@@ -8,5 +8,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>fibula-core</module>
+        <module>fibula-annotation-processor</module>
+        <module>fibula-samples</module>
     </modules>
 </project>
