@@ -21,8 +21,18 @@
     </dependency>
     <dependency>
       <groupId>org.mendrugo.fibula</groupId>
+      <artifactId>fibula-results</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mendrugo.fibula</groupId>
       <artifactId>fibula-extension</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup</groupId>
+      <artifactId>javapoet</artifactId>
+      <version>1.13.0</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
