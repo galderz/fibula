@@ -19,7 +19,7 @@ public class Handler
         this.infrastructure = infrastructure;
     }
 
-    ThroughputResult runIteration(Callable<ThroughputResult> callable)
+    public ThroughputResult runIteration(Callable<ThroughputResult> callable)
     {
         final long defaultTimeout = TimeUnit.MINUTES.toNanos(1);
         long waitDeadline = System.nanoTime() + defaultTimeout;
@@ -28,7 +28,10 @@ public class Handler
         final CompletionService<ThroughputResult> completionService = new ExecutorCompletionService<>(executor);
 
         final Future<ThroughputResult> completed = completionService.submit(callable);
-        final long defaultRuntime = TimeUnit.SECONDS.toNanos(10);
+
+        // final long defaultRuntime = TimeUnit.SECONDS.toNanos(10);
+        final long defaultRuntime = TimeUnit.SECONDS.toNanos(3);
+
         try
         {
             final Future<ThroughputResult> failing = completionService.poll(defaultRuntime, TimeUnit.NANOSECONDS);

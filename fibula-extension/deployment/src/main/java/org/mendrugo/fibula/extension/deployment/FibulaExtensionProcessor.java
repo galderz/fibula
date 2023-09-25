@@ -2,11 +2,14 @@ package org.mendrugo.fibula.extension.deployment;
 
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
+import io.quarkus.deployment.GeneratedClassGizmoAdaptor;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
+import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.gizmo.ClassOutput;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
@@ -23,12 +26,17 @@ class FibulaExtensionProcessor
 
     private static DotName NATIVE_BENCHMARK = DotName.createSimple(NativeBenchmark.class.getName());
 
+//    @BuildStep
+//    void addDependencies(BuildProducer<IndexDependencyBuildItem> indexDependency)
+//    {
+//        indexDependency.produce(new IndexDependencyBuildItem("org.mendrugo.fibula", "fibula-core"));
+//    }
+
     @BuildStep
-    @Record(STATIC_INIT)
     void scanForBenchmarks(
-        BuildProducer<GeneratedBeanBuildItem> generatedBeans
+        BuildProducer<GeneratedClassBuildItem> generatedClasses
+        , BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
         , CombinedIndexBuildItem index
-        , FibulaRecorder recorder
     )
     {
         final BenchmarkInfo.Builder benchBuilder = new BenchmarkInfo.Builder();
@@ -37,29 +45,13 @@ class FibulaExtensionProcessor
             final MethodInfo methodInfo = ann.target().asMethod();
             System.out.println(methodInfo);
             benchBuilder.withMethod(methodInfo);
-            recorder.log(methodInfo.name());
         }
 
         // ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
-        // new BenchmarkGenerator().generate(benchBuilder.build(), classOutput);
-
-//        IndexView indexView = beanArchiveIndex.getIndex();
-//        Collection<AnnotationInstance> testBeans = indexView.getAnnotations(TEST_ANNOTATION);
-//        for (AnnotationInstance ann : testBeans) {
-//            ClassInfo beanClassInfo = ann.target().asClass();
-//            try {
-//                boolean isConfigConsumer = beanClassInfo.interfaceNames()
-//                    .stream()
-//                    .anyMatch(dotName -> dotName.equals(DotName.createSimple(IConfigConsumer.class.getName())));
-//                if (isConfigConsumer) {
-//                    Class<IConfigConsumer> beanClass = (Class<IConfigConsumer>) Class.forName(beanClassInfo.name().toString(), false, Thread.currentThread().getContextClassLoader());
-//                    testBeanProducer.produce(new TestBeanBuildItem(beanClass));
-//                    log.infof("Configured bean: %s", beanClass);
-//                }
-//            } catch (ClassNotFoundException e) {
-//                log.warn("Failed to load bean class", e);
-//            }
-//        }
+        ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
+        ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
+        new BenchmarkGenerator().generate(benchBuilder.build(), classOutput, beanOutput);
+        System.out.println("Generated: " + classOutput);
     }
 
     @BuildStep

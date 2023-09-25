@@ -8,12 +8,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 import org.mendrugo.fibula.results.ThroughputResult;
 import org.mendrugo.fibula.runner.client.ResultProxy;
-import org.mendrugo.fibula.runner.sample.SampleBenchmarkRunner;
 
 @ApplicationScoped
 public abstract class AbstractBenchmarkRunner
 {
-    private static final Logger LOGGER = Logger.getLogger(SampleBenchmarkRunner.class);
+    private static final Logger LOGGER = Logger.getLogger(AbstractBenchmarkRunner.class);
 
     @RestClient
     ResultProxy resultProxy;
