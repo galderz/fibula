@@ -61,5 +61,5 @@ $(annotations_jar): $(shell find $(annotations_dir)/src -type f -name '*.java')
 > $(mvnw) package -DskipTests -pl $(annotations_dir)
 
 clean:
-> ./mvnw clean
+> $(mvnw) clean
 .PHONY: clean

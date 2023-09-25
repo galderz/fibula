@@ -8,11 +8,12 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 import org.mendrugo.fibula.results.ThroughputResult;
 import org.mendrugo.fibula.runner.client.ResultProxy;
+import org.mendrugo.fibula.runner.sample.SampleBenchmarkRunner;
 
 @ApplicationScoped
-public class RunnerApplicationLifeCycle
+public abstract class AbstractBenchmarkRunner
 {
-    private static final Logger LOGGER = Logger.getLogger(RunnerApplicationLifeCycle.class);
+    private static final Logger LOGGER = Logger.getLogger(SampleBenchmarkRunner.class);
 
     @RestClient
     ResultProxy resultProxy;
@@ -20,8 +21,14 @@ public class RunnerApplicationLifeCycle
     void onStart(@Observes StartupEvent ev)
     {
         LOGGER.info("-> onStart");
-        resultProxy.send(ThroughputResult.of("sample-label", 1, 2000, 1000));
+//        resultProxy.send(ThroughputResult.of("sample-label", 1, 2000, 1000));
+        final Infrastructure infrastructure = new Infrastructure();
+        // todo consider using vertx.timer() instead
+        final ThroughputResult result = doBenchmark(new Handler(infrastructure), infrastructure);
+        resultProxy.send(result);
     }
+
+    public abstract ThroughputResult doBenchmark(Handler handler, Infrastructure infrastructure);
 
     void onStop(@Observes ShutdownEvent ev)
     {

@@ -1,9 +1,13 @@
 package org.mendrugo.fibula.extension.deployment;
 
+import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
+import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
+import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.gizmo.ClassOutput;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
@@ -21,14 +25,23 @@ class FibulaExtensionProcessor
 
     @BuildStep
     @Record(STATIC_INIT)
-    void scanForBenchmarks(CombinedIndexBuildItem index, FibulaRecorder recorder)
+    void scanForBenchmarks(
+        BuildProducer<GeneratedBeanBuildItem> generatedBeans
+        , CombinedIndexBuildItem index
+        , FibulaRecorder recorder
+    )
     {
+        final BenchmarkInfo.Builder benchBuilder = new BenchmarkInfo.Builder();
         for (AnnotationInstance ann : index.getIndex().getAnnotations(NATIVE_BENCHMARK))
         {
             final MethodInfo methodInfo = ann.target().asMethod();
             System.out.println(methodInfo);
+            benchBuilder.withMethod(methodInfo);
             recorder.log(methodInfo.name());
         }
+
+        // ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
+        // new BenchmarkGenerator().generate(benchBuilder.build(), classOutput);
 
 //        IndexView indexView = beanArchiveIndex.getIndex();
 //        Collection<AnnotationInstance> testBeans = indexView.getAnnotations(TEST_ANNOTATION);
