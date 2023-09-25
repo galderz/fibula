@@ -1,11 +1,15 @@
 package org.mendrugo.fibula.extension.deployment;
 
+import io.quarkus.gizmo.AssignableResultHandle;
+import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.FieldCreator;
+import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
+import io.quarkus.gizmo.WhileLoop;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.MethodInfo;
 import org.mendrugo.fibula.results.ThroughputResult;
@@ -98,44 +102,51 @@ public class BenchmarkGenerator
         ctor.close();
 
         final MethodCreator callableGet = callable.getMethodCreator("call", Object.class);
+
+        String annotatedBenchmarkClassName = classInfo.name().toString();
+        String annotatedBenchmarkClassTypeDescriptor = "L" + annotatedBenchmarkClassName.replace('.', '/') + ";";
+        final AssignableResultHandle annotatedBenchmark = callableGet.createVariable(annotatedBenchmarkClassTypeDescriptor);
+        callableGet.assign(annotatedBenchmark, callableGet.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
+
+        // long operations = 0;
+        final AssignableResultHandle operations = callableGet.createVariable(double.class);
+        callableGet.assign(operations, callableGet.load((double) 0));
+
+        // long startTime = System.nanoTime();
+        final AssignableResultHandle startTime = callableGet.createVariable(long.class);
+        final ResultHandle startNanoTime = callableGet.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+        callableGet.assign(startTime, startNanoTime);
+
+        final WhileLoop whileLoop = callableGet.whileLoop(condition ->
+            {
+                final ResultHandle localInfrastructure = condition.readInstanceField(infrastructure.getFieldDescriptor(), callableGet.getThis());
+                final FieldDescriptor isDoneField = FieldDescriptor.of("org.mendrugo.fibula.runner.Infrastructure", "isDone", boolean.class);
+                final ResultHandle isDone = condition.readInstanceField(isDoneField, localInfrastructure);
+                return condition.ifFalse(isDone);
+            }
+        );
+        final BytecodeCreator loopBlock = whileLoop.block();
+        // loopBlock.invokeStaticMethod(MethodDescriptor.of(methodInfo));
+        loopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), annotatedBenchmark);
+        // operations++;
+        loopBlock.assign(operations, loopBlock.add(operations, loopBlock.load((double) 1)));
+        loopBlock.close();
+
+        // long stopTime = System.nanoTime();
+        final AssignableResultHandle stopTime = callableGet.createVariable(long.class);
+        final ResultHandle stopNanoTime = callableGet.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+        callableGet.assign(stopTime, stopNanoTime);
+
         final ResultHandle result = callableGet.invokeStaticMethod(
             MethodDescriptor.ofMethod(ThroughputResult.class, "of", ThroughputResult.class, String.class, double.class, long.class, long.class)
             , callableGet.load(methodInfo.name())
-            , callableGet.load((double) 1) // operations
-            , callableGet.load((long) 2) // stopTime
-            , callableGet.load((long) 3) // startTime
+            , operations
+            , stopTime
+            , startTime
         );
         callableGet.returnValue(result);
         callableGet.close();
 
-//        // long operations = 0;
-//        final AssignableResultHandle operations = callableGet.createVariable(double.class);
-//        callableGet.assign(operations, callableGet.load(0));
-//
-//        // long startTime = System.nanoTime();
-//        final AssignableResultHandle startTime = callableGet.createVariable(long.class);
-//        final ResultHandle startNanoTime = callableGet.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-//        callableGet.assign(startTime, startNanoTime);
-//
-//        final WhileLoop whileLoop = callableGet.whileLoop(b ->
-//            {
-//                final ResultHandle localInfrastructure = callableGet.readInstanceField(infrastructure.getFieldDescriptor(), callableGet.getThis());
-//                final ResultHandle isDone = callableGet.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), localInfrastructure);
-//                return b.ifFalse(isDone);
-//            }
-//        );
-//        final BytecodeCreator loopBlock = whileLoop.block();
-//        loopBlock.invokeStaticMethod(MethodDescriptor.of(methodInfo));
-//        // operations++;
-//        // loopBlock.assign(operations, loopBlock.increment(operations));
-//        loopBlock.assign(operations, loopBlock.add(operations, loopBlock.load((double) 1)));
-//        loopBlock.close();
-//
-//        // long stopTime = System.nanoTime();
-//        final AssignableResultHandle stopTime = callableGet.createVariable(long.class);
-//        final ResultHandle stopNanoTime = callableGet.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-//        callableGet.assign(stopTime, stopNanoTime);
-//
 //        final ResultHandle result = callableGet.invokeStaticMethod(
 //            MethodDescriptor.ofMethod(ThroughputResult.class, "of", ThroughputResult.class, String.class, double.class, long.class, long.class)
 //            , callableGet.load(methodInfo.name())
