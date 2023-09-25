@@ -2,12 +2,14 @@ package org.mendrugo.fibula.extension.deployment;
 
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
+import io.quarkus.gizmo.FieldCreator;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.MethodInfo;
 import org.mendrugo.fibula.results.ThroughputResult;
+import org.objectweb.asm.Opcodes;
 
 import java.util.concurrent.Callable;
 
@@ -84,10 +86,16 @@ public class BenchmarkGenerator
             .interfaces(Callable.class)
             .build();
 
-//        // private final Infrastructure infrastructure;
-//        final FieldCreator infrastructure = callable
-//            .getFieldCreator("infrastructure", Infrastructure.class)
-//            .setModifiers(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL);
+        // private final Infrastructure infrastructure;
+        final FieldCreator infrastructure = callable
+            .getFieldCreator("infrastructure", "org.mendrugo.fibula.runner.Infrastructure")
+            .setModifiers(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL);
+
+        final MethodCreator ctor = callable.getMethodCreator(MethodDescriptor.INIT, "V", "org.mendrugo.fibula.runner.Infrastructure");
+        ctor.invokeSpecialMethod(MethodDescriptor.ofMethod(Object.class, MethodDescriptor.INIT, void.class), ctor.getThis());
+        ctor.writeInstanceField(infrastructure.getFieldDescriptor(), ctor.getThis(), ctor.getMethodParam(0));
+        ctor.returnValue(null);
+        ctor.close();
 
         final MethodCreator callableGet = callable.getMethodCreator("call", Object.class);
         final ResultHandle result = callableGet.invokeStaticMethod(
@@ -166,11 +174,9 @@ public class BenchmarkGenerator
             , Callable.class.getName()
         );
         final ResultHandle handler = doBenchmark.getMethodParam(0);
-        final ResultHandle infrastructure = doBenchmark.getMethodParam(0);
-//        final MethodDescriptor ctor = MethodDescriptor.ofConstructor(benchmarkCallableName, "org.mendrugo.fibula.runner.Infrastructure");
-//        final ResultHandle benchmarkCallable = doBenchmark.newInstance(ctor, infrastructure);
-        final MethodDescriptor ctor = MethodDescriptor.ofConstructor(benchmarkCallableName); // todo temp
-        final ResultHandle benchmarkCallable = doBenchmark.newInstance(ctor); // todo temp
+        final ResultHandle infrastructure = doBenchmark.getMethodParam(1);
+        final MethodDescriptor ctor = MethodDescriptor.ofConstructor(benchmarkCallableName, "org.mendrugo.fibula.runner.Infrastructure");
+        final ResultHandle benchmarkCallable = doBenchmark.newInstance(ctor, infrastructure);
         final ResultHandle result = doBenchmark.invokeVirtualMethod(runIteration, handler, benchmarkCallable);
         doBenchmark.returnValue(result);
         doBenchmark.close();
