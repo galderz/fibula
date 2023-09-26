@@ -10,7 +10,8 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
-JAVA_HOME ?= $(HOME)/opt/boot-java-20
+#JAVA_HOME ?= $(HOME)/opt/boot-java-20
+JAVA_HOME ?= $(HOME)/opt/graalvm-community-openjdk-20.0.2+9.1/Contents/Home
 
 #annotations_dir = $(annotations_name)
 #annotations_name = fibula-annotations
@@ -72,6 +73,10 @@ core-dev: build
 runner-dev: build
 > $(mvnw) clean quarkus:dev -pl $(runner_dir) -Dquarkus.package.quiltflower.enabled=true
 .PHONY: runner-dev
+
+native: build
+> $(mvnw) package -Pnative -pl $(runner_dir)
+.PHONY: native
 
 runner-package: $(deployment_jar) $(annotations_jar) $(results_jar)
 > $(mvnw) package -pl $(runner_dir) -Dquarkus.package.quiltflower.enabled=true
