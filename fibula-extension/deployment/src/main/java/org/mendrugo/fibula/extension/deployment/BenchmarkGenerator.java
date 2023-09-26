@@ -21,63 +21,79 @@ public class BenchmarkGenerator
 {
     static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
 
-    void generate(BenchmarkInfo benchmarkInfo, ClassOutput classOutput, ClassOutput beanOutput)
+    void generate(BenchmarkInfo benchmarkInfo, ClassOutput beanOutput)
     {
-        generateBenchmarkCallable(benchmarkInfo, classOutput);
-        generateBenchmarkRunner(benchmarkInfo, beanOutput);
+        final MethodInfo methodInfo = benchmarkInfo.info();
+        final ClassInfo classInfo = methodInfo.declaringClass();
+        System.out.println(methodInfo);
+        System.out.println(classInfo);
 
-//        final MethodInfo methodInfo = benchmarkInfo.info();
-//        final ClassInfo classInfo = methodInfo.declaringClass();
-//
-//        final ClassCreator creator = ClassCreator.builder()
-//            .classOutput(classOutput)
-//            .className(String.format("%s.%s_Benchmark", PACKAGE_NAME, classInfo.name()))
-//            .interfaces(Callable.class)
-//            .build();
-//
-//        final FieldCreator infraField = creator.getFieldCreator("infrastructure", Infrastructure.class);
-//
-//        final MethodCreator constructor = creator.getMethodCreator(MethodDescriptor.INIT, void.class, Infrastructure.class);
-//        // Neeeded? ctor.invokeSpecialMethod(MethodDescriptor.ofMethod(Object.class, MethodDescriptor.INIT, void.class), ctor.getThis());
-//        constructor.writeInstanceField(infraField.getFieldDescriptor(), constructor.getThis(), constructor.getMethodParam(0));
-//        constructor.close();
-//
-//        final MethodCreator method = creator.getMethodCreator(String.format("%s_Throughput", methodInfo.name()), ThroughputResult.class, Infrastructure.class);
-//        final AssignableResultHandle benchmarkInstance = method.createVariable(classInfo.simpleName());
-//        // method.cre
-//        // final ResultHandle newInstance = methodCreator.newInstance(MethodDescriptor.ofConstructor(classInfo));
-//        final AssignableResultHandle operations = method.createVariable(double.class);
-//        method.assign(operations, method.load(0));
-//        // final ResultHandle operations = methodCreator.load(0);
-//        final AssignableResultHandle startTime = method.createVariable(long.class);
-//        method.assign(startTime, method.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class)));
-//        final ResultHandle infraParam = method.getMethodParam(0);
-//        final WhileLoop whileLoop = method.whileLoop(b ->
-//            b.ifFalse(method.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infraParam)));
-//        final BytecodeCreator loopBlock = whileLoop.block();
-//        loopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmarkInstance);
-//        // loopBlock.increment(operations);
-//        loopBlock.assign(operations, loopBlock.increment(operations));
-//        loopBlock.close();
-//        final AssignableResultHandle stopTime = method.createVariable(long.class);
-//        method.assign(stopTime, method.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class)));
-//        final ResultHandle result = method.invokeStaticMethod(
-//            MethodDescriptor.ofMethod(ThroughputResult.class, "of", ThroughputResult.class, String.class, double.class, long.class, long.class)
-//            , method.load(methodInfo.name())
-//            , operations
-//            , stopTime
-//            , startTime
-//        );
-//        method.returnValue(result);
-//        method.close();
-//
-//        final MethodCreator call = creator.getMethodCreator("call", void.class);
-//        final ResultHandle infraInstance = call.readInstanceField(infraField.getFieldDescriptor(), call.getThis());
-//        call.invokeStaticMethod(method.getMethodDescriptor(), infraInstance);
-//        call.close();
-//
-//        creator.close();
+        final ClassCreator callable = ClassCreator.builder()
+            .classOutput(beanOutput)
+            .className(String.format("%s.%s_BenchmarkCallable", PACKAGE_NAME, classInfo.simpleName()))
+            .interfaces(Callable.class)
+            .build();
+
+        callable.close();
     }
+
+//    void generate(BenchmarkInfo benchmarkInfo, ClassOutput classOutput, ClassOutput beanOutput)
+//    {
+//        generateBenchmarkCallable(benchmarkInfo, classOutput);
+//        generateBenchmarkRunner(benchmarkInfo, beanOutput);
+//
+////        final MethodInfo methodInfo = benchmarkInfo.info();
+////        final ClassInfo classInfo = methodInfo.declaringClass();
+////
+////        final ClassCreator creator = ClassCreator.builder()
+////            .classOutput(classOutput)
+////            .className(String.format("%s.%s_Benchmark", PACKAGE_NAME, classInfo.name()))
+////            .interfaces(Callable.class)
+////            .build();
+////
+////        final FieldCreator infraField = creator.getFieldCreator("infrastructure", Infrastructure.class);
+////
+////        final MethodCreator constructor = creator.getMethodCreator(MethodDescriptor.INIT, void.class, Infrastructure.class);
+////        // Neeeded? ctor.invokeSpecialMethod(MethodDescriptor.ofMethod(Object.class, MethodDescriptor.INIT, void.class), ctor.getThis());
+////        constructor.writeInstanceField(infraField.getFieldDescriptor(), constructor.getThis(), constructor.getMethodParam(0));
+////        constructor.close();
+////
+////        final MethodCreator method = creator.getMethodCreator(String.format("%s_Throughput", methodInfo.name()), ThroughputResult.class, Infrastructure.class);
+////        final AssignableResultHandle benchmarkInstance = method.createVariable(classInfo.simpleName());
+////        // method.cre
+////        // final ResultHandle newInstance = methodCreator.newInstance(MethodDescriptor.ofConstructor(classInfo));
+////        final AssignableResultHandle operations = method.createVariable(double.class);
+////        method.assign(operations, method.load(0));
+////        // final ResultHandle operations = methodCreator.load(0);
+////        final AssignableResultHandle startTime = method.createVariable(long.class);
+////        method.assign(startTime, method.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class)));
+////        final ResultHandle infraParam = method.getMethodParam(0);
+////        final WhileLoop whileLoop = method.whileLoop(b ->
+////            b.ifFalse(method.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infraParam)));
+////        final BytecodeCreator loopBlock = whileLoop.block();
+////        loopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmarkInstance);
+////        // loopBlock.increment(operations);
+////        loopBlock.assign(operations, loopBlock.increment(operations));
+////        loopBlock.close();
+////        final AssignableResultHandle stopTime = method.createVariable(long.class);
+////        method.assign(stopTime, method.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class)));
+////        final ResultHandle result = method.invokeStaticMethod(
+////            MethodDescriptor.ofMethod(ThroughputResult.class, "of", ThroughputResult.class, String.class, double.class, long.class, long.class)
+////            , method.load(methodInfo.name())
+////            , operations
+////            , stopTime
+////            , startTime
+////        );
+////        method.returnValue(result);
+////        method.close();
+////
+////        final MethodCreator call = creator.getMethodCreator("call", void.class);
+////        final ResultHandle infraInstance = call.readInstanceField(infraField.getFieldDescriptor(), call.getThis());
+////        call.invokeStaticMethod(method.getMethodDescriptor(), infraInstance);
+////        call.close();
+////
+////        creator.close();
+//    }
 
     void generateBenchmarkCallable(BenchmarkInfo benchmarkInfo, ClassOutput classOutput)
     {

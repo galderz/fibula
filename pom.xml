@@ -12,6 +12,7 @@
     <module>fibula-extension</module>
     <module>fibula-core</module>
     <module>fibula-runner</module>
+    <module>fibula-samples</module>
   </modules>
   <properties>
     <compiler-plugin.version>3.11.0</compiler-plugin.version>
