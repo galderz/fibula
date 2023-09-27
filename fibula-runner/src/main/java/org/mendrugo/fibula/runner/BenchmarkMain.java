@@ -23,7 +23,6 @@ public class BenchmarkMain implements QuarkusApplication
     @Override
     public int run(String... args)
     {
-        System.out.println("Hello " + args[0]);
         suppliers.forEach(BenchmarkSupplier::run);
         return 0;
     }
