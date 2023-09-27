@@ -10,7 +10,6 @@
   <artifactId>fibula-extension-parent</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Fibula Extension - Parent</name>
   <modules>
     <module>deployment</module>
     <module>runtime</module>

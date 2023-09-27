@@ -8,7 +8,6 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>fibula-extension-deployment</artifactId>
-  <name>Fibula Extension - Deployment</name>
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>

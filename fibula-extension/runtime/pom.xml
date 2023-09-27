@@ -8,7 +8,6 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>fibula-extension</artifactId>
-  <name>Fibula Extension - Runtime</name>
   <description>Do something useful.</description>
   <dependencies>
     <dependency>

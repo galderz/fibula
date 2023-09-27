@@ -6,9 +6,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.jboss.resteasy.reactive.PartType;
-import org.jboss.resteasy.reactive.RestForm;
-import org.mendrugo.fibula.results.ThroughputResult;
 
 @Path("/api/results")
 @Produces(MediaType.TEXT_PLAIN)
@@ -17,5 +14,6 @@ import org.mendrugo.fibula.results.ThroughputResult;
 public interface ResultProxy
 {
     @POST
-    String send(ThroughputResult result);
+    // String send(ThroughputResult result);
+    String send(String result);
 }

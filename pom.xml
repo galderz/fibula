@@ -8,9 +8,7 @@
   <packaging>pom</packaging>
   <modules>
     <module>fibula-annotations</module>
-    <module>fibula-results</module>
     <module>fibula-extension</module>
-    <module>fibula-core</module>
     <module>fibula-runner</module>
     <module>fibula-samples</module>
   </modules>
