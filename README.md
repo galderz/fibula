@@ -5,6 +5,11 @@
 - [ ] Create infrastructure module
 - [ ] Use vertx.timer and run something for a number of seconds
 - [ ] Check how qollider processed command line options before picocli
+- [ ] Add main module, which contains the http server that the runner communicates with.
+      When the main module starts, it needs to start an HTTP server and in parallel,
+      fire native compilation of runner + samples.
+      Once native compilation finishes, it executes the native part which communicates back with main.
+      When main receives the reply, it prints results.
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
