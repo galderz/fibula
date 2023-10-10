@@ -14,6 +14,7 @@ JAVA_HOME ?= $(HOME)/opt/boot-java-20
 #JAVA_HOME ?= $(HOME)/opt/graalvm-community-openjdk-20.0.2+9.1/Contents/Home
 
 java = $(JAVA_HOME)/bin/java
+bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 samples_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
@@ -27,14 +28,20 @@ ifdef DEBUG
   mvnw += -X
 endif
 
-run-samples: $(samples_jar)
-> $(java) -jar $<
-.PHONY: run-samples
+samples: $(bootstrap_jar)
+> $(mvnw) install -DskipTests -pl fibula-samples -Dquarkus.package.main-class=bootstrap
+> $(java) -jar $(samples_jar)
+.PHONY: samples
 
-$(samples_jar): $(shell find . -type f -name '*.java')
-$(samples_jar): $(shell find . -type f -name 'pom.xml')
-$(samples_jar):
-> $(mvnw) install -DskipTests
+runner: $(bootstrap_jar)
+> $(mvnw) install -DskipTests -pl fibula-samples -Dquarkus.package.main-class=runner
+> $(java) -jar $(samples_jar)
+.PHONY: runner
+
+$(bootstrap_jar): $(shell find . -type f -name '*.java')
+$(bootstrap_jar): $(shell find . -type f -name 'pom.xml')
+$(bootstrap_jar):
+> $(mvnw) install -DskipTests --projects !fibula-samples
 
 build:
 > $(mvnw) -DskipTests=true install -Dquarkus.package.quiltflower.enabled=true

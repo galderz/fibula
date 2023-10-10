@@ -1,14 +1,4 @@
-# fibula
-
-## TODO
-
-- [ ] Create infrastructure module
-- [ ] Use vertx.timer and run something for a number of seconds
-- [ ] Check how qollider processed command line options before picocli
-- [ ] When the bootstrap module starts and the HTTP server is ready (use app lifecycle)
-      fire native compilation of the current project (e.g. fibula-samples) with `-Dquarkus.package.main-class=runner`.
-      Once native compilation finishes, it executes the native part which communicates back with main.
-      When main receives the reply, it prints results.
+# fibula-bootstrap
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
@@ -53,13 +43,9 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/fibula-1.0.0-SNAPSHOT-runner`
+You can then execute your native executable with: `./target/fibula-bootstrap-1.0.0-SNAPSHOT-runner`
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
-
-## Related Guides
-
-- RESTEasy Reactive ([guide](https://quarkus.io/guides/resteasy-reactive)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
 
 ## Provided Code
 

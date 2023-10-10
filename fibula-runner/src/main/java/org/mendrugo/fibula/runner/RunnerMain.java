@@ -8,10 +8,10 @@ import org.jboss.logging.Logger;
 
 import java.util.List;
 
-@QuarkusMain
-public class BenchmarkMain implements QuarkusApplication
+@QuarkusMain(name = "runner")
+public class RunnerMain implements QuarkusApplication
 {
-    private static final Logger LOGGER = Logger.getLogger(BenchmarkMain.class);
+    private static final Logger LOGGER = Logger.getLogger(RunnerMain.class);
 
 //    @RestClient
 //    ResultProxy resultProxy;
@@ -23,6 +23,7 @@ public class BenchmarkMain implements QuarkusApplication
     @Override
     public int run(String... args)
     {
+        System.out.println("Running fibula.runner.RunnerMain...");
         suppliers.forEach(BenchmarkSupplier::run);
         return 0;
     }
