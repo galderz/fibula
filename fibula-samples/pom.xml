@@ -42,25 +42,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.mendrugo.fibula</groupId>
-      <artifactId>fibula-extension</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mendrugo.fibula</groupId>
-      <artifactId>fibula-runner</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mendrugo.fibula</groupId>
-      <artifactId>fibula-main</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
     </dependency>
@@ -144,6 +125,40 @@
         <skipITs>false</skipITs>
         <quarkus.package.type>native</quarkus.package.type>
       </properties>
+    </profile>
+    <profile>
+      <id>bootstrap</id>
+      <activation>
+        <activeByDefault>
+          true
+        </activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.mendrugo.fibula</groupId>
+          <artifactId>fibula-bootstrap</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>runner</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mendrugo.fibula</groupId>
+          <artifactId>fibula-extension</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.mendrugo.fibula</groupId>
+          <artifactId>fibula-runner</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 </project>

@@ -34,7 +34,7 @@ samples: $(bootstrap_jar)
 .PHONY: samples
 
 runner: $(bootstrap_jar)
-> $(mvnw) install -DskipTests -pl fibula-samples -Dquarkus.package.main-class=runner
+> $(mvnw) install -DskipTests -pl fibula-samples -Dquarkus.package.main-class=runner -Prunner
 > $(java) -jar $(samples_jar)
 .PHONY: runner
 
