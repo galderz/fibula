@@ -21,7 +21,7 @@ import org.mendrugo.fibula.annotations.NativeBenchmark;
 
 class FibulaProcessor
 {
-    private static final String FEATURE = "command-extension";
+    private static final String FEATURE = "fibula-extension";
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
     private static final DotName NATIVE_BENCHMARK = DotName.createSimple(NativeBenchmark.class.getName());
 
