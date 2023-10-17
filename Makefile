@@ -15,7 +15,8 @@ JAVA_HOME ?= $(HOME)/opt/boot-java-20
 
 java = $(JAVA_HOME)/bin/java
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
-samples_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
+samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
+samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
 ifdef DEBUG_IDE
@@ -30,12 +31,12 @@ endif
 
 samples: $(bootstrap_jar)
 > $(mvnw) install -DskipTests -pl fibula-samples
-> $(java) -jar $(samples_jar)
+> $(java) -jar $(samples_bootstrap_jar)
 .PHONY: samples
 
 runner: $(bootstrap_jar)
 > $(mvnw) install -DskipTests -pl fibula-samples -Prunner
-> $(java) -jar $(samples_jar)
+> $(java) -jar $(samples_runner_jar)
 .PHONY: runner
 
 $(bootstrap_jar): $(shell find . -type f -name '*.java')

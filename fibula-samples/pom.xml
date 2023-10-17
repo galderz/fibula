@@ -143,6 +143,7 @@
       <id>runner</id>
       <properties>
         <quarkus.package.main-class>runner</quarkus.package.main-class>
+        <quarkus.package.output-directory>runner-app</quarkus.package.output-directory>
       </properties>
       <dependencies>
         <dependency>
