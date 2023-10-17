@@ -30,12 +30,12 @@ ifdef DEBUG
 endif
 
 samples: $(bootstrap_jar)
-> $(mvnw) install -DskipTests -pl fibula-samples
+> $(mvnw) package -DskipTests -pl fibula-samples
 > $(java) -jar $(samples_bootstrap_jar)
 .PHONY: samples
 
 runner: $(bootstrap_jar)
-> $(mvnw) install -DskipTests -pl fibula-samples -Prunner
+> $(mvnw) package -DskipTests -pl fibula-samples -Prunner
 > $(java) -jar $(samples_runner_jar)
 .PHONY: runner
 
