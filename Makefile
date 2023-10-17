@@ -29,12 +29,12 @@ ifdef DEBUG
 endif
 
 samples: $(bootstrap_jar)
-> $(mvnw) install -DskipTests -pl fibula-samples -Dquarkus.package.main-class=bootstrap
+> $(mvnw) install -DskipTests -pl fibula-samples
 > $(java) -jar $(samples_jar)
 .PHONY: samples
 
 runner: $(bootstrap_jar)
-> $(mvnw) install -DskipTests -pl fibula-samples -Dquarkus.package.main-class=runner -Prunner
+> $(mvnw) install -DskipTests -pl fibula-samples -Prunner
 > $(java) -jar $(samples_jar)
 .PHONY: runner
 

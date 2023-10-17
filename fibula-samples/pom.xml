@@ -128,6 +128,9 @@
           true
         </activeByDefault>
       </activation>
+      <properties>
+        <quarkus.package.main-class>bootstrap</quarkus.package.main-class>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>org.mendrugo.fibula</groupId>
@@ -138,6 +141,9 @@
     </profile>
     <profile>
       <id>runner</id>
+      <properties>
+        <quarkus.package.main-class>runner</quarkus.package.main-class>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>org.mendrugo.fibula</groupId>
