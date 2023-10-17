@@ -20,11 +20,6 @@
     </dependency>
     <dependency>
       <groupId>org.mendrugo.fibula</groupId>
-      <artifactId>fibula-results</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mendrugo.fibula</groupId>
       <artifactId>fibula-extension</artifactId>
       <version>${project.version}</version>
     </dependency>
