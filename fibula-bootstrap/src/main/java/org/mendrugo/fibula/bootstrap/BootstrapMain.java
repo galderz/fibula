@@ -8,7 +8,7 @@ public class BootstrapMain
 {
     public static void main(String... args)
     {
-        System.out.println("Running fibula.bootstrap.BootstrapMain...");
+        System.out.println("Running bootstrap main...");
         Quarkus.run(args);
     }
 }
