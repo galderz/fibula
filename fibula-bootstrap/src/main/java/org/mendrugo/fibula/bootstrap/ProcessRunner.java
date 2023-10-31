@@ -1,20 +1,24 @@
 package org.mendrugo.fibula.bootstrap;
 
-import io.quarkus.logging.Log;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.List;
 
-public class PackageRunner
+public class ProcessRunner
 {
-    void run(PackageTool tool)
+    void runAsync(ProcessBuilder processBuilder)
     {
-        final List<String> arguments = tool.arguments();
-        final ProcessBuilder processBuilder = new ProcessBuilder(arguments)
-            .inheritIO();
-        Log.infof("Executing: %s", String.join(" ", arguments));
+        try
+        {
+            processBuilder.start();
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
+    }
 
+    void runSync(ProcessBuilder processBuilder)
+    {
         try
         {
             final Process process = processBuilder.start();
