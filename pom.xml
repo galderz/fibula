@@ -9,6 +9,7 @@
   <modules>
     <module>fibula-annotations</module>
     <module>fibula-extension</module>
+    <module>fibula-results</module>
     <module>fibula-runner</module>
     <module>fibula-bootstrap</module>
     <module>fibula-samples</module>

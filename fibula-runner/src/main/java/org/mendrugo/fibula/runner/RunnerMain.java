@@ -1,20 +1,21 @@
 package org.mendrugo.fibula.runner;
 
 import io.quarkus.arc.All;
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
-import org.jboss.logging.Logger;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.mendrugo.fibula.results.OkResult;
+import org.mendrugo.fibula.runner.client.ResultProxy;
 
 import java.util.List;
 
 @QuarkusMain(name = "runner")
 public class RunnerMain implements QuarkusApplication
 {
-    private static final Logger LOGGER = Logger.getLogger(RunnerMain.class);
-
-//    @RestClient
-//    ResultProxy resultProxy;
+    @RestClient
+    ResultProxy resultProxy;
 
     @Inject
     @All
@@ -23,8 +24,9 @@ public class RunnerMain implements QuarkusApplication
     @Override
     public int run(String... args)
     {
-        System.out.println("Running fibula.runner.RunnerMain...");
+        Log.info("Running fibula.runner.RunnerMain...");
         suppliers.forEach(BenchmarkSupplier::run);
+        resultProxy.send(new OkResult());
         return 0;
     }
 }
