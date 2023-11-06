@@ -9,15 +9,17 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
-import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
+import io.quarkus.gizmo.ResultHandle;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
 import org.mendrugo.fibula.annotations.NativeBenchmark;
+
+import java.util.function.Function;
 
 class FibulaProcessor
 {
@@ -61,31 +63,59 @@ class FibulaProcessor
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
 
-        final ClassCreator command = ClassCreator.builder()
+        final String functionClassName = generateFunction(methodInfo, beanOutput);
+        generateSupplier(methodInfo, beanOutput, classInfo, functionClassName);
+    }
+
+    private static void generateSupplier(MethodInfo methodInfo, ClassOutput beanOutput, ClassInfo classInfo, String functionClassName)
+    {
+        final ClassCreator supplier = ClassCreator.builder()
             .classOutput(beanOutput)
             .className(String.format(
-                "%s.%s_%s_Command"
+                "%s.%s_%s_Supplier"
                 , PACKAGE_NAME
                 , classInfo.simpleName()
                 , methodInfo.name())
             )
             .interfaces("org.mendrugo.fibula.runner.BenchmarkSupplier") // todo share class
             .build();
-        command.addAnnotation(ApplicationScoped.class);
+        supplier.addAnnotation(ApplicationScoped.class);
 
-        final MethodCreator run = command.getMethodCreator("run", void.class);
-        Gizmo.systemOutPrintln(run, run.load("A generated command"));
+        final MethodCreator run = supplier.getMethodCreator("get", Function.class);
+        final ResultHandle newInstance = run.newInstance(MethodDescriptor.ofConstructor(functionClassName));
+        run.returnValue(newInstance);
+        run.close();
 
+        supplier.close();
+    }
+
+    private String generateFunction(MethodInfo methodInfo, ClassOutput beanOutput)
+    {
+        final ClassInfo classInfo = methodInfo.declaringClass();
+
+        final String className = String.format(
+            "%s.%s_%s_Function"
+            , PACKAGE_NAME
+            , classInfo.simpleName()
+            , methodInfo.name());
+
+        final ClassCreator function = ClassCreator.builder()
+            .classOutput(beanOutput)
+            .className(className)
+            .superClass("org.mendrugo.fibula.runner.ThroughputFunction") // todo share class
+            .build();
+
+        final MethodCreator run = function.getMethodCreator("doOperation", void.class);
         final String typeName = classInfo.name().toString();
         final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
         final AssignableResultHandle variable = run.createVariable(typeDescriptor);
         run.assign(variable, run.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
         run.invokeVirtualMethod(MethodDescriptor.of(methodInfo), variable);
-
         run.returnValue(null);
         run.close();
 
-        command.close();
+        function.close();
+        return className;
     }
 }
 

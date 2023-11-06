@@ -13,6 +13,7 @@ public class ResultResource
     public String add(ThroughputResult result)
     {
         Log.infof("Received result: %s", result);
+        new ResultFormat().write(result);
         Log.infof("Now exit the application");
         Quarkus.asyncExit();
         return "Ok";

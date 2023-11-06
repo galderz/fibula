@@ -13,6 +13,7 @@ public class PackageTool
             , "-pl"
             , "fibula-samples"
             , "-Prunner"
+            , "-Dquarkus.package.quiltflower.enabled=true" // todo make optional
         );
     }
 }

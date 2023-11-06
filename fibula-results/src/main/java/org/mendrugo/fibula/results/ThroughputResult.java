@@ -19,6 +19,6 @@ public record ThroughputResult(
 //        long duration = stopTime - startTime;
 //        TimeUnit outputTimeUnit = TimeUnit.SECONDS;
 //        double statistic = operations * TimeUnit.NANOSECONDS.convert(1, outputTimeUnit) / duration;
-//        return new ThroughputResult(label, operations, statistic, "ops/s");
+//        return new ThroughputResult(label, operations, statistic, outputTimeUnit);
 //    }
 }
