@@ -6,19 +6,19 @@ public record ThroughputResult(
     String label
     , double operations
     , double statistic
-    , String unit
+    , TimeUnit unit
 )
 {
-    public static ThroughputResult of(
-        String label
-        , double operations
-        , long stopTime
-        , long startTime
-    )
-    {
-        long duration = stopTime - startTime;
-        TimeUnit outputTimeUnit = TimeUnit.SECONDS;
-        double statistic = operations * TimeUnit.NANOSECONDS.convert(1, outputTimeUnit) / duration;
-        return new ThroughputResult(label, operations, statistic, "ops/s");
-    }
+//    public static ThroughputResult of(
+//        String label
+//        , double operations
+//        , long stopTime
+//        , long startTime
+//    )
+//    {
+//        long duration = stopTime - startTime;
+//        TimeUnit outputTimeUnit = TimeUnit.SECONDS;
+//        double statistic = operations * TimeUnit.NANOSECONDS.convert(1, outputTimeUnit) / duration;
+//        return new ThroughputResult(label, operations, statistic, "ops/s");
+//    }
 }
