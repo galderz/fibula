@@ -1,10 +1,10 @@
 package org.mendrugo.fibula.samples;
 
-import org.mendrugo.fibula.annotations.NativeBenchmark;
+import org.openjdk.jmh.annotations.Benchmark;
 
 public class FibulaSample_01_HelloWorld
 {
-    @NativeBenchmark
+    @Benchmark
     public void helloWorld()
     {
     }

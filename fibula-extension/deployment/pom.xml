@@ -14,9 +14,9 @@
       <artifactId>quarkus-arc-deployment</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.mendrugo.fibula</groupId>
-      <artifactId>fibula-annotations</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>1.37</version>
     </dependency>
     <dependency>
       <groupId>org.mendrugo.fibula</groupId>

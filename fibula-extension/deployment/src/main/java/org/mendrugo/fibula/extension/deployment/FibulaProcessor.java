@@ -17,7 +17,7 @@ import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
-import org.mendrugo.fibula.annotations.NativeBenchmark;
+import org.openjdk.jmh.annotations.Benchmark;
 
 import java.util.function.Function;
 
@@ -25,7 +25,7 @@ class FibulaProcessor
 {
     private static final String FEATURE = "fibula-extension";
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
-    private static final DotName NATIVE_BENCHMARK = DotName.createSimple(NativeBenchmark.class.getName());
+    private static final DotName NATIVE_BENCHMARK = DotName.createSimple(Benchmark.class.getName());
 
     @BuildStep
     FeatureBuildItem feature()
