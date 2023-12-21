@@ -16,7 +16,7 @@
   </modules>
   <properties>
     <compiler-plugin.version>3.11.0</compiler-plugin.version>
-    <maven.compiler.release>20</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <quarkus.platform.version>3.4.2</quarkus.platform.version>
   </properties>
   <build>

@@ -10,8 +10,7 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
-JAVA_HOME ?= $(HOME)/opt/boot-java-20
-#JAVA_HOME ?= $(HOME)/opt/graalvm-community-openjdk-20.0.2+9.1/Contents/Home
+JAVA_HOME ?= $(HOME)/opt/java-21
 
 java = $(JAVA_HOME)/bin/java
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
