@@ -1,11 +1,16 @@
 package org.mendrugo.fibula.bootstrap;
 
+import org.mendrugo.fibula.results.BenchmarkResult;
+import org.mendrugo.fibula.results.IterationResult;
 import org.mendrugo.fibula.results.ThroughputResult;
 
 public class ResultFormat
 {
-    void write(ThroughputResult result)
+    void write(BenchmarkResult br)
     {
+        // todo aggregate
+        final ThroughputResult result = br.iterationResults().get(0).result();
+
         final int COLUMN_PAD = 2;
 
         // todo unfix

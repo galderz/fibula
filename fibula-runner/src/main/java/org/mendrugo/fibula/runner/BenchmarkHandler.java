@@ -1,7 +1,11 @@
 package org.mendrugo.fibula.runner;
 
+import org.mendrugo.fibula.results.BenchmarkResult;
+import org.mendrugo.fibula.results.IterationResult;
+import org.mendrugo.fibula.results.IterationType;
 import org.mendrugo.fibula.results.ThroughputResult;
 
+import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -12,7 +16,7 @@ import java.util.function.Function;
 
 public class BenchmarkHandler
 {
-    ThroughputResult handle(BenchmarkCallable callable, Infrastructure infrastructure)
+    BenchmarkResult handle(BenchmarkCallable callable, Infrastructure infrastructure)
     {
         final long defaultTimeout = TimeUnit.MINUTES.toNanos(1);
         long waitDeadline = System.nanoTime() + defaultTimeout;
@@ -43,7 +47,9 @@ public class BenchmarkHandler
 
         try
         {
-            return completed.get();
+            final ThroughputResult throughputResult = completed.get();
+            final BenchmarkResult result = new BenchmarkResult(List.of(new IterationResult(IterationType.MEASURE, throughputResult)));
+            return result;
         }
         catch (Exception e)
         {

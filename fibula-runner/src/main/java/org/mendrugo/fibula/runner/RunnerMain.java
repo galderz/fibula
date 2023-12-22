@@ -6,6 +6,7 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.mendrugo.fibula.results.BenchmarkResult;
 import org.mendrugo.fibula.results.ThroughputResult;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class RunnerMain implements QuarkusApplication
         // suppliers.forEach(BenchmarkSupplier::run);
         final BenchmarkHandler benchmarkHandler = new BenchmarkHandler();
         final Infrastructure infrastructure = new Infrastructure();
-        final List<ThroughputResult> results = suppliers.stream()
+        final List<BenchmarkResult> results = suppliers.stream()
             .map(BenchmarkSupplier::get)
             .map(benchmarkFunction -> new BenchmarkCallable(benchmarkFunction, infrastructure))
             .map(benchmarkCallable -> benchmarkHandler.handle(benchmarkCallable, infrastructure))

@@ -6,6 +6,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import org.mendrugo.fibula.results.BenchmarkResult;
 import org.mendrugo.fibula.results.ThroughputResult;
 
 @Path("/results")
@@ -15,5 +16,5 @@ import org.mendrugo.fibula.results.ThroughputResult;
 public interface ResultRestClient
 {
     @POST
-    String send(ThroughputResult result);
+    String send(BenchmarkResult result);
 }
