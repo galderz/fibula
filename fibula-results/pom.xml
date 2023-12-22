@@ -18,6 +18,13 @@
 <!--        <quarkus.version>3.3.3</quarkus.version>-->
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+        </dependency>
+    </dependencies>
+
 <!--    <dependencyManagement>-->
 <!--        <dependencies>-->
 <!--            <dependency>-->

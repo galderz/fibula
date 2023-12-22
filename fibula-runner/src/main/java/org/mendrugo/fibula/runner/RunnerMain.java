@@ -6,7 +6,9 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.mendrugo.fibula.results.ThroughputResult;
+import org.mendrugo.fibula.results.NativeBenchmarkTaskResult;
+import org.openjdk.jmh.results.BenchmarkTaskResult;
+import org.openjdk.jmh.results.RawResults;
 
 import java.util.List;
 
@@ -27,13 +29,13 @@ public class RunnerMain implements QuarkusApplication
         // suppliers.forEach(BenchmarkSupplier::run);
         final BenchmarkHandler benchmarkHandler = new BenchmarkHandler();
         final Infrastructure infrastructure = new Infrastructure();
-        final List<ThroughputResult> results = suppliers.stream()
+        final List<BenchmarkTaskResult> results = suppliers.stream()
             .map(BenchmarkSupplier::get)
             .map(benchmarkFunction -> new BenchmarkCallable(benchmarkFunction, infrastructure))
             .map(benchmarkCallable -> benchmarkHandler.handle(benchmarkCallable, infrastructure))
             .toList();
         // resultProxy.send(new ThroughputResult("test", 1.0, 2.0, TimeUnit.SECONDS));
-        resultClient.send(results.get(0));
+        resultClient.send(NativeBenchmarkTaskResult.of(results.get(0)));
         return 0;
     }
 }

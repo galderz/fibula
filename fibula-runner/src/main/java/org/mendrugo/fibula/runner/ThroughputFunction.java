@@ -1,29 +1,31 @@
 package org.mendrugo.fibula.runner;
 
-import org.mendrugo.fibula.results.ThroughputResult;
+import org.openjdk.jmh.results.RawResults;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-public abstract class ThroughputFunction implements Function<Infrastructure, ThroughputResult>
+public abstract class ThroughputFunction implements Function<Infrastructure, RawResults>
 {
     @Override
-    public ThroughputResult apply(Infrastructure infrastructure)
+    public RawResults apply(Infrastructure infrastructure)
     {
+        final RawResults raw = new RawResults();
         long operations = 0;
-        long startTime = System.nanoTime();
+        raw.startTime = System.nanoTime();
         do
         {
             doOperation();
             operations++;
         }
         while(!infrastructure.isDone);
-        long stopTime = System.nanoTime();
+        raw.stopTime = System.nanoTime();
+        raw.measuredOps = operations;
+        return raw;
 
-        long duration = stopTime - startTime;
-        final TimeUnit timeUnit = TimeUnit.SECONDS;
-        double statistic = ((double) operations) * TimeUnit.NANOSECONDS.convert(1, timeUnit) / duration;
-        return new ThroughputResult("blah", operations, statistic, timeUnit);
+//        long duration = stopTime - startTime;
+//        final TimeUnit timeUnit = TimeUnit.SECONDS;
+//        double statistic = ((double) operations) * TimeUnit.NANOSECONDS.convert(1, timeUnit) / duration;
+//        return new ThroughputResult("blah", operations, statistic, timeUnit);
     }
 
     public abstract void doOperation();
