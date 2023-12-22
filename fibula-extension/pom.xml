@@ -18,11 +18,9 @@
     </modules>
     <properties>
         <compiler-plugin.version>3.11.0</compiler-plugin.version>
-        <failsafe-plugin.version>${surefire-plugin.version}
-        </failsafe-plugin.version>
+        <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8
-        </project.reporting.outputEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.version>3.3.3</quarkus.version>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
     </properties>
@@ -50,9 +48,7 @@
                     <version>${surefire-plugin.version}</version>
                     <configuration>
                         <systemPropertyVariables>
-                            <java.util.logging.manager>
-                                org.jboss.logmanager.LogManager
-                            </java.util.logging.manager>
+                            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                             <maven.home>${maven.home}</maven.home>
                             <maven.repo>${settings.localRepository}</maven.repo>
                         </systemPropertyVariables>
@@ -63,9 +59,7 @@
                     <version>${failsafe-plugin.version}</version>
                     <configuration>
                         <systemPropertyVariables>
-                            <java.util.logging.manager>
-                                org.jboss.logmanager.LogManager
-                            </java.util.logging.manager>
+                            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                             <maven.home>${maven.home}</maven.home>
                             <maven.repo>${settings.localRepository}</maven.repo>
                         </systemPropertyVariables>
