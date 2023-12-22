@@ -7,7 +7,7 @@ import org.openjdk.jmh.results.ThroughputResult;
 public record NativeThroughputResult(
     ResultRole role
     , String label
-    , NativeSingletonStatistics statistics
+    , NativeStatistics statistics
     , String unit
     , AggregationPolicy policy
 ) implements NativeResult

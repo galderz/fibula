@@ -8,12 +8,12 @@ import java.util.List;
 public record NativeBenchmarkTaskResult(
     long allOperations
     , long measuredOperations
-    , Collection<NativeThroughputResult> results
+    , Collection<NativeResult> results
 )
 {
     public static NativeBenchmarkTaskResult of(BenchmarkTaskResult obj)
     {
-        final List<NativeThroughputResult> results = obj.getResults().stream().map(NativeResult::of).toList();
+        final List<NativeResult> results = obj.getResults().stream().map(NativeResult::of).toList();
         return new NativeBenchmarkTaskResult(
             obj.getAllOps()
             , obj.getMeasuredOps()
