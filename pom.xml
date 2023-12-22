@@ -16,13 +16,28 @@
         <module>fibula-samples</module>
     </modules>
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <compiler-plugin.version>3.11.0</compiler-plugin.version>
-        <jmh.version>1.37</jmh.version>
+        <surefire-plugin.version>3.1.2</surefire-plugin.version>
         <maven.compiler.release>21</maven.compiler.release>
+
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+
+        <jmh.version>1.37</jmh.version>
         <quarkus.platform.version>3.4.2</quarkus.platform.version>
     </properties>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>${quarkus.platform.artifact-id}</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>

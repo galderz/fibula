@@ -8,41 +8,16 @@
         <artifactId>fibula-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>fibula-results</artifactId>
-
     <properties>
         <maven.compiler.source>20</maven.compiler.source>
         <maven.compiler.target>20</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-<!--        <quarkus.version>3.3.3</quarkus.version>-->
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
         </dependency>
     </dependencies>
-
-<!--    <dependencyManagement>-->
-<!--        <dependencies>-->
-<!--            <dependency>-->
-<!--                <groupId>io.quarkus</groupId>-->
-<!--                <artifactId>quarkus-bom</artifactId>-->
-<!--                <version>${quarkus.version}</version>-->
-<!--                <type>pom</type>-->
-<!--                <scope>import</scope>-->
-<!--            </dependency>-->
-<!--        </dependencies>-->
-<!--    </dependencyManagement>-->
-
-
-<!--    <dependencies>-->
-<!--        <dependency>-->
-<!--            <groupId>io.quarkus</groupId>-->
-<!--            <artifactId>quarkus-rest-client-reactive-jackson</artifactId>-->
-<!--        </dependency>-->
-<!--    </dependencies>-->
-
 </project>
