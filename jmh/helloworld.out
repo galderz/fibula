@@ -1,0 +1,101 @@
+❯ java -jar target/benchmarks.jar
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 5 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.sample.MyBenchmark.testMethod
+
+# Run progress: 0.00% complete, ETA 00:08:20
+# Fork: 1 of 5
+# Warmup Iteration   1: 1774518866.121 ops/s
+# Warmup Iteration   2: 1372446095.719 ops/s
+# Warmup Iteration   3: 1783740267.488 ops/s
+# Warmup Iteration   4: 1786712098.267 ops/s
+# Warmup Iteration   5: 1783769440.504 ops/s
+Iteration   1: 1779457615.632 ops/s
+Iteration   2: 1781478667.812 ops/s
+Iteration   3: 1769783881.772 ops/s
+Iteration   4: 1772036276.406 ops/s
+Iteration   5: 1778400445.226 ops/s
+
+# Run progress: 20.00% complete, ETA 00:06:40
+# Fork: 2 of 5
+# Warmup Iteration   1: 1775716236.764 ops/s
+# Warmup Iteration   2: 1760614538.199 ops/s
+# Warmup Iteration   3: 1758994756.144 ops/s
+# Warmup Iteration   4: 1768670183.716 ops/s
+# Warmup Iteration   5: 1782734219.763 ops/s
+Iteration   1: 1773408068.305 ops/s
+Iteration   2: 1758137899.129 ops/s
+Iteration   3: 1774210115.068 ops/s
+Iteration   4: 1784079814.409 ops/s
+Iteration   5: 1772077374.186 ops/s
+
+# Run progress: 40.00% complete, ETA 00:05:00
+# Fork: 3 of 5
+# Warmup Iteration   1: 1761264340.069 ops/s
+# Warmup Iteration   2: 1772934104.913 ops/s
+# Warmup Iteration   3: 1777071555.308 ops/s
+# Warmup Iteration   4: 1506040240.212 ops/s
+# Warmup Iteration   5: 1771574849.593 ops/s
+Iteration   1: 1776737088.645 ops/s
+Iteration   2: 1377329113.496 ops/s
+Iteration   3: 1781126210.323 ops/s
+Iteration   4: 1788693233.397 ops/s
+Iteration   5: 1519630736.972 ops/s
+
+# Run progress: 60.00% complete, ETA 00:03:20
+# Fork: 4 of 5
+# Warmup Iteration   1: 1777199270.848 ops/s
+# Warmup Iteration   2: 1361174153.478 ops/s
+# Warmup Iteration   3: 1772922004.215 ops/s
+# Warmup Iteration   4: 1776886356.691 ops/s
+# Warmup Iteration   5: 1745756286.091 ops/s
+Iteration   1: 1760650173.722 ops/s
+Iteration   2: 1767109271.265 ops/s
+Iteration   3: 1764376067.982 ops/s
+Iteration   4: 1789890804.278 ops/s
+Iteration   5: 1790052189.291 ops/s
+
+# Run progress: 80.00% complete, ETA 00:01:40
+# Fork: 5 of 5
+# Warmup Iteration   1: 1781521902.413 ops/s
+# Warmup Iteration   2: 1782391768.903 ops/s
+# Warmup Iteration   3: 1785399189.952 ops/s
+# Warmup Iteration   4: 1522012241.090 ops/s
+# Warmup Iteration   5: 1789161981.686 ops/s
+Iteration   1: 1789756535.678 ops/s
+Iteration   2: 1785269117.335 ops/s
+Iteration   3: 1790389621.469 ops/s
+Iteration   4: 1776961621.479 ops/s
+Iteration   5: 1779353447.186 ops/s
+
+
+Result "org.sample.MyBenchmark.testMethod":
+  1751215815.619 ±(99.9%) 70293448.863 ops/s [Average]
+  (min, avg, max) = (1377329113.496, 1751215815.619, 1790389621.469), stdev = 93839743.120
+  CI (99.9%): [1680922366.755, 1821509264.482] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:08:21
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                Mode  Cnt           Score          Error  Units
+MyBenchmark.testMethod  thrpt   25  1751215815.619 ± 70293448.863  ops/s
