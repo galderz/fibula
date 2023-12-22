@@ -26,10 +26,6 @@ public class BootstrapLifecycle
             , "fibula-samples/target/runner-app/quarkus-run.jar"
         );
         Log.infof("Executing: %s", String.join(" ", runArguments));
-        processRunner.runAsync(
-            new ProcessBuilder(runArguments)
-                .redirectErrorStream(true)
-                .redirectOutput(Path.of("fibula-samples", "target", "runner.log").toFile())
-        );
+        processRunner.runAsync(new ProcessBuilder(runArguments).inheritIO());
     }
 }
