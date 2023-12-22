@@ -15,15 +15,14 @@ public class BootstrapLifecycle
         final PackageTool tool = new PackageTool();
         final ProcessRunner processRunner = new ProcessRunner();
 
-        final List<String> buildArguments = tool.arguments();
+        final PackageMode packageMode = PackageMode.JVM;
+        // final PackageMode packageMode = PackageMode.NATIVE;
+
+        final List<String> buildArguments = tool.buildArguments(packageMode);
         Log.infof("Executing: %s", String.join(" ", buildArguments));
         processRunner.runSync(new ProcessBuilder(buildArguments).inheritIO());
 
-        final List<String> runArguments = List.of(
-            "java"
-            , "-jar"
-            , "fibula-samples/target/runner-app/quarkus-run.jar"
-        );
+        final List<String> runArguments = tool.runArguments(packageMode);
         Log.infof("Executing: %s", String.join(" ", runArguments));
         processRunner.runAsync(new ProcessBuilder(runArguments).inheritIO());
     }

@@ -18,7 +18,9 @@ public interface NativeResult
     {
         if (result instanceof ThroughputResult tr)
         {
-            return NativeThroughputResult.of(tr);
+            final NativeThroughputResult nativeResult = NativeThroughputResult.of(tr);
+            System.out.println("Created " + nativeResult);
+            return nativeResult;
         }
         return null;  // TODO: Customise this generated block
     }

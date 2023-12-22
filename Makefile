@@ -11,6 +11,7 @@ endif
 .RECIPEPREFIX = >
 
 JAVA_HOME ?= $(HOME)/opt/java-21
+GRAALVM_HOME ?= $(HOME)/opt/graalvm-community-openjdk-21+35.1/Contents/Home
 
 java = $(JAVA_HOME)/bin/java
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
@@ -38,6 +39,11 @@ runner: $(bootstrap_jar)
 > $(java) -jar $(samples_runner_jar)
 .PHONY: runner
 
+native: $(bootstrap_jar)
+> $(mvnw) package -DskipTests -pl fibula-samples
+> GRAALVM_HOME=$(GRAALVM_HOME) $(java) -jar $(samples_bootstrap_jar)
+.PHONY: native
+
 $(bootstrap_jar): $(shell find . -type f -name '*.java')
 $(bootstrap_jar): $(shell find . -type f -name 'pom.xml')
 $(bootstrap_jar):
@@ -46,46 +52,6 @@ $(bootstrap_jar):
 build:
 > $(mvnw) -DskipTests=true install -Dquarkus.package.quiltflower.enabled=true
 .PHONY: build
-
-core-dev: build
-> $(mvnw) clean quarkus:dev -pl $(core_dir)
-.PHONY: core-dev
-
-runner-dev: build
-> $(mvnw) clean quarkus:dev -pl $(runner_dir) -Dquarkus.package.quiltflower.enabled=true
-.PHONY: runner-dev
-
-native: build
-> $(mvnw) package -Pnative -pl $(runner_dir)
-.PHONY: native
-
-runner-package: $(deployment_jar) $(annotations_jar) $(results_jar)
-> $(mvnw) package -pl $(runner_dir) -Dquarkus.package.quiltflower.enabled=true
-.PHONY: runner-package
-
-$(core_jar): $(annotations_jar)
-$(core_jar): $(runtime_jar)
-$(core_jar): $(deployment_jar)
-$(core_jar): $(shell find $(core_dir)/src -type f -name '*.java')
-> $(mvnw) package -DskipTests -pl $(core_dir)
-
-$(deployment_jar): $(annotations_jar)
-$(deployment_jar): $(runtime_jar)
-$(deployment_jar): $(deployment_pom)
-$(deployment_jar): $(shell find $(deployment_dir)/src -type f -name '*.java')
-> $(mvnw) package -DskipTests -pl $(deployment_dir)
-
-$(results_jar): $(results_pom)
-$(results_jar): $(shell find $(results_dir)/src -type f -name '*.java')
-> $(mvnw) package -DskipTests -pl $(results_dir)
-
-$(runtime_jar): $(runtime_pom)
-$(runtime_jar): $(shell find $(runtime_dir)/src -type f -name '*.java')
-> $(mvnw) package -DskipTests -pl $(runtime_dir)
-
-$(annotations_jar): $(annotations_pom)
-$(annotations_jar): $(shell find $(annotations_dir)/src -type f -name '*.java')
-> $(mvnw) package -DskipTests -pl $(annotations_dir)
 
 clean:
 > $(mvnw) clean

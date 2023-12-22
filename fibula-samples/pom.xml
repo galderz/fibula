@@ -164,5 +164,31 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>runner-native</id>
+            <properties>
+                <quarkus.package.main-class>runner</quarkus.package.main-class>
+                <quarkus.package.output-directory>runner-app</quarkus.package.output-directory>
+                <skipITs>false</skipITs>
+                <quarkus.package.type>native</quarkus.package.type>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.mendrugo.fibula</groupId>
+                    <artifactId>fibula-extension</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.mendrugo.fibula</groupId>
+                    <artifactId>fibula-runner</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-rest-client-reactive-jackson
+                    </artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 </project>
