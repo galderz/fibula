@@ -3,14 +3,12 @@ package org.mendrugo.fibula.bootstrap;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.Quarkus;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mendrugo.fibula.results.NativeBenchmarkTaskResult;
 import org.mendrugo.fibula.results.NativeIterationResult;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
-import org.openjdk.jmh.results.IterationResultMetaData;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
 import org.openjdk.jmh.results.format.ResultFormatType;
@@ -31,8 +29,9 @@ import java.util.concurrent.TimeUnit;
 @ApplicationScoped
 public class ResultService
 {
-    final List<NativeIterationResult> iterationResults = new ArrayList<>();
-    final int iterationCount = 2; // todo fixed for now
+    private final List<NativeIterationResult> iterationResults = new ArrayList<>();
+    private final int iterationCount = 2; // todo fixed for now
+    private PackageMode packageMode;
 
     void addIteration(NativeIterationResult result)
     {
@@ -123,5 +122,10 @@ public class ResultService
             , "0.1"
             , TimeValue.minutes(10)
         );
+    }
+
+    void setPackageMode(PackageMode packageMode)
+    {
+        this.packageMode = packageMode;
     }
 }
