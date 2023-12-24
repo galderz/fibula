@@ -15,6 +15,7 @@ import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.WorkloadParams;
+import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.UnCloseablePrintStream;
 import org.openjdk.jmh.util.Utils;
@@ -30,18 +31,23 @@ import java.util.concurrent.TimeUnit;
 public class ResultService
 {
     private final List<NativeIterationResult> iterationResults = new ArrayList<>();
-    private final int iterationCount = 2; // todo fixed for now
-    private PackageMode packageMode;
+
+    private NativeOptions options;
 
     void addIteration(NativeIterationResult result)
     {
         iterationResults.add(result);
-        if (iterationCount == iterationResults.size())
+        if (options.getMeasurementIterations() == iterationResults.size())
         {
             endRun(result);
             Log.infof("Now exit the application");
             Quarkus.asyncExit();
         }
+    }
+
+    void setOptions(NativeOptions options)
+    {
+        this.options = options;
     }
 
     private void endRun(NativeIterationResult result)
@@ -122,10 +128,5 @@ public class ResultService
             , "0.1"
             , TimeValue.minutes(10)
         );
-    }
-
-    void setPackageMode(PackageMode packageMode)
-    {
-        this.packageMode = packageMode;
     }
 }

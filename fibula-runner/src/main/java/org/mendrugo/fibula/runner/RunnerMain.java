@@ -23,8 +23,11 @@ public class RunnerMain implements QuarkusApplication
     public int run(String... args)
     {
         Log.info("Running fibula.runner.RunnerMain...");
+
+        final Cli cli = Cli.read(args);
+
         // suppliers.forEach(BenchmarkSupplier::run);
-        final BenchmarkHandler benchmarkHandler = new BenchmarkHandler();
+        final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(cli);
         final Infrastructure infrastructure = new Infrastructure();
         suppliers.stream()
             .map(BenchmarkSupplier::get)

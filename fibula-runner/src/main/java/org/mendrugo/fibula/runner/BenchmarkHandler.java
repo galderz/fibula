@@ -32,8 +32,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class BenchmarkHandler
+final class BenchmarkHandler
 {
+    private final Cli cli;
+
+    public BenchmarkHandler(Cli cli)
+    {
+        this.cli = cli;
+    }
+
     void runBenchmark(BenchmarkCallable callable, ResultRestClient client, Infrastructure infrastructure)
     {
         // todo move it to a common module
@@ -60,7 +67,7 @@ public class BenchmarkHandler
         }
     }
 
-    IterationResult runIteration(BenchmarkCallable callable, BenchmarkParams benchmarkParams, IterationParams iterationParams, Infrastructure infrastructure)
+    private IterationResult runIteration(BenchmarkCallable callable, BenchmarkParams benchmarkParams, IterationParams iterationParams, Infrastructure infrastructure)
     {
         final List<Result> iterationResults = new ArrayList<>();
         final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure);
@@ -74,7 +81,7 @@ public class BenchmarkHandler
         return result;
     }
 
-    BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure)
+    private BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure)
     {
         final long defaultTimeout = TimeUnit.MINUTES.toNanos(1);
         long waitDeadline = System.nanoTime() + defaultTimeout;
@@ -126,6 +133,8 @@ public class BenchmarkHandler
 
     private BenchmarkParams getBenchmarkParams()
     {
+        final int measurementIterations = Integer.parseInt(cli.required("iterations"));
+
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
             , 0 // Defaults.WARMUP_ITERATIONS
@@ -134,7 +143,7 @@ public class BenchmarkHandler
         );
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
-            , 2 // Defaults.MEASUREMENT_ITERATIONS
+            , measurementIterations
             , Defaults.MEASUREMENT_TIME
             , Defaults.MEASUREMENT_BATCHSIZE
         );

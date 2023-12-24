@@ -5,6 +5,8 @@ import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
+import org.openjdk.jmh.runner.options.CommandLineOptions;
+import org.openjdk.jmh.runner.options.Options;
 
 import java.util.List;
 
@@ -19,20 +21,23 @@ public class BootstrapMain implements QuarkusApplication
     {
         System.out.println("Running bootstrap main...");
 
-        // todo read command line args and extract package mode
-        final PackageMode packageMode = PackageMode.JVM;
-        resultService.setPackageMode(packageMode);
+        // Read command line arguments just like JMH does
+        final Options jmhOptions = new CommandLineOptions(args);
+        final NativeOptions options = new NativeOptions(jmhOptions);
+        resultService.setOptions(options);
 
         final PackageTool tool = new PackageTool();
         final ProcessRunner processRunner = new ProcessRunner();
 
-        final List<String> buildArguments = tool.buildArguments(packageMode);
+        final List<String> buildArguments = tool.buildArguments(options.getPackageMode());
         Log.infof("Executing: %s", String.join(" ", buildArguments));
         processRunner.runSync(new ProcessBuilder(buildArguments).inheritIO());
 
-        final List<String> runArguments = tool.runArguments(packageMode);
+        // todo forward command line arguments onto the runner process
+        //      so that it can extract iteration count...etc.
+        final List<String> runArguments = tool.runArguments(options.getPackageMode(), options.getRunnerArguments());
         Log.infof("Executing: %s", String.join(" ", runArguments));
-        System.out.println("# Fork: 1 of 5");
+        // System.out.println("# Fork: 1 of 5");
         processRunner.runAsync(new ProcessBuilder(runArguments).inheritIO());
 
         // todo I need bootstrap lifecycle?

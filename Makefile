@@ -31,7 +31,7 @@ endif
 
 samples: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples
-> $(java) -jar $(samples_bootstrap_jar)
+> $(java) -jar $(samples_bootstrap_jar) -i 2
 .PHONY: samples
 
 runner: $(bootstrap_jar)
