@@ -3,10 +3,10 @@
 ## TODO
 
 - [ ] Add suppport for multiple forks
-- [ ] Send iteration count from bootstrap to runner
 - [ ] Create a reproducer for native issue
-- [ ] Add cli integration to pass in iteration count, fork count...etc
-      Maybe reuse the same CLI logic as in JMH?
+- [ ] Add a record equals/hashCode benchmark
+- [ ] See how record equals/hashCode benchmark behaves with different GraalVM versions
+- [ ] Add profiler integration
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
