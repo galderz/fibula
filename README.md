@@ -5,6 +5,8 @@
 - [ ] Add suppport for multiple forks
 - [ ] Create a reproducer for native issue
 - [ ] Add a record equals/hashCode benchmark
+      Some potential examples:
+      https://github.com/openjdk/jdk/blob/master/test/micro/org/openjdk/bench/java/io/RecordDeserialization.java
 - [ ] See how record equals/hashCode benchmark behaves with different GraalVM versions
 - [ ] Add profiler integration
 
