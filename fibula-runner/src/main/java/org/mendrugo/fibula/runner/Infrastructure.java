@@ -8,4 +8,9 @@ public class Infrastructure
     {
         isDone = true;
     }
+
+    public void resetDone()
+    {
+        isDone = false;
+    }
 }

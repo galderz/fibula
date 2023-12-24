@@ -6,7 +6,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.mendrugo.fibula.results.NativeBenchmarkTaskResult;
+import org.mendrugo.fibula.results.NativeIterationResult;
 
 @Path("/results")
 @Produces(MediaType.TEXT_PLAIN)
@@ -15,5 +15,5 @@ import org.mendrugo.fibula.results.NativeBenchmarkTaskResult;
 public interface ResultRestClient
 {
     @POST
-    String send(NativeBenchmarkTaskResult result);
+    String send(NativeIterationResult result);
 }

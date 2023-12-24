@@ -1,10 +1,15 @@
 package org.mendrugo.fibula.bootstrap;
 
+import org.mendrugo.fibula.results.NativeIterationResult;
 import org.mendrugo.fibula.results.NativeResult;
 import org.mendrugo.fibula.results.NativeSingletonStatistics;
 import org.mendrugo.fibula.results.NativeStatistics;
 import org.mendrugo.fibula.results.NativeThroughputResult;
+import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.AggregationPolicy;
+import org.openjdk.jmh.results.IterationResult;
+import org.openjdk.jmh.results.IterationResultMetaData;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ThroughputResult;
@@ -15,6 +20,16 @@ import java.lang.reflect.Constructor;
 
 final class Results
 {
+    static IterationResult toIterationResult(NativeIterationResult result, BenchmarkParams benchmarkParams, IterationParams iterationParams)
+    {
+        final IterationResultMetaData metadata = new IterationResultMetaData(result.allOperations(), result.measuredOperations());
+        final IterationResult iterationResult = new IterationResult(benchmarkParams, iterationParams, metadata);
+        result.primaryResults().stream()
+            .map(Results::toResult)
+            .forEach(iterationResult::addResult);
+        return iterationResult;
+    }
+
     static Result toResult(NativeResult result)
     {
         if (result instanceof NativeThroughputResult throughputResult)

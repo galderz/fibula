@@ -2,13 +2,11 @@
 
 ## TODO
 
-- [ ] Create infrastructure module
-- [ ] Use vertx.timer and run something for a number of seconds
-- [ ] Check how qollider processed command line options before picocli
-- [ ] When the bootstrap module starts and the HTTP server is ready (use app lifecycle)
-      fire native compilation of the current project (e.g. fibula-samples) with `-Dquarkus.package.main-class=runner`.
-      Once native compilation finishes, it executes the native part which communicates back with main.
-      When main receives the reply, it prints results.
+- [ ] Add suppport for multiple forks
+- [ ] Send iteration count from bootstrap to runner
+- [ ] Create a reproducer for native issue
+- [ ] Add cli integration to pass in iteration count, fork count...etc
+      Maybe reuse the same CLI logic as in JMH?
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
