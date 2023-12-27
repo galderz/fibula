@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.bootstrap;
 
+import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.Optional;
@@ -25,7 +26,18 @@ final class NativeOptions
         return List.of(
             "--iterations"
             , String.valueOf(getMeasurementIterations())
+            , "--warmup-iterations"
+            , String.valueOf(getWarmupIterations())
         );
+    }
+
+    int getMeasurementForks()
+    {
+        return jmhOptions.getForkCount().orElse(Defaults.MEASUREMENT_FORKS);
+
+//        return jmhOptions.getForkCount().orElse(
+//            benchmark.getForks().orElse(
+//                Defaults.MEASUREMENT_FORKS));
     }
 
     int getMeasurementIterations()
@@ -37,13 +49,14 @@ final class NativeOptions
 //            .orElse(benchmark.getMode() == Mode.SingleShotTime ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT : Defaults.MEASUREMENT_ITERATIONS));
     }
 
-    int getMeasurementForks()
+    int getWarmupIterations()
     {
-        return jmhOptions.getForkCount().orElse(Defaults.MEASUREMENT_FORKS);
+        return jmhOptions.getWarmupIterations().orElse(Defaults.WARMUP_ITERATIONS);
 
-//        return jmhOptions.getForkCount().orElse(
-//            benchmark.getForks().orElse(
-//                Defaults.MEASUREMENT_FORKS));
+//        return jmhOptions.getWarmupIterations().orElse(
+//            benchmark.getWarmupIterations().orElse(
+//                (benchmark.getMode() == Mode.SingleShotTime) ? Defaults.WARMUP_ITERATIONS_SINGLESHOT : Defaults.WARMUP_ITERATIONS
+//            ))
     }
 
     PackageMode getPackageMode()

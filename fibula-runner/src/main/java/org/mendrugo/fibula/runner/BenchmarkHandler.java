@@ -50,6 +50,20 @@ final class BenchmarkHandler
             throw new IllegalStateException(e);
         }
 
+        final int warmupIterations = Integer.parseInt(cli.required("warmup-iterations"));
+        final IterationParams warmup = new IterationParams(
+            IterationType.WARMUP
+            , warmupIterations
+            , Defaults.WARMUP_TIME
+            , Defaults.WARMUP_BATCHSIZE
+        );
+        for (int i = 1; i <= warmup.getCount(); i++)
+        {
+            out.iteration(null, warmup, i);
+            IterationResult iterationResult = runIteration(callable, warmup, infrastructure);
+            out.iterationResult(null, warmup, i, iterationResult);
+        }
+
         final int measurementIterations = Integer.parseInt(cli.required("iterations"));
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT

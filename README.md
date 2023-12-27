@@ -2,7 +2,6 @@
 
 ## TODO
 
-- [ ] Add warmup iterations
 - [ ] Extract benchmark name from user-provided code
 - [ ] Add benchmark with multiple methods
 - [ ] Hide INFO log messages
