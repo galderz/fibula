@@ -27,22 +27,14 @@ public class BootstrapMain implements QuarkusApplication
         resultService.setOptions(options);
 
         final PackageTool tool = new PackageTool();
-        final ProcessRunner processRunner = new ProcessRunner();
+        final ProcessRunner processRunner = new ProcessRunner(options, tool);
+        resultService.setProcessRunner(processRunner);
 
-        final List<String> buildArguments = tool.buildArguments(options.getPackageMode());
-        Log.infof("Executing: %s", String.join(" ", buildArguments));
-        processRunner.runSync(new ProcessBuilder(buildArguments).inheritIO());
+        // Build the runner and run the first fork
+        processRunner.runBuild();
+        processRunner.runFork(0);
 
-        final List<String> runArguments = tool.runArguments(options.getPackageMode(), options.getRunnerArguments());
-        Log.infof("Executing: %s", String.join(" ", runArguments));
-        // System.out.println("# Fork: 1 of 5");
-        processRunner.runAsync(new ProcessBuilder(runArguments).inheritIO());
-
-        // todo I need bootstrap lifecycle?
-        // e.g. I can fire the build and the first invocation/fork
-        //      then the result service can fire more if neeeded
-        //      and eventually exit
         Quarkus.waitForExit();
-        return 0;  // TODO: Customise this generated block
+        return 0;
     }
 }

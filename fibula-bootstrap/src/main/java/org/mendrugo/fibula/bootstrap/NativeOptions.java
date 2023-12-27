@@ -37,6 +37,15 @@ final class NativeOptions
 //            .orElse(benchmark.getMode() == Mode.SingleShotTime ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT : Defaults.MEASUREMENT_ITERATIONS));
     }
 
+    int getMeasurementForks()
+    {
+        return jmhOptions.getForkCount().orElse(Defaults.MEASUREMENT_FORKS);
+
+//        return jmhOptions.getForkCount().orElse(
+//            benchmark.getForks().orElse(
+//                Defaults.MEASUREMENT_FORKS));
+    }
+
     PackageMode getPackageMode()
     {
         return packageMode;

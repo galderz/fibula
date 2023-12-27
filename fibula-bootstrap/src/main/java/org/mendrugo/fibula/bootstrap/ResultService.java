@@ -15,7 +15,6 @@ import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.WorkloadParams;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.UnCloseablePrintStream;
 import org.openjdk.jmh.util.Utils;
@@ -33,21 +32,38 @@ public class ResultService
     private final List<NativeIterationResult> iterationResults = new ArrayList<>();
 
     private NativeOptions options;
+    private int forkCount;
+    private int iterationCount;
+    private ProcessRunner processRunner;
 
     void addIteration(NativeIterationResult result)
     {
         iterationResults.add(result);
-        if (options.getMeasurementIterations() == iterationResults.size())
+        final int totalIterations = options.getMeasurementForks() * options.getMeasurementIterations();
+        if (totalIterations == iterationResults.size())
         {
             endRun(result);
             Log.infof("Now exit the application");
             Quarkus.asyncExit();
+        }
+
+        iterationCount++;
+        if (iterationCount == options.getMeasurementIterations())
+        {
+            forkCount++;
+            // Run subsequent forks
+            processRunner.runFork(forkCount);
         }
     }
 
     void setOptions(NativeOptions options)
     {
         this.options = options;
+    }
+
+    public void setProcessRunner(ProcessRunner processRunner)
+    {
+        this.processRunner = processRunner;
     }
 
     private void endRun(NativeIterationResult result)
@@ -77,7 +93,7 @@ public class ResultService
         final BenchmarkParams benchmarkParams = getBenchmarkParams();
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
-            , 2 // Defaults.MEASUREMENT_ITERATIONS
+            , options.getMeasurementIterations()
             , Defaults.MEASUREMENT_TIME
             , Defaults.MEASUREMENT_BATCHSIZE
         );
@@ -95,7 +111,7 @@ public class ResultService
         );
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
-            , 2 // Defaults.MEASUREMENT_ITERATIONS
+            , options.getMeasurementIterations()
             , Defaults.MEASUREMENT_TIME
             , Defaults.MEASUREMENT_BATCHSIZE
         );
@@ -112,7 +128,7 @@ public class ResultService
             , 1
             , new int[]{1}
             , Collections.emptyList()
-            , 1
+            , options.getMeasurementForks()
             , 0
             , warmup
             , measurement
