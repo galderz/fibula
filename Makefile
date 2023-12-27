@@ -12,10 +12,13 @@ endif
 
 JAVA_HOME ?= $(HOME)/opt/java-21
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
+MODE ?= jvm
 
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 benchmark_params += -i
 benchmark_params += 2
+benchmark_params += -p
+benchmark_params += fibula.package.mode=$(MODE)
 java = $(JAVA_HOME)/bin/java
 samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
 samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
@@ -33,7 +36,7 @@ endif
 
 samples: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples
-> $(java) -jar $(samples_bootstrap_jar) $(benchmark_params)
+> GRAALVM_HOME=$(GRAALVM_HOME) $(java) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
 
 runner: $(bootstrap_jar)

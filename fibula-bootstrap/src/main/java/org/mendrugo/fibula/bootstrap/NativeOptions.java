@@ -10,14 +10,12 @@ import java.util.List;
 final class NativeOptions
 {
     private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.JVM;
-    // private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.NATIVE;
 
     private final Options jmhOptions;
     private final PackageMode packageMode;
 
     NativeOptions(Options jmhOptions)
     {
-        // Read command line arguments just like JMH does
         this.jmhOptions = jmhOptions;
         this.packageMode = packageModeOrDefault(jmhOptions);
     }
@@ -46,10 +44,10 @@ final class NativeOptions
 
     private static PackageMode packageModeOrDefault(Options options)
     {
-        final Optional<Collection<String>> packageMode = options.getParameter("fibular.package.mode");
+        final Optional<Collection<String>> packageMode = options.getParameter("fibula.package.mode");
         if (packageMode.hasValue())
         {
-            return PackageMode.valueOf(packageMode.get().iterator().next());
+            return PackageMode.valueOf(packageMode.get().iterator().next().toUpperCase());
         }
 
         return DEFAULT_PACKAGE_MODE;
