@@ -2,8 +2,10 @@
 
 ## TODO
 
-- [ ] Add suppport for multiple forks
-- [ ] Create a reproducer for native issue
+- [ ] Add warmup iterations
+- [ ] Extract benchmark name from user-provided code
+- [ ] Add benchmark with multiple methods
+- [ ] Hide INFO log messages
 - [ ] Add a record equals/hashCode benchmark
       Some potential examples:
       https://github.com/openjdk/jdk/blob/master/test/micro/org/openjdk/bench/java/io/RecordDeserialization.java
