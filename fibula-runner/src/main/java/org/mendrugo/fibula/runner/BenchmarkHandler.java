@@ -1,8 +1,6 @@
 package org.mendrugo.fibula.runner;
 
 import org.mendrugo.fibula.results.NativeIterationResult;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.results.IterationResult;
@@ -13,17 +11,14 @@ import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ThroughputResult;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
-import org.openjdk.jmh.runner.WorkloadParams;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.format.OutputFormatFactory;
-import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.UnCloseablePrintStream;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -55,19 +50,24 @@ final class BenchmarkHandler
             throw new IllegalStateException(e);
         }
 
-        // todo should be built from incoming parameters
-        final BenchmarkParams benchmarkParams = getBenchmarkParams();
-        final IterationParams measurement = benchmarkParams.getMeasurement();
+        final int measurementIterations = Integer.parseInt(cli.required("iterations"));
+        final IterationParams measurement = new IterationParams(
+            IterationType.MEASUREMENT
+            , measurementIterations
+            , Defaults.MEASUREMENT_TIME
+            , Defaults.MEASUREMENT_BATCHSIZE
+        );
+
         for (int i = 1; i <= measurement.getCount(); i++)
         {
-            out.iteration(benchmarkParams, measurement, i);
-            IterationResult iterationResult = runIteration(callable, benchmarkParams, measurement, infrastructure);
-            out.iterationResult(benchmarkParams, measurement, i, iterationResult);
+            out.iteration(null, measurement, i);
+            IterationResult iterationResult = runIteration(callable, measurement, infrastructure);
+            out.iterationResult(null, measurement, i, iterationResult);
             client.send(NativeIterationResult.of(iterationResult));
         }
     }
 
-    private IterationResult runIteration(BenchmarkCallable callable, BenchmarkParams benchmarkParams, IterationParams iterationParams, Infrastructure infrastructure)
+    private IterationResult runIteration(BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
     {
         final List<Result> iterationResults = new ArrayList<>();
         final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure);
@@ -76,7 +76,7 @@ final class BenchmarkHandler
         long allOps = benchmarkTaskResult.getAllOps();
         long measuredOps = benchmarkTaskResult.getMeasuredOps();
 
-        IterationResult result = new IterationResult(benchmarkParams, iterationParams, new IterationResultMetaData(allOps, measuredOps));
+        IterationResult result = new IterationResult(null, iterationParams, new IterationResultMetaData(allOps, measuredOps));
         result.addResults(iterationResults);
         return result;
     }
@@ -91,6 +91,7 @@ final class BenchmarkHandler
 
         final Future<RawResults> completed = completionService.submit(callable);
 
+        // todo read run time from parameters
         // final long defaultRuntime = TimeUnit.SECONDS.toNanos(10);
         final long defaultRuntime = TimeUnit.SECONDS.toNanos(3);
 
@@ -107,7 +108,6 @@ final class BenchmarkHandler
             // Ignore
         }
 
-        // System.out.println("Mark done");
         infrastructure.markDone();
 
         try
@@ -129,52 +129,5 @@ final class BenchmarkHandler
         {
             throw new RuntimeException(e);
         }
-    }
-
-    private BenchmarkParams getBenchmarkParams()
-    {
-        final int measurementIterations = Integer.parseInt(cli.required("iterations"));
-
-        final IterationParams warmup = new IterationParams(
-            IterationType.WARMUP
-            , 0 // Defaults.WARMUP_ITERATIONS
-            , Defaults.WARMUP_TIME
-            , Defaults.WARMUP_BATCHSIZE
-        );
-        final IterationParams measurement = new IterationParams(
-            IterationType.MEASUREMENT
-            , measurementIterations
-            , Defaults.MEASUREMENT_TIME
-            , Defaults.MEASUREMENT_BATCHSIZE
-        );
-        final WorkloadParams params = new WorkloadParams();
-
-        String jdkVersion = System.getProperty("java.version");
-        String vmVersion = System.getProperty("java.vm.version");
-        String vmName = System.getProperty("java.vm.name");
-
-        return new BenchmarkParams(
-            "org.mendrugo.fibula.samples.FibulaSample_01_HelloWorld.helloWorld"
-            , ""
-            , true
-            , 1
-            , new int[]{1}
-            , Collections.emptyList()
-            , 1
-            , 0
-            , warmup
-            , measurement
-            , Mode.Throughput
-            , params
-            , TimeUnit.SECONDS
-            , 1
-            , ""
-            , new ArrayList<>()
-            , jdkVersion
-            , vmName
-            , vmVersion
-            , "0.1"
-            , TimeValue.minutes(10)
-        );
     }
 }
