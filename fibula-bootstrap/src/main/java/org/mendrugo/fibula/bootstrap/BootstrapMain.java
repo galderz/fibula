@@ -33,8 +33,6 @@ public class BootstrapMain implements QuarkusApplication
         Log.infof("Executing: %s", String.join(" ", buildArguments));
         processRunner.runSync(new ProcessBuilder(buildArguments).inheritIO());
 
-        // todo forward command line arguments onto the runner process
-        //      so that it can extract iteration count...etc.
         final List<String> runArguments = tool.runArguments(options.getPackageMode(), options.getRunnerArguments());
         Log.infof("Executing: %s", String.join(" ", runArguments));
         // System.out.println("# Fork: 1 of 5");

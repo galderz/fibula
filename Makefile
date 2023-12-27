@@ -11,10 +11,12 @@ endif
 .RECIPEPREFIX = >
 
 JAVA_HOME ?= $(HOME)/opt/java-21
-GRAALVM_HOME ?= $(HOME)/opt/graalvm-community-openjdk-21+35.1/Contents/Home
+GRAALVM_HOME ?= $(HOME)/opt/graal-21
 
-java = $(JAVA_HOME)/bin/java
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
+benchmark_params += -i
+benchmark_params += 2
+java = $(JAVA_HOME)/bin/java
 samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
 samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
 
@@ -31,7 +33,7 @@ endif
 
 samples: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples
-> $(java) -jar $(samples_bootstrap_jar) -i 2
+> $(java) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
 
 runner: $(bootstrap_jar)
@@ -41,7 +43,7 @@ runner: $(bootstrap_jar)
 
 native: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples
-> GRAALVM_HOME=$(GRAALVM_HOME) $(java) -jar $(samples_bootstrap_jar)
+> GRAALVM_HOME=$(GRAALVM_HOME) $(java) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: native
 
 $(bootstrap_jar): $(shell find . -type f -name '*.java')

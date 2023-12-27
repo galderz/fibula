@@ -10,6 +10,7 @@ import java.util.List;
 final class NativeOptions
 {
     private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.JVM;
+    // private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.NATIVE;
 
     private final Options jmhOptions;
     private final PackageMode packageMode;
