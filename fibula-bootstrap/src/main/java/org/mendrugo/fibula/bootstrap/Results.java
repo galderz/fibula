@@ -20,10 +20,10 @@ import java.lang.reflect.Constructor;
 
 final class Results
 {
-    static IterationResult toIterationResult(NativeIterationResult result, BenchmarkParams benchmarkParams, IterationParams iterationParams)
+    static IterationResult toIterationResult(NativeIterationResult result, BenchmarkParams benchmarkParams)
     {
         final IterationResultMetaData metadata = new IterationResultMetaData(result.allOperations(), result.measuredOperations());
-        final IterationResult iterationResult = new IterationResult(benchmarkParams, iterationParams, metadata);
+        final IterationResult iterationResult = new IterationResult(benchmarkParams, benchmarkParams.getMeasurement(), metadata);
         result.primaryResults().stream()
             .map(Results::toResult)
             .forEach(iterationResult::addResult);

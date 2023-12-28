@@ -1,9 +1,9 @@
 package org.mendrugo.fibula.bootstrap;
 
-import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.Optional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,40 +25,10 @@ final class NativeOptions
 
     List<String> getRunnerArguments()
     {
-        return List.of(
-            "--iterations"
-            , String.valueOf(getMeasurementIterations())
-            , "--warmup-iterations"
-            , String.valueOf(getWarmupIterations())
-        );
-    }
-
-    int getMeasurementForks()
-    {
-        return jmhOptions.getForkCount().orElse(Defaults.MEASUREMENT_FORKS);
-
-//        return jmhOptions.getForkCount().orElse(
-//            benchmark.getForks().orElse(
-//                Defaults.MEASUREMENT_FORKS));
-    }
-
-    int getMeasurementIterations()
-    {
-        return jmhOptions.getMeasurementIterations().orElse(Defaults.MEASUREMENT_ITERATIONS);
-
-//        jmhOptions.getMeasurementIterations()
-//            .orElse(benchmark.getMeasurementIterations()
-//            .orElse(benchmark.getMode() == Mode.SingleShotTime ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT : Defaults.MEASUREMENT_ITERATIONS));
-    }
-
-    int getWarmupIterations()
-    {
-        return jmhOptions.getWarmupIterations().orElse(Defaults.WARMUP_ITERATIONS);
-
-//        return jmhOptions.getWarmupIterations().orElse(
-//            benchmark.getWarmupIterations().orElse(
-//                (benchmark.getMode() == Mode.SingleShotTime) ? Defaults.WARMUP_ITERATIONS_SINGLESHOT : Defaults.WARMUP_ITERATIONS
-//            ))
+        final List<String> arguments = new ArrayList<>();
+        addIfPresent("--iterations", jmhOptions.getMeasurementIterations(), arguments);
+        addIfPresent("--warmup-iterations", jmhOptions.getWarmupIterations(), arguments);
+        return arguments;
     }
 
     PackageMode getPackageMode()
@@ -69,6 +39,25 @@ final class NativeOptions
     boolean isDecompile()
     {
         return isDecompile;
+    }
+
+    Optional<Integer> getMeasurementForks()
+    {
+        return jmhOptions.getForkCount();
+    }
+
+    Optional<Integer> getMeasurementIterations()
+    {
+        return jmhOptions.getMeasurementIterations();
+    }
+
+    private void addIfPresent(String paramName, Optional<Integer> paramValue, List<String> arguments)
+    {
+        if (paramValue.hasValue())
+        {
+            arguments.add(paramName);
+            arguments.add(String.valueOf(paramValue.get()));
+        }
     }
 
     private static PackageMode packageModeOrDefault(Options jmhOptions)

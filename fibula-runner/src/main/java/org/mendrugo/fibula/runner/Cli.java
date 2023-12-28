@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 
 final class Cli
 {
@@ -19,22 +20,33 @@ final class Cli
         return options == null ? List.of() : options;
     }
 
-    String required(String name)
-    {
-        final var option = params.get(name);
-        if (null == option)
-            throw new IllegalArgumentException(String.format(
-                "Missing mandatory --%s"
-                , name
-            ));
+//    String required(String name)
+//    {
+//        final var option = params.get(name);
+//        if (null == option)
+//            throw new IllegalArgumentException(String.format(
+//                "Missing mandatory --%s"
+//                , name
+//            ));
+//
+//        return option.getFirst();
+//    }
 
-        return option.getFirst();
-    }
-
-    String optional(String name, String defaultValue)
+    String text(String name, String defaultValue)
     {
         final var option = params.get(name);
         return option != null ? option.getFirst() : defaultValue;
+    }
+
+    Optional<String> text(String name)
+    {
+        final var option = params.get(name);
+        return option != null ? Optional.ofNullable(option.getFirst()) : Optional.empty();
+    }
+
+    Optional<Integer> integer(String name)
+    {
+        return text(name).map(Integer::parseInt);
     }
 
     static Cli read(String... args)

@@ -1,16 +1,30 @@
 package org.mendrugo.fibula.runner;
 
-public class Infrastructure
-{
-    public volatile boolean isDone;
+import org.mendrugo.fibula.results.NativeBenchmarkParams;
 
-    public void markDone()
+public final class Infrastructure
+{
+    private final NativeBenchmarkParams benchmarkParams;
+
+    volatile boolean isDone;
+
+    Infrastructure(String annotationParams)
+    {
+        this.benchmarkParams = new NativeBenchmarkParams(annotationParams);
+    }
+
+    void markDone()
     {
         isDone = true;
     }
 
-    public void resetDone()
+    void resetDone()
     {
         isDone = false;
+    }
+
+    NativeBenchmarkParams getBenchmarkParams()
+    {
+        return benchmarkParams;
     }
 }

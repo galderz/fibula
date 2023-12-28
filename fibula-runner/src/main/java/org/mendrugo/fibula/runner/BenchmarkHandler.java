@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.runner;
 
+import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
@@ -36,7 +37,7 @@ final class BenchmarkHandler
         this.cli = cli;
     }
 
-    void runBenchmark(BenchmarkCallable callable, ResultRestClient client, Infrastructure infrastructure)
+    void runBenchmark(BenchmarkCallable callable, ResultRestClient client)
     {
         // todo move it to a common module
         final OutputFormat out;
@@ -50,7 +51,9 @@ final class BenchmarkHandler
             throw new IllegalStateException(e);
         }
 
-        final int warmupIterations = Integer.parseInt(cli.required("warmup-iterations"));
+        final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
+
+        final int warmupIterations = params.getWarmupIterations(cli.integer("warmup-iterations"));
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
             , warmupIterations
@@ -60,11 +63,11 @@ final class BenchmarkHandler
         for (int i = 1; i <= warmup.getCount(); i++)
         {
             out.iteration(null, warmup, i);
-            IterationResult iterationResult = runIteration(callable, warmup, infrastructure);
+            IterationResult iterationResult = runIteration(callable, warmup, callable.infrastructure);
             out.iterationResult(null, warmup, i, iterationResult);
         }
 
-        final int measurementIterations = Integer.parseInt(cli.required("iterations"));
+        final int measurementIterations = params.getMeasurementIterations(cli.integer("iterations"));
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
             , measurementIterations
@@ -75,9 +78,9 @@ final class BenchmarkHandler
         for (int i = 1; i <= measurement.getCount(); i++)
         {
             out.iteration(null, measurement, i);
-            IterationResult iterationResult = runIteration(callable, measurement, infrastructure);
+            IterationResult iterationResult = runIteration(callable, measurement, callable.infrastructure);
             out.iterationResult(null, measurement, i, iterationResult);
-            client.send(NativeIterationResult.of(iterationResult));
+            client.send(NativeIterationResult.of(iterationResult, params.getAnnotationParams()));
         }
     }
 

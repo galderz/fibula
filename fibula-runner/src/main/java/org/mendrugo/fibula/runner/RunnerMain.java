@@ -28,11 +28,9 @@ public class RunnerMain implements QuarkusApplication
 
         // suppliers.forEach(BenchmarkSupplier::run);
         final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(cli);
-        final Infrastructure infrastructure = new Infrastructure();
         suppliers.stream()
-            .map(BenchmarkSupplier::get)
-            .map(benchmarkFunction -> new BenchmarkCallable(benchmarkFunction, infrastructure))
-            .forEach(benchmarkCallable -> benchmarkHandler.runBenchmark(benchmarkCallable, resultClient, infrastructure));
+            .map(supplier -> new BenchmarkCallable(supplier.get(), new Infrastructure(supplier.annotationParams())))
+            .forEach(benchmarkCallable -> benchmarkHandler.runBenchmark(benchmarkCallable, resultClient));
         // resultProxy.send(new ThroughputResult("test", 1.0, 2.0, TimeUnit.SECONDS));
         // resultClient.send(NativeBenchmarkTaskResult.of(results.get(0)));
         return 0;

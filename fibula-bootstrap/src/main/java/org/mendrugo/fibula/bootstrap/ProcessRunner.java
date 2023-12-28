@@ -26,10 +26,17 @@ final class ProcessRunner
         runSync(new ProcessBuilder(buildArguments).inheritIO());
     }
 
-    void runFork(int forkCount)
+    void runFirstFork()
     {
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
-        System.out.printf("# Fork: %d of %d%n", forkCount + 1, options.getMeasurementForks());
+        System.out.println("# Fork: 1 of ...");
+        runAsync(new ProcessBuilder(forkArguments).inheritIO());
+    }
+
+    void runFork(int forkCount, int totalForkCount)
+    {
+        Log.debugf("Executing: %s", String.join(" ", forkArguments));
+        System.out.printf("# Fork: %d of %d%n", forkCount + 1, totalForkCount);
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 

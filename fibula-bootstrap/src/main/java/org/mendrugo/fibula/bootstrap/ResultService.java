@@ -3,7 +3,9 @@ package org.mendrugo.fibula.bootstrap;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.Quarkus;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
+import org.mendrugo.fibula.results.Optionals;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
@@ -38,21 +40,24 @@ public class ResultService
 
     void addIteration(NativeIterationResult result)
     {
+        final BenchmarkParams benchmarkParams = getBenchmarkParams(result);
+        final int totalForkCount = benchmarkParams.getForks();
+
         iterationResults.add(result);
-        final int totalIterations = options.getMeasurementForks() * options.getMeasurementIterations();
+        final int totalIterations = totalForkCount * benchmarkParams.getMeasurement().getCount();
         if (totalIterations == iterationResults.size())
         {
-            endRun(iterationResults);
+            endRun(iterationResults, benchmarkParams);
             Log.infof("Now exit the application");
             Quarkus.asyncExit();
         }
 
         iterationCount++;
-        if (iterationCount == options.getMeasurementIterations())
+        if (iterationCount == benchmarkParams.getMeasurement().getCount())
         {
             forkCount++;
             // Run subsequent forks
-            processRunner.runFork(forkCount);
+            processRunner.runFork(forkCount, totalForkCount);
         }
     }
 
@@ -66,9 +71,9 @@ public class ResultService
         this.processRunner = processRunner;
     }
 
-    private void endRun(List<NativeIterationResult> results)
+    private void endRun(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
     {
-        final Collection<RunResult> runResults = runResults(results);
+        final Collection<RunResult> runResults = runResults(results, benchmarkParams);
         try
         {
             // todo move it to a common module
@@ -81,30 +86,26 @@ public class ResultService
         }
     }
 
-    private Collection<RunResult> runResults(List<NativeIterationResult> results)
+    private Collection<RunResult> runResults(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
     {
-        final BenchmarkParams benchmarkParams = getBenchmarkParams();
-        final Collection<BenchmarkResult> benchmarkResults = List.of(benchmarkResult(results));
+        final Collection<BenchmarkResult> benchmarkResults = List.of(benchmarkResult(results, benchmarkParams));
         return List.of(new RunResult(benchmarkParams, benchmarkResults));
     }
 
-    private BenchmarkResult benchmarkResult(List<NativeIterationResult> results)
+    private BenchmarkResult benchmarkResult(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
     {
-        final BenchmarkParams benchmarkParams = getBenchmarkParams();
-        final IterationParams measurement = new IterationParams(
-            IterationType.MEASUREMENT
-            , options.getMeasurementIterations()
-            , Defaults.MEASUREMENT_TIME
-            , Defaults.MEASUREMENT_BATCHSIZE
-        );
         final List<IterationResult> iterationResults = results.stream()
-            .map(iterationResult -> Results.toIterationResult(iterationResult, benchmarkParams, measurement))
+            .map(iterationResult -> Results.toIterationResult(iterationResult, benchmarkParams))
             .toList();
         return new BenchmarkResult(benchmarkParams, iterationResults);
     }
 
-    private BenchmarkParams getBenchmarkParams()
+    private BenchmarkParams getBenchmarkParams(NativeIterationResult result)
     {
+        final NativeBenchmarkParams nativeParams = new NativeBenchmarkParams(result.annotationParams());
+        final int measurementForks = nativeParams.getMeasurementForks(Optionals.fromJmh(options.getMeasurementForks()));
+        final int measurementIterations = nativeParams.getMeasurementIterations(Optionals.fromJmh(options.getMeasurementIterations()));
+
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
             , 0 // Defaults.WARMUP_ITERATIONS
@@ -113,7 +114,7 @@ public class ResultService
         );
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
-            , options.getMeasurementIterations()
+            , measurementIterations
             , Defaults.MEASUREMENT_TIME
             , Defaults.MEASUREMENT_BATCHSIZE
         );
@@ -130,7 +131,7 @@ public class ResultService
             , 1
             , new int[]{1}
             , Collections.emptyList()
-            , options.getMeasurementForks()
+            , measurementForks
             , 0
             , warmup
             , measurement

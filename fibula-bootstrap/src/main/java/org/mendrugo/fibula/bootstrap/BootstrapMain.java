@@ -31,7 +31,7 @@ public class BootstrapMain implements QuarkusApplication
 
         // Build the runner and run the first fork
         processRunner.runBuild();
-        processRunner.runFork(0);
+        processRunner.runFirstFork();
 
         Quarkus.waitForExit();
         return 0;
