@@ -42,7 +42,7 @@ public class ResultService
         final int totalIterations = options.getMeasurementForks() * options.getMeasurementIterations();
         if (totalIterations == iterationResults.size())
         {
-            endRun(result);
+            endRun(iterationResults);
             Log.infof("Now exit the application");
             Quarkus.asyncExit();
         }
@@ -66,9 +66,9 @@ public class ResultService
         this.processRunner = processRunner;
     }
 
-    private void endRun(NativeIterationResult result)
+    private void endRun(List<NativeIterationResult> results)
     {
-        final Collection<RunResult> runResults = runResults(result);
+        final Collection<RunResult> runResults = runResults(results);
         try
         {
             // todo move it to a common module
@@ -81,14 +81,14 @@ public class ResultService
         }
     }
 
-    private Collection<RunResult> runResults(NativeIterationResult result)
+    private Collection<RunResult> runResults(List<NativeIterationResult> results)
     {
         final BenchmarkParams benchmarkParams = getBenchmarkParams();
-        final Collection<BenchmarkResult> results = benchmarkResults(result);
-        return List.of(new RunResult(benchmarkParams, results));
+        final Collection<BenchmarkResult> benchmarkResults = List.of(benchmarkResult(results));
+        return List.of(new RunResult(benchmarkParams, benchmarkResults));
     }
 
-    private Collection<BenchmarkResult> benchmarkResults(NativeIterationResult result)
+    private BenchmarkResult benchmarkResult(List<NativeIterationResult> results)
     {
         final BenchmarkParams benchmarkParams = getBenchmarkParams();
         final IterationParams measurement = new IterationParams(
@@ -97,8 +97,10 @@ public class ResultService
             , Defaults.MEASUREMENT_TIME
             , Defaults.MEASUREMENT_BATCHSIZE
         );
-        final IterationResult iterationResult = Results.toIterationResult(result, benchmarkParams, measurement);
-        return List.of(new BenchmarkResult(benchmarkParams, List.of(iterationResult)));
+        final List<IterationResult> iterationResults = results.stream()
+            .map(iterationResult -> Results.toIterationResult(iterationResult, benchmarkParams, measurement))
+            .toList();
+        return new BenchmarkResult(benchmarkParams, iterationResults);
     }
 
     private BenchmarkParams getBenchmarkParams()
