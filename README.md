@@ -2,6 +2,7 @@
 
 ## TODO
 
+- [ ] Update decompiler option to `quarkus.package.vineflower.enabled` and make it optional
 - [ ] Extract benchmark name from user-provided code
 - [ ] Add benchmark with multiple methods
 - [ ] Hide INFO log messages
