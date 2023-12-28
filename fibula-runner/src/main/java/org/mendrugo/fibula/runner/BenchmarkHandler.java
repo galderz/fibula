@@ -2,6 +2,7 @@ package org.mendrugo.fibula.runner;
 
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
+import org.mendrugo.fibula.results.RunnerArguments;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.results.IterationResult;
@@ -14,6 +15,7 @@ import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.format.OutputFormatFactory;
+import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.UnCloseablePrintStream;
 import org.openjdk.jmh.util.Utils;
@@ -21,6 +23,7 @@ import org.openjdk.jmh.util.Utils;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -53,11 +56,17 @@ final class BenchmarkHandler
 
         final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
 
-        final int warmupIterations = params.getWarmupIterations(cli.integer("warmup-iterations"));
+        final int warmupIterations = params.getWarmupIterations(cli.integer(RunnerArguments.WARMUP_ITERATIONS));
+        final Optional<TimeValue> cmdLineValue = cli.timeValue(RunnerArguments.WARMUP_TIME);
+        // todo convert to debug message
+        System.out.println("CMD line value: " + cmdLineValue);
+        final TimeValue warmupTime = params.getWarmupTime(cmdLineValue);
+        // todo convert to debug message
+        System.out.println("Warmup time: " + warmupTime);
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
             , warmupIterations
-            , Defaults.WARMUP_TIME
+            , warmupTime
             , Defaults.WARMUP_BATCHSIZE
         );
         for (int i = 1; i <= warmup.getCount(); i++)
@@ -67,11 +76,12 @@ final class BenchmarkHandler
             out.iterationResult(null, warmup, i, iterationResult);
         }
 
-        final int measurementIterations = params.getMeasurementIterations(cli.integer("iterations"));
+        final int measurementIterations = params.getMeasurementIterations(cli.integer(RunnerArguments.MEASUREMENT_ITERATIONS));
+        final TimeValue measurementTime = params.getMeasurementTime(cli.timeValue(RunnerArguments.MEASUREMENT_TIME));
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
             , measurementIterations
-            , Defaults.MEASUREMENT_TIME
+            , measurementTime
             , Defaults.MEASUREMENT_BATCHSIZE
         );
 
@@ -87,7 +97,7 @@ final class BenchmarkHandler
     private IterationResult runIteration(BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
     {
         final List<Result> iterationResults = new ArrayList<>();
-        final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure);
+        final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure, iterationParams.getTime());
         iterationResults.addAll(benchmarkTaskResult.getResults());
 
         long allOps = benchmarkTaskResult.getAllOps();
@@ -98,7 +108,7 @@ final class BenchmarkHandler
         return result;
     }
 
-    private BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure)
+    private BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure, TimeValue runTime)
     {
         final long defaultTimeout = TimeUnit.MINUTES.toNanos(1);
         long waitDeadline = System.nanoTime() + defaultTimeout;
@@ -108,13 +118,10 @@ final class BenchmarkHandler
 
         final Future<RawResults> completed = completionService.submit(callable);
 
-        // todo read run time from parameters
-        // final long defaultRuntime = TimeUnit.SECONDS.toNanos(10);
-        final long defaultRuntime = TimeUnit.SECONDS.toNanos(3);
-
         try
         {
-            final Future<RawResults> failing = completionService.poll(defaultRuntime, TimeUnit.NANOSECONDS);
+            final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
+            final Future<RawResults> failing = completionService.poll(runTime.convertTo(timeUnit), timeUnit);
             if (failing != null)
             {
                 System.out.println("Benchmark finished before it was due!");

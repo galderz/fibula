@@ -1,5 +1,7 @@
 package org.mendrugo.fibula.runner;
 
+import org.openjdk.jmh.runner.options.TimeValue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +51,11 @@ final class Cli
         return text(name).map(Integer::parseInt);
     }
 
+    Optional<TimeValue> timeValue(String name)
+    {
+        return text(name).map(TimeValue::fromString);
+    }
+
     static Cli read(String... args)
     {
         final Map<String, List<String>> params = new HashMap<>();
@@ -77,6 +84,9 @@ final class Cli
                 throw new IllegalArgumentException("Illegal parameter usage");
             }
         }
+
+        // todo convert to debug log message
+        System.out.println("Cli Params: " + params);
 
         return new Cli(params);
     }

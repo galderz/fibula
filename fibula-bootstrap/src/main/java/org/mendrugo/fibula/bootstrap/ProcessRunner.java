@@ -22,7 +22,7 @@ final class ProcessRunner
 
     void runBuild()
     {
-        Log.infof("Executing: %s", String.join(" ", buildArguments));
+        Log.debugf("Executing: %s", String.join(" ", buildArguments));
         runSync(new ProcessBuilder(buildArguments).inheritIO());
     }
 

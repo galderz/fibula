@@ -19,12 +19,28 @@ java = $(JAVA_HOME)/bin/java
 samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
 samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
 
+ifdef LOG_LEVEL
+  ifeq ($(LOG_LEVEL),DEBUG)
+    system_props += -Dquarkus.log.category.\"org.mendrugo.fibula\".level=DEBUG
+  endif
+endif
+
+# Measurement iterations
 benchmark_params += -i
 benchmark_params += 2
+# Warmup iterations
 benchmark_params += -wi
 benchmark_params += 2
+# Measurement forks
 benchmark_params += -f
 benchmark_params += 2
+# Measurement time
+benchmark_params += -r
+benchmark_params += 2
+# Warmup time
+benchmark_params += -w
+benchmark_params += 2
+
 benchmark_params += -p
 benchmark_params += fibula.package.mode=$(MODE)
 ifdef DECOMPILE
@@ -49,7 +65,7 @@ endif
 
 samples: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples
-> GRAALVM_HOME=$(GRAALVM_HOME) $(java) -jar $(samples_bootstrap_jar) $(benchmark_params)
+> GRAALVM_HOME=$(GRAALVM_HOME) $(java) $(system_props) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
 
 runner: $(bootstrap_jar)

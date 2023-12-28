@@ -3,6 +3,7 @@ package org.mendrugo.fibula.results;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.Defaults;
+import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.Optional;
 
@@ -39,6 +40,16 @@ public final class NativeBenchmarkParams
             );
     }
 
+    public TimeValue getMeasurementTime(Optional<TimeValue> cmdLineValue)
+    {
+        return cmdLineValue
+            .orElse(benchmark.getMeasurementTime()
+            .orElse(benchmark.getMode() == Mode.SingleShotTime
+                ? TimeValue.NONE
+                : Defaults.MEASUREMENT_TIME)
+            );
+    }
+
     public int getWarmupIterations(Optional<Integer> cmdLineValue)
     {
         return cmdLineValue
@@ -46,6 +57,16 @@ public final class NativeBenchmarkParams
             .orElse(benchmark.getMode() == Mode.SingleShotTime
                 ? Defaults.WARMUP_ITERATIONS_SINGLESHOT
                 : Defaults.WARMUP_ITERATIONS)
+            );
+    }
+
+    public TimeValue getWarmupTime(Optional<TimeValue> cmdLineValue)
+    {
+        return cmdLineValue
+            .orElse(benchmark.getWarmupTime()
+            .orElse(benchmark.getMode() == Mode.SingleShotTime
+                ? TimeValue.NONE
+                : Defaults.WARMUP_TIME)
             );
     }
 

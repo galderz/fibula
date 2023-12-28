@@ -1,11 +1,13 @@
 package org.mendrugo.fibula.bootstrap;
 
+import org.mendrugo.fibula.results.RunnerArguments;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.Optional;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 final class NativeOptions
 {
@@ -26,9 +28,11 @@ final class NativeOptions
     List<String> getRunnerArguments()
     {
         final List<String> arguments = new ArrayList<>();
-        // todo refactor runner parameter names to avoid typos
-        addIfPresent("--iterations", jmhOptions.getMeasurementIterations(), arguments);
-        addIfPresent("--warmup-iterations", jmhOptions.getWarmupIterations(), arguments);
+        addIfPresent(RunnerArguments.MEASUREMENT_ITERATIONS, jmhOptions.getMeasurementIterations(), String::valueOf, arguments);
+        addIfPresent(RunnerArguments.MEASUREMENT_TIME, jmhOptions.getMeasurementTime(), Object::toString, arguments);
+        addIfPresent(RunnerArguments.WARMUP_ITERATIONS, jmhOptions.getWarmupIterations(), String::valueOf, arguments);
+        addIfPresent(RunnerArguments.WARMUP_TIME, jmhOptions.getWarmupTime(), Object::toString, arguments);
+        // todo pass on logging levels into runner
         return arguments;
     }
 
@@ -52,12 +56,12 @@ final class NativeOptions
         return jmhOptions.getMeasurementIterations();
     }
 
-    private void addIfPresent(String paramName, Optional<Integer> paramValue, List<String> arguments)
+    private <T> void addIfPresent(String paramName, Optional<T> paramValue, Function<T, String> transform, List<String> arguments)
     {
         if (paramValue.hasValue())
         {
-            arguments.add(paramName);
-            arguments.add(String.valueOf(paramValue.get()));
+            arguments.add("--" + paramName);
+            arguments.add(transform.apply(paramValue.get()));
         }
     }
 
