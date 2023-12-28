@@ -26,6 +26,7 @@ final class NativeOptions
     List<String> getRunnerArguments()
     {
         final List<String> arguments = new ArrayList<>();
+        // todo refactor runner parameter names to avoid typos
         addIfPresent("--iterations", jmhOptions.getMeasurementIterations(), arguments);
         addIfPresent("--warmup-iterations", jmhOptions.getWarmupIterations(), arguments);
         return arguments;

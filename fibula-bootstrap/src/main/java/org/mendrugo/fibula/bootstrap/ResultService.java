@@ -66,7 +66,7 @@ public class ResultService
         this.options = options;
     }
 
-    public void setProcessRunner(ProcessRunner processRunner)
+    void setProcessRunner(ProcessRunner processRunner)
     {
         this.processRunner = processRunner;
     }
@@ -125,7 +125,7 @@ public class ResultService
         String vmName = System.getProperty("java.vm.name");
 
         return new BenchmarkParams(
-            "org.mendrugo.fibula.samples.FibulaSample_01_HelloWorld.helloWorld"
+            nativeParams.getBenchmark()
             , ""
             , true
             , 1

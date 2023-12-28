@@ -17,6 +17,11 @@ public final class NativeBenchmarkParams
         this.benchmark = new BenchmarkListEntry(annotationParams);
     }
 
+    public String getBenchmark()
+    {
+        return benchmark.getUsername();
+    }
+
     public int getMeasurementForks(Optional<Integer> cmdLineValue)
     {
         return cmdLineValue
@@ -49,28 +54,3 @@ public final class NativeBenchmarkParams
         return annotationParams;
     }
 }
-
-//public record NativeBenchmarkParams(
-//    String benchmark
-////    , boolean synchIterations
-////    , int threads
-////    , int[] threadGroups
-////    , Collection<String> threadGroupLabels
-//    , int forks
-//    , int warmupForks
-//    , NativeIterationParams warmup
-//    , NativeIterationParams measurement
-//    , Mode mode
-////    , WorkloadParams params
-////    , TimeUnit timeUnit
-////    , int opsPerInvocation
-////    , String jvm
-////    , Collection<String> jvmArgs
-////    , String jdkVersion
-////    , String jmhVersion
-////    , String vmName
-////    , String vmVersion
-////    , TimeValue timeout
-//)
-//{
-//}
