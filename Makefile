@@ -34,8 +34,12 @@ else
   mvnw += ./mvnw
 endif
 
-ifdef DEBUG
+ifdef VERBOSE
   mvnw += -X
+endif
+
+ifdef DEBUG
+  java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
 endif
 
 samples: $(bootstrap_jar)
