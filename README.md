@@ -2,7 +2,6 @@
 
 ## TODO
 
-- [ ] Extract benchmark name from user-provided code
 - [ ] Add benchmark with multiple methods
 - [ ] Hide INFO log messages
 - [ ] Add a record equals/hashCode benchmark
