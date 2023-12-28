@@ -15,12 +15,8 @@ public class ResultResource
     @POST
     public String add(NativeIterationResult result)
     {
-        Log.infof("Received result: %s", result);
+        Log.debugf("Received result: %s", result);
         resultService.addIteration(result);
-        // new ResultFormat().write(result);
-        // endRun(result);
-        // Log.infof("Now exit the application");
-        // Quarkus.asyncExit();
         return "Ok";
     }
 }

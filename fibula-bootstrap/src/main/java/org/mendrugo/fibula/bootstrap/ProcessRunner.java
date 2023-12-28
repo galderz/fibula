@@ -27,8 +27,8 @@ final class ProcessRunner
 
     void runFork(int forkCount)
     {
-        Log.infof("Executing: %s", String.join(" ", forkArguments));
-        System.out.printf("# Fork: %d of %d", forkCount + 1, options.getMeasurementForks());
+        Log.debugf("Executing: %s", String.join(" ", forkArguments));
+        System.out.printf("# Fork: %d of %d%n", forkCount + 1, options.getMeasurementForks());
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
