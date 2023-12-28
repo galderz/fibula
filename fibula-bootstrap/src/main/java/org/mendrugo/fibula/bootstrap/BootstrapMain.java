@@ -26,8 +26,7 @@ public class BootstrapMain implements QuarkusApplication
         final NativeOptions options = new NativeOptions(jmhOptions);
         resultService.setOptions(options);
 
-        final PackageTool tool = new PackageTool();
-        final ProcessRunner processRunner = new ProcessRunner(options, tool);
+        final ProcessRunner processRunner = new ProcessRunner(options);
         resultService.setProcessRunner(processRunner);
 
         // Build the runner and run the first fork

@@ -15,6 +15,10 @@ GRAALVM_HOME ?= $(HOME)/opt/graal-21
 MODE ?= jvm
 
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
+java = $(JAVA_HOME)/bin/java
+samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
+samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
+
 benchmark_params += -i
 benchmark_params += 2
 benchmark_params += -wi
@@ -23,9 +27,10 @@ benchmark_params += -f
 benchmark_params += 2
 benchmark_params += -p
 benchmark_params += fibula.package.mode=$(MODE)
-java = $(JAVA_HOME)/bin/java
-samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
-samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
+ifdef DECOMPILE
+  benchmark_params += -p
+  benchmark_params += fibula.decompile=true
+endif
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
 ifdef DEBUG_IDE

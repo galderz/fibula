@@ -54,7 +54,6 @@
                     <configuration>
                         <compilerArgs>
                             <arg>-parameters</arg>
-                            <arg>--enable-preview</arg>
                         </compilerArgs>
                     </configuration>
                 </plugin>

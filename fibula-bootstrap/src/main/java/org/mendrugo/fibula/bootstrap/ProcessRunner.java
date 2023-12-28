@@ -4,6 +4,7 @@ import io.quarkus.logging.Log;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
 
 final class ProcessRunner
@@ -12,11 +13,11 @@ final class ProcessRunner
     private final List<String> forkArguments;
     private final List<String> buildArguments;
 
-    ProcessRunner(NativeOptions options, PackageTool tool)
+    ProcessRunner(NativeOptions options)
     {
         this.options = options;
-        this.buildArguments = tool.buildArguments(options.getPackageMode());
-        this.forkArguments = tool.runArguments(options.getPackageMode(), options.getRunnerArguments());
+        this.buildArguments = buildArguments(options);
+        this.forkArguments = runArguments(options);
     }
 
     void runBuild()
@@ -66,5 +67,58 @@ final class ProcessRunner
         {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private static List<String> buildArguments(NativeOptions options)
+    {
+        final PackageMode packageMode = options.getPackageMode();
+        final List<String> baseArguments = switch (packageMode)
+        {
+            case JVM -> List.of(
+                "mvn"
+                , "package"
+                , "-DskipTests"
+                , "-pl"
+                , "fibula-samples"
+                , "-Prunner"
+            );
+            case NATIVE -> List.of(
+                "mvn"
+                , "package"
+                , "-DskipTests"
+                , "-pl"
+                , "fibula-samples"
+                , "-Prunner-native"
+            );
+        };
+
+        final List<String> arguments = new ArrayList<>(baseArguments);
+        if (options.isDecompile())
+        {
+            arguments.add("-Dquarkus.package.vineflower.enabled=true");
+        }
+
+        return arguments;
+    }
+
+    private static List<String> runArguments(NativeOptions options)
+    {
+        final PackageMode packageMode = options.getPackageMode();
+        final List<String> runnerArguments = options.getRunnerArguments();
+        final List<String> baseArguments = switch (packageMode)
+        {
+            case JVM -> List.of(
+                "java"
+                , "-jar"
+                , "fibula-samples/target/runner-app/quarkus-run.jar"
+            );
+            case NATIVE -> List.of(
+                "./fibula-samples/target/runner-app/fibula-samples-1.0.0-SNAPSHOT-runner"
+            );
+        };
+
+        final List<String> arguments = new ArrayList<>(baseArguments);
+        arguments.addAll(runnerArguments);
+        return arguments;
     }
 }
