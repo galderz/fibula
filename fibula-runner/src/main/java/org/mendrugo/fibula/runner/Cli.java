@@ -22,38 +22,45 @@ final class Cli
         return options == null ? List.of() : options;
     }
 
-//    String required(String name)
-//    {
-//        final var option = params.get(name);
-//        if (null == option)
-//            throw new IllegalArgumentException(String.format(
-//                "Missing mandatory --%s"
-//                , name
-//            ));
-//
-//        return option.getFirst();
-//    }
+    String text(String name)
+    {
+        final var option = params.get(name);
+        if (null == option)
+        {
+            throw new IllegalArgumentException(String.format(
+                "Missing mandatory --%s"
+                , name
+            ));
+        }
 
-    String text(String name, String defaultValue)
+        return option.getFirst();
+    }
+
+    int integer(String name)
+    {
+        return Integer.parseInt(text(name));
+    }
+
+    String textOpt(String name, String defaultValue)
     {
         final var option = params.get(name);
         return option != null ? option.getFirst() : defaultValue;
     }
 
-    Optional<String> text(String name)
+    Optional<String> textOpt(String name)
     {
         final var option = params.get(name);
         return option != null ? Optional.ofNullable(option.getFirst()) : Optional.empty();
     }
 
-    Optional<Integer> integer(String name)
+    Optional<Integer> integerOpt(String name)
     {
-        return text(name).map(Integer::parseInt);
+        return textOpt(name).map(Integer::parseInt);
     }
 
-    Optional<TimeValue> timeValue(String name)
+    Optional<TimeValue> timeValueOpt(String name)
     {
-        return text(name).map(TimeValue::fromString);
+        return textOpt(name).map(TimeValue::fromString);
     }
 
     static Cli read(String... args)

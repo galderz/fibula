@@ -10,14 +10,12 @@ import java.util.List;
 final class ProcessRunner
 {
     private final NativeOptions options;
-    private final List<String> forkArguments;
     private final List<String> buildArguments;
 
     ProcessRunner(NativeOptions options)
     {
         this.options = options;
         this.buildArguments = buildArguments(options);
-        this.forkArguments = runArguments(options);
     }
 
     void runBuild()
@@ -26,17 +24,10 @@ final class ProcessRunner
         runSync(new ProcessBuilder(buildArguments).inheritIO());
     }
 
-    void runFirstFork()
+    void runFork(int forkIndex)
     {
+        final List<String> forkArguments = runArguments(forkIndex, options);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
-        System.out.println("# Fork: 1 of ...");
-        runAsync(new ProcessBuilder(forkArguments).inheritIO());
-    }
-
-    void runFork(int forkCount, int totalForkCount)
-    {
-        Log.debugf("Executing: %s", String.join(" ", forkArguments));
-        System.out.printf("# Fork: %d of %d%n", forkCount + 1, totalForkCount);
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
@@ -108,10 +99,10 @@ final class ProcessRunner
         return arguments;
     }
 
-    private static List<String> runArguments(NativeOptions options)
+    private static List<String> runArguments(int forkIndex, NativeOptions options)
     {
         final PackageMode packageMode = options.getPackageMode();
-        final List<String> runnerArguments = options.getRunnerArguments();
+        final List<String> runnerArguments = options.getRunnerArguments(forkIndex);
         final List<String> baseArguments = switch (packageMode)
         {
             case JVM -> List.of(

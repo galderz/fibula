@@ -25,14 +25,17 @@ final class NativeOptions
         this.isDecompile = decompileOrDefault(jmhOptions);
     }
 
-    List<String> getRunnerArguments()
+    List<String> getRunnerArguments(int forkIndex)
     {
         final List<String> arguments = new ArrayList<>();
-        addIfPresent(RunnerArguments.MEASUREMENT_ITERATIONS, jmhOptions.getMeasurementIterations(), String::valueOf, arguments);
-        addIfPresent(RunnerArguments.MEASUREMENT_TIME, jmhOptions.getMeasurementTime(), Object::toString, arguments);
-        addIfPresent(RunnerArguments.WARMUP_ITERATIONS, jmhOptions.getWarmupIterations(), String::valueOf, arguments);
-        addIfPresent(RunnerArguments.WARMUP_TIME, jmhOptions.getWarmupTime(), Object::toString, arguments);
-        // todo pass on logging levels into runner
+        final Function<Optional<Integer>, Integer> get = Optional::get;
+        final Function<Integer, String> valueOf = String::valueOf;
+        addArgument(RunnerArguments.FORK_COUNT, jmhOptions.getForkCount(), get.andThen(valueOf), arguments);
+        addArgument(RunnerArguments.FORK_INDEX, forkIndex, String::valueOf, arguments);
+        addArgumentIfPresent(RunnerArguments.MEASUREMENT_ITERATIONS, jmhOptions.getMeasurementIterations(), String::valueOf, arguments);
+        addArgumentIfPresent(RunnerArguments.MEASUREMENT_TIME, jmhOptions.getMeasurementTime(), Object::toString, arguments);
+        addArgumentIfPresent(RunnerArguments.WARMUP_ITERATIONS, jmhOptions.getWarmupIterations(), String::valueOf, arguments);
+        addArgumentIfPresent(RunnerArguments.WARMUP_TIME, jmhOptions.getWarmupTime(), Object::toString, arguments);
         return arguments;
     }
 
@@ -56,15 +59,6 @@ final class NativeOptions
         return jmhOptions.getMeasurementIterations();
     }
 
-    private <T> void addIfPresent(String paramName, Optional<T> paramValue, Function<T, String> transform, List<String> arguments)
-    {
-        if (paramValue.hasValue())
-        {
-            arguments.add("--" + paramName);
-            arguments.add(transform.apply(paramValue.get()));
-        }
-    }
-
     private static PackageMode packageModeOrDefault(Options jmhOptions)
     {
         final Optional<Collection<String>> packageMode = jmhOptions.getParameter("fibula.package.mode");
@@ -85,5 +79,19 @@ final class NativeOptions
         }
 
         return DEFAULT_DECOMPILE;
+    }
+
+    private <T> void addArgumentIfPresent(String paramName, Optional<T> paramValue, Function<T, String> transform, List<String> arguments)
+    {
+        if (paramValue.hasValue())
+        {
+            addArgument(paramName, paramValue.get(), transform, arguments);
+        }
+    }
+
+    private static <T> void addArgument(String paramName, T value, Function<T, String> transform, List<String> arguments)
+    {
+        arguments.add("--" + paramName);
+        arguments.add(transform.apply(value));
     }
 }

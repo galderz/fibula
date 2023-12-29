@@ -57,7 +57,7 @@ public class ResultService
         {
             forkCount++;
             // Run subsequent forks
-            processRunner.runFork(forkCount, totalForkCount);
+            processRunner.runFork(forkCount + 1);
         }
     }
 

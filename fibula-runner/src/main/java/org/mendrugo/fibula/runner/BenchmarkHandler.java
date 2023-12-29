@@ -56,8 +56,8 @@ final class BenchmarkHandler
 
         final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
 
-        final int warmupIterations = params.getWarmupIterations(cli.integer(RunnerArguments.WARMUP_ITERATIONS));
-        final Optional<TimeValue> cmdLineValue = cli.timeValue(RunnerArguments.WARMUP_TIME);
+        final int warmupIterations = params.getWarmupIterations(cli.integerOpt(RunnerArguments.WARMUP_ITERATIONS));
+        final Optional<TimeValue> cmdLineValue = cli.timeValueOpt(RunnerArguments.WARMUP_TIME);
         final TimeValue warmupTime = params.getWarmupTime(cmdLineValue);
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
@@ -72,8 +72,8 @@ final class BenchmarkHandler
             out.iterationResult(null, warmup, i, iterationResult);
         }
 
-        final int measurementIterations = params.getMeasurementIterations(cli.integer(RunnerArguments.MEASUREMENT_ITERATIONS));
-        final TimeValue measurementTime = params.getMeasurementTime(cli.timeValue(RunnerArguments.MEASUREMENT_TIME));
+        final int measurementIterations = params.getMeasurementIterations(cli.integerOpt(RunnerArguments.MEASUREMENT_ITERATIONS));
+        final TimeValue measurementTime = params.getMeasurementTime(cli.timeValueOpt(RunnerArguments.MEASUREMENT_TIME));
         final IterationParams measurement = new IterationParams(
             IterationType.MEASUREMENT
             , measurementIterations
