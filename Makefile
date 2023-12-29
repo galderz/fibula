@@ -27,14 +27,14 @@ endif
 
 # Benchmark name
 benchmark_params += JMHSample_01
+# Measurement forks
+benchmark_params += -f
+benchmark_params += 2
 # Measurement iterations
 benchmark_params += -i
 benchmark_params += 2
 # Warmup iterations
 benchmark_params += -wi
-benchmark_params += 2
-# Measurement forks
-benchmark_params += -f
 benchmark_params += 2
 # Measurement time
 benchmark_params += -r

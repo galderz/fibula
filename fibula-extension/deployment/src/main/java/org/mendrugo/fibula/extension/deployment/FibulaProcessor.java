@@ -65,7 +65,11 @@ class FibulaProcessor
 
         build.methods()
             // todo add support for more benchmarks in jmh-samples
-            .stream().filter(m -> "wellHelloThere".equals(m.name()))
+            .stream().filter(m ->
+                // m.declaringClass().simpleName().contains("MultiHelloWorld")
+                m.declaringClass().simpleName().contains("JMHSample_01")
+                // ||  m.declaringClass().simpleName().contains("JMHSample_02")
+            )
             .forEach(m -> generate(m, beanOutput));
     }
 

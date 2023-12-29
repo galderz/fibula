@@ -1,0 +1,408 @@
+$ java -jar target/benchmarks.jar JMHSample_02 -f 1 -i 1 -wi 1 -r 2 -w 2
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll
+
+# Run progress: 0.00% complete, ETA 00:00:36
+# Fork: 1 of 1
+# Warmup Iteration   1: ≈ 10⁻⁵ ops/us
+Iteration   1: ≈ 10⁻⁵ ops/us
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll":
+  ≈ 10⁻⁵ ops/us
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple
+
+# Run progress: 11.11% complete, ETA 00:00:34
+# Fork: 1 of 1
+# Warmup Iteration   1: ≈ 10⁻⁵ ops/us
+Iteration   1: ≈ 10⁻⁵ ops/us
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple":
+  ≈ 10⁻⁵ ops/us
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureThroughput
+
+# Run progress: 22.22% complete, ETA 00:00:30
+# Fork: 1 of 1
+# Warmup Iteration   1: 9.691 ops/s
+Iteration   1: 9.710 ops/s
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureThroughput":
+  9.710 ops/s
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll
+
+# Run progress: 33.33% complete, ETA 00:00:25
+# Fork: 1 of 1
+# Warmup Iteration   1: 103365.050 us/op
+Iteration   1: 102378.929 us/op
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll":
+  102378.929 us/op
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAvgTime
+
+# Run progress: 44.44% complete, ETA 00:00:21
+# Fork: 1 of 1
+# Warmup Iteration   1: 102867.900 us/op
+Iteration   1: 102490.529 us/op
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAvgTime":
+  102490.529 us/op
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple
+
+# Run progress: 55.55% complete, ETA 00:00:17
+# Fork: 1 of 1
+# Warmup Iteration   1: 103400.983 us/op
+Iteration   1: 102911.908 us/op
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple":
+  102911.908 us/op
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll
+
+# Run progress: 66.66% complete, ETA 00:00:12
+# Fork: 1 of 1
+# Warmup Iteration   1: 102629.376 ±(99.9%) 1569.296 us/op
+Iteration   1: 103029.146 ±(99.9%) 1395.668 us/op
+                 p0.00:   100401.152 us/op
+                 p0.50:   103350.272 us/op
+                 p0.90:   104988.672 us/op
+                 p0.95:   104988.672 us/op
+                 p0.99:   104988.672 us/op
+                 p0.999:  104988.672 us/op
+                 p0.9999: 104988.672 us/op
+                 p1.00:   104988.672 us/op
+
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll":
+  N = 20
+  mean = 103029.146 ±(99.9%) 1395.668 us/op
+
+  Histogram, us/op:
+    [100000.000, 100500.000) = 2
+    [100500.000, 101000.000) = 0
+    [101000.000, 101500.000) = 3
+    [101500.000, 102000.000) = 1
+    [102000.000, 102500.000) = 2
+    [102500.000, 103000.000) = 1
+    [103000.000, 103500.000) = 1
+    [103500.000, 104000.000) = 3
+    [104000.000, 104500.000) = 3
+
+  Percentiles, us/op:
+      p(0.0000) = 100401.152 us/op
+     p(50.0000) = 103350.272 us/op
+     p(90.0000) = 104988.672 us/op
+     p(95.0000) = 104988.672 us/op
+     p(99.0000) = 104988.672 us/op
+     p(99.9000) = 104988.672 us/op
+     p(99.9900) = 104988.672 us/op
+     p(99.9990) = 104988.672 us/op
+     p(99.9999) = 104988.672 us/op
+    p(100.0000) = 104988.672 us/op
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple
+
+# Run progress: 77.76% complete, ETA 00:00:08
+# Fork: 1 of 1
+# Warmup Iteration   1: 102622.822 ±(99.9%) 1642.937 us/op
+Iteration   1: 103507.558 ±(99.9%) 1384.695 us/op
+                 p0.00:   100401.152 us/op
+                 p0.50:   104136.704 us/op
+                 p0.90:   104988.672 us/op
+                 p0.95:   105113.190 us/op
+                 p0.99:   105119.744 us/op
+                 p0.999:  105119.744 us/op
+                 p0.9999: 105119.744 us/op
+                 p1.00:   105119.744 us/op
+
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple":
+  N = 20
+  mean = 103507.558 ±(99.9%) 1384.695 us/op
+
+  Histogram, us/op:
+    [100000.000, 100500.000) = 1
+    [100500.000, 101000.000) = 1
+    [101000.000, 101500.000) = 2
+    [101500.000, 102000.000) = 0
+    [102000.000, 102500.000) = 2
+    [102500.000, 103000.000) = 1
+    [103000.000, 103500.000) = 0
+    [103500.000, 104000.000) = 2
+    [104000.000, 104500.000) = 4
+    [104500.000, 105000.000) = 6
+    [105000.000, 105500.000) = 1
+
+  Percentiles, us/op:
+      p(0.0000) = 100401.152 us/op
+     p(50.0000) = 104136.704 us/op
+     p(90.0000) = 104988.672 us/op
+     p(95.0000) = 105113.190 us/op
+     p(99.0000) = 105119.744 us/op
+     p(99.9000) = 105119.744 us/op
+     p(99.9900) = 105119.744 us/op
+     p(99.9990) = 105119.744 us/op
+     p(99.9999) = 105119.744 us/op
+    p(100.0000) = 105119.744 us/op
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureSamples
+
+# Run progress: 88.87% complete, ETA 00:00:04
+# Fork: 1 of 1
+# Warmup Iteration   1: 103120.896 ±(99.9%) 1226.335 us/op
+Iteration   1: 102458.982 ±(99.9%) 1366.854 us/op
+                 p0.00:   100007.936 us/op
+                 p0.50:   102039.552 us/op
+                 p0.90:   104333.312 us/op
+                 p0.95:   104955.904 us/op
+                 p0.99:   104988.672 us/op
+                 p0.999:  104988.672 us/op
+                 p0.9999: 104988.672 us/op
+                 p1.00:   104988.672 us/op
+
+
+
+Result "org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureSamples":
+  N = 20
+  mean = 102458.982 ±(99.9%) 1366.854 us/op
+
+  Histogram, us/op:
+    [100000.000, 100500.000) = 3
+    [100500.000, 101000.000) = 1
+    [101000.000, 101500.000) = 1
+    [101500.000, 102000.000) = 5
+    [102000.000, 102500.000) = 1
+    [102500.000, 103000.000) = 1
+    [103000.000, 103500.000) = 1
+    [103500.000, 104000.000) = 1
+    [104000.000, 104500.000) = 5
+
+  Percentiles, us/op:
+      p(0.0000) = 100007.936 us/op
+     p(50.0000) = 102039.552 us/op
+     p(90.0000) = 104333.312 us/op
+     p(95.0000) = 104955.904 us/op
+     p(99.0000) = 104988.672 us/op
+     p(99.9000) = 104988.672 us/op
+     p(99.9900) = 104988.672 us/op
+     p(99.9990) = 104988.672 us/op
+     p(99.9999) = 104988.672 us/op
+    p(100.0000) = 104988.672 us/op
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread
+# Benchmark mode: Single shot invocation time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureAll
+
+# Run progress: 99.98% complete, ETA 00:00:00
+# Fork: 1 of 1
+# Warmup Iteration   1: 105079.833 us/op
+Iteration   1: 104067.666 us/op
+
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread
+# Benchmark mode: Single shot invocation time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureMultiple
+
+# Run progress: 99.99% complete, ETA 00:00:00
+# Fork: 1 of 1
+# Warmup Iteration   1: 102914.625 us/op
+Iteration   1: 105019.792 us/op
+
+
+
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 1 iterations, 2 s each
+# Measurement: 1 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread
+# Benchmark mode: Single shot invocation time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_02_BenchmarkModes.measureSingleShot
+
+# Run progress: 99.99% complete, ETA 00:00:00
+# Fork: 1 of 1
+# Warmup Iteration   1: 102500.417 us/op
+Iteration   1: 105021.166 us/op
+
+
+
+# Run complete. Total time: 00:00:39
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                              Mode  Cnt       Score      Error   Units
+JMHSample_02_BenchmarkModes.measureAll                thrpt           ≈ 10⁻⁵             ops/us
+JMHSample_02_BenchmarkModes.measureMultiple           thrpt           ≈ 10⁻⁵             ops/us
+JMHSample_02_BenchmarkModes.measureThroughput         thrpt            9.710              ops/s
+JMHSample_02_BenchmarkModes.measureAll                 avgt       102378.929              us/op
+JMHSample_02_BenchmarkModes.measureAvgTime             avgt       102490.529              us/op
+JMHSample_02_BenchmarkModes.measureMultiple            avgt       102911.908              us/op
+JMHSample_02_BenchmarkModes.measureAll               sample   20  103029.146 ± 1395.668   us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.00         sample       100401.152              us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.50         sample       103350.272              us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.90         sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.95         sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.99         sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.999        sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureAll:p0.9999       sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureAll:p1.00         sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureMultiple          sample   20  103507.558 ± 1384.695   us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.00    sample       100401.152              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.50    sample       104136.704              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.90    sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.95    sample       105113.190              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.99    sample       105119.744              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.999   sample       105119.744              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p0.9999  sample       105119.744              us/op
+JMHSample_02_BenchmarkModes.measureMultiple:p1.00    sample       105119.744              us/op
+JMHSample_02_BenchmarkModes.measureSamples           sample   20  102458.982 ± 1366.854   us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.00     sample       100007.936              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.50     sample       102039.552              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.90     sample       104333.312              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.95     sample       104955.904              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.99     sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.999    sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p0.9999   sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureSamples:p1.00     sample       104988.672              us/op
+JMHSample_02_BenchmarkModes.measureAll                   ss       104067.666              us/op
+JMHSample_02_BenchmarkModes.measureMultiple              ss       105019.792              us/op
+JMHSample_02_BenchmarkModes.measureSingleShot            ss       105021.166              us/op

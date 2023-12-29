@@ -2,6 +2,8 @@
 
 ## TODO
 
+- [ ] Print result
+- [ ] Support running single benchmark with multiple methods (basic!)
 - [ ] Use jmh-samples instead of duplicating the samples
       This means you need to be able to run individual benchmark files...etc
 - [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
