@@ -4,7 +4,6 @@
 
 - [ ] Use jmh-samples instead of duplicating the samples
       This means you need to be able to run individual benchmark files...etc
-- [ ] Remove INFO logging and banner from runner
 - [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
 - [ ] Add a record equals/hashCode benchmark
       Some potential examples:
