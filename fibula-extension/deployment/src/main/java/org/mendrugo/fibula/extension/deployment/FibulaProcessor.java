@@ -63,7 +63,10 @@ class FibulaProcessor
             return;
         }
 
-        build.methods().forEach(m -> generate(m, beanOutput));
+        build.methods()
+            // todo add support for more benchmarks in jmh-samples
+            .stream().filter(m -> "wellHelloThere".equals(m.name()))
+            .forEach(m -> generate(m, beanOutput));
     }
 
     private void generate(MethodInfo methodInfo, ClassOutput beanOutput)

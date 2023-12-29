@@ -43,6 +43,11 @@
                 <artifactId>jmh-core</artifactId>
                 <version>${jmh.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-samples</artifactId>
+                <version>${jmh.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>

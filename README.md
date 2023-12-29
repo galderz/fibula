@@ -5,6 +5,7 @@
 - [ ] Use jmh-samples instead of duplicating the samples
       This means you need to be able to run individual benchmark files...etc
 - [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
+      E.g. JMHSample_02_BenchmarkModes
 - [ ] Add a record equals/hashCode benchmark
       Some potential examples:
       https://github.com/openjdk/jdk/blob/master/test/micro/org/openjdk/bench/java/io/RecordDeserialization.java

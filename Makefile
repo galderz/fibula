@@ -25,6 +25,8 @@ ifdef LOG_LEVEL
   endif
 endif
 
+# Benchmark name
+benchmark_params += JMHSample_01
 # Measurement iterations
 benchmark_params += -i
 benchmark_params += 2
