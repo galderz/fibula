@@ -70,6 +70,7 @@ final class ProcessRunner
     private static List<String> buildArguments(NativeOptions options)
     {
         final PackageMode packageMode = options.getPackageMode();
+        // todo avoid hardcoding sample project name
         final List<String> baseArguments = switch (packageMode)
         {
             case JVM -> List.of(
@@ -103,6 +104,7 @@ final class ProcessRunner
     {
         final PackageMode packageMode = options.getPackageMode();
         final List<String> runnerArguments = options.getRunnerArguments(forkIndex);
+        // todo avoid hardcoding sample project name
         final List<String> baseArguments = switch (packageMode)
         {
             case JVM -> List.of(

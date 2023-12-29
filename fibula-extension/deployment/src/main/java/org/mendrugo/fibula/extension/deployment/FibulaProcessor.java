@@ -6,6 +6,7 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
 import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
@@ -19,10 +20,19 @@ import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.Optional;
 import org.openjdk.jmh.util.lines.TestLineWriter;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +54,7 @@ class FibulaProcessor
     void generateCommand(
         BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
         , CombinedIndexBuildItem index
+        , BuildSystemTargetBuildItem buildSystemTarget
     )
     {
         System.out.println("Generating command...");
@@ -70,18 +81,18 @@ class FibulaProcessor
                 m.declaringClass().simpleName().contains("JMHSample_01")
                 // ||  m.declaringClass().simpleName().contains("JMHSample_02")
             )
-            .forEach(m -> generate(m, beanOutput));
+            .forEach(m -> generate(m, beanOutput, buildSystemTarget));
     }
 
-    private void generate(MethodInfo methodInfo, ClassOutput beanOutput)
+    private void generate(MethodInfo methodInfo, ClassOutput beanOutput, BuildSystemTargetBuildItem buildSystemTarget)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
 
         final String functionClassName = generateFunction(methodInfo, beanOutput);
-        generateSupplier(methodInfo, beanOutput, classInfo, functionClassName);
+        generateSupplier(methodInfo, beanOutput, classInfo, functionClassName, buildSystemTarget);
     }
 
-    private static void generateSupplier(MethodInfo methodInfo, ClassOutput beanOutput, ClassInfo classInfo, String functionClassName)
+    private static void generateSupplier(MethodInfo methodInfo, ClassOutput beanOutput, ClassInfo classInfo, String functionClassName, BuildSystemTargetBuildItem buildSystemTarget)
     {
         final String userClassQName = String.format("%s.%s", PACKAGE_NAME, classInfo.simpleName());
         final String method = methodInfo.name();
@@ -107,16 +118,26 @@ class FibulaProcessor
         annotationParams.returnValue(annotationParams.load(params));
         annotationParams.close();
 
-        // todo generate a benchmark list as text and get the supplier to return it
-        //      at runtime, the line will be read and deserialized to read the benchmark parameters
-        //      e.g. user class name, method name, annotation values...etc
-        //      E.g.
-        //
-        //      Format:
-        //
-        // TestLineWriter writer = new TestLineWriter();
+        // Write annotation params externally for the bootstrap process to pick up
+        writeAnnotationParams(params, buildSystemTarget);
 
         supplier.close();
+    }
+
+    private static void writeAnnotationParams(String params, BuildSystemTargetBuildItem buildSystemTarget)
+    {
+        final File resourceDir = buildSystemTarget.getOutputDirectory().resolve(Path.of("classes")).toFile();
+        final File sourceDir = buildSystemTarget.getOutputDirectory().resolve(Path.of("classes", "tbd")).toFile();
+        final FileSystemDestination destination = new FileSystemDestination(resourceDir, sourceDir);
+        try (OutputStream stream = destination.newResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
+        {
+            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8)))
+            {
+                writer.println(params);
+            }
+        } catch (IOException ex) {
+            destination.printError("Error writing benchmark list", ex);
+        }
     }
 
     private static String generateAnnotationParams(String userClassQName, String method)

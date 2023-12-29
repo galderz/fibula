@@ -43,6 +43,7 @@ public class RunnerMain implements QuarkusApplication
         final int cliForkCount = cli.integer(RunnerArguments.FORK_COUNT);
         final int forkIndex = cli.integer(RunnerArguments.FORK_INDEX);
         final int forkCount = callable.infrastructure.getBenchmarkParams().getMeasurementForks(Optional.of(cliForkCount));
+        // todo bring back fork process logging to boostrap now that annotation params can be queried
         System.out.printf("# Fork: %d of %d%n", forkIndex, forkCount);
     }
 }
