@@ -48,7 +48,7 @@ public class ResultService
         if (totalIterations == iterationResults.size())
         {
             endRun(iterationResults, benchmarkParams);
-            Log.infof("Now exit the application");
+            Log.debug("Now exit the application");
             Quarkus.asyncExit();
         }
 
