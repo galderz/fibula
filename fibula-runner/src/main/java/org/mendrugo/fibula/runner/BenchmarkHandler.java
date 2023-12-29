@@ -58,11 +58,7 @@ final class BenchmarkHandler
 
         final int warmupIterations = params.getWarmupIterations(cli.integer(RunnerArguments.WARMUP_ITERATIONS));
         final Optional<TimeValue> cmdLineValue = cli.timeValue(RunnerArguments.WARMUP_TIME);
-        // todo convert to debug message
-        System.out.println("CMD line value: " + cmdLineValue);
         final TimeValue warmupTime = params.getWarmupTime(cmdLineValue);
-        // todo convert to debug message
-        System.out.println("Warmup time: " + warmupTime);
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
             , warmupIterations

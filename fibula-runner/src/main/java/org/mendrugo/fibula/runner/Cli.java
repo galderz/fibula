@@ -85,9 +85,6 @@ final class Cli
             }
         }
 
-        // todo convert to debug log message
-        System.out.println("Cli Params: " + params);
-
         return new Cli(params);
     }
 }
