@@ -24,10 +24,12 @@ final class ProcessRunner
         runSync(new ProcessBuilder(buildArguments).inheritIO());
     }
 
-    void runFork(int forkIndex)
+    void runFork(int forkIndex, int forkCount)
     {
-        final List<String> forkArguments = runArguments(forkIndex, options);
+        final List<String> forkArguments = runArguments(options);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
+        // todo use destination instead of System.out
+        System.out.printf("# Fork: %d of %d%n", forkIndex, forkCount);
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
@@ -100,10 +102,10 @@ final class ProcessRunner
         return arguments;
     }
 
-    private static List<String> runArguments(int forkIndex, NativeOptions options)
+    private static List<String> runArguments(NativeOptions options)
     {
         final PackageMode packageMode = options.getPackageMode();
-        final List<String> runnerArguments = options.getRunnerArguments(forkIndex);
+        final List<String> runnerArguments = options.getRunnerArguments();
         // todo avoid hardcoding sample project name
         final List<String> baseArguments = switch (packageMode)
         {

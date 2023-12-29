@@ -25,13 +25,9 @@ final class NativeOptions
         this.isDecompile = decompileOrDefault(jmhOptions);
     }
 
-    List<String> getRunnerArguments(int forkIndex)
+    List<String> getRunnerArguments()
     {
         final List<String> arguments = new ArrayList<>();
-        final Function<Optional<Integer>, Integer> get = Optional::get;
-        final Function<Integer, String> valueOf = String::valueOf;
-        addArgument(RunnerArguments.FORK_COUNT, jmhOptions.getForkCount(), get.andThen(valueOf), arguments);
-        addArgument(RunnerArguments.FORK_INDEX, forkIndex, String::valueOf, arguments);
         addArgumentIfPresent(RunnerArguments.MEASUREMENT_ITERATIONS, jmhOptions.getMeasurementIterations(), String::valueOf, arguments);
         addArgumentIfPresent(RunnerArguments.MEASUREMENT_TIME, jmhOptions.getMeasurementTime(), Object::toString, arguments);
         addArgumentIfPresent(RunnerArguments.WARMUP_ITERATIONS, jmhOptions.getWarmupIterations(), String::valueOf, arguments);

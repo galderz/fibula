@@ -14,16 +14,11 @@ import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
-import org.openjdk.jmh.results.format.ResultFormatFactory;
-import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.WorkloadParams;
 import org.openjdk.jmh.runner.options.TimeValue;
-import org.openjdk.jmh.util.UnCloseablePrintStream;
-import org.openjdk.jmh.util.Utils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,17 +31,17 @@ public class ResultService
     private final List<NativeIterationResult> iterationResults = new ArrayList<>();
 
     private NativeOptions options;
-    private int forkCount;
-    private int iterationCount;
+    private int forkCounter;
+    private int iterationCounter;
     private ProcessRunner processRunner;
 
     void addIteration(NativeIterationResult result)
     {
         final BenchmarkParams benchmarkParams = getBenchmarkParams(result);
-        final int totalForkCount = benchmarkParams.getForks();
+        final int forkCount = benchmarkParams.getForks();
 
         iterationResults.add(result);
-        final int totalIterations = totalForkCount * benchmarkParams.getMeasurement().getCount();
+        final int totalIterations = forkCount * benchmarkParams.getMeasurement().getCount();
         if (totalIterations == iterationResults.size())
         {
             endRun(iterationResults, benchmarkParams);
@@ -54,12 +49,12 @@ public class ResultService
             Quarkus.asyncExit();
         }
 
-        iterationCount++;
-        if (iterationCount == benchmarkParams.getMeasurement().getCount())
+        iterationCounter++;
+        if (iterationCounter == benchmarkParams.getMeasurement().getCount())
         {
-            forkCount++;
+            forkCounter++;
             // Run subsequent forks
-            processRunner.runFork(forkCount + 1);
+            processRunner.runFork(forkCounter + 1, forkCount);
         }
     }
 
