@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.runner;
 
+import org.mendrugo.fibula.results.JmhFormats;
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
 import org.mendrugo.fibula.results.RunnerArguments;
@@ -14,13 +15,8 @@ import org.openjdk.jmh.results.ThroughputResult;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.format.OutputFormat;
-import org.openjdk.jmh.runner.format.OutputFormatFactory;
 import org.openjdk.jmh.runner.options.TimeValue;
-import org.openjdk.jmh.runner.options.VerboseMode;
-import org.openjdk.jmh.util.UnCloseablePrintStream;
-import org.openjdk.jmh.util.Utils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,18 +38,7 @@ final class BenchmarkHandler
 
     void runBenchmark(BenchmarkCallable callable, ResultRestClient client)
     {
-        // todo move it to a common module
-        final OutputFormat out;
-        try
-        {
-            final UnCloseablePrintStream printStream = new UnCloseablePrintStream(System.out, Utils.guessConsoleEncoding());
-            out = OutputFormatFactory.createFormatInstance(printStream, VerboseMode.NORMAL);
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            throw new IllegalStateException(e);
-        }
-
+        final OutputFormat out = JmhFormats.outputFormat();
         final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
 
         final int warmupIterations = params.getWarmupIterations(cli.integerOpt(RunnerArguments.WARMUP_ITERATIONS));

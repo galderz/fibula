@@ -3,15 +3,17 @@ package org.mendrugo.fibula.bootstrap;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.Quarkus;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.mendrugo.fibula.results.JmhFormats;
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
-import org.mendrugo.fibula.results.Optionals;
+import org.mendrugo.fibula.results.JmhOptionals;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
+import org.openjdk.jmh.results.format.ResultFormat;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
 import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Defaults;
@@ -74,16 +76,8 @@ public class ResultService
     private void endRun(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
     {
         final Collection<RunResult> runResults = runResults(results, benchmarkParams);
-        try
-        {
-            // todo move it to a common module
-            final UnCloseablePrintStream out = new UnCloseablePrintStream(System.out, Utils.guessConsoleEncoding());
-            ResultFormatFactory.getInstance(ResultFormatType.TEXT, out).writeOut(runResults);
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            throw new IllegalStateException(e);
-        }
+        final ResultFormat resultFormat = JmhFormats.resultFormat();
+        resultFormat.writeOut(runResults);
     }
 
     private Collection<RunResult> runResults(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
@@ -103,8 +97,8 @@ public class ResultService
     private BenchmarkParams getBenchmarkParams(NativeIterationResult result)
     {
         final NativeBenchmarkParams nativeParams = new NativeBenchmarkParams(result.annotationParams());
-        final int measurementForks = nativeParams.getMeasurementForks(Optionals.fromJmh(options.getMeasurementForks()));
-        final int measurementIterations = nativeParams.getMeasurementIterations(Optionals.fromJmh(options.getMeasurementIterations()));
+        final int measurementForks = nativeParams.getMeasurementForks(JmhOptionals.fromJmh(options.getMeasurementForks()));
+        final int measurementIterations = nativeParams.getMeasurementIterations(JmhOptionals.fromJmh(options.getMeasurementIterations()));
 
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
