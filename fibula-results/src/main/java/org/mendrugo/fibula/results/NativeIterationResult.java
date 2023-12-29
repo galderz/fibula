@@ -11,17 +11,17 @@ public record NativeIterationResult(
     long allOperations
     , long measuredOperations
     , Collection<NativeResult> primaryResults
-    , String annotationParams
+    , String benchmark
 )
 {
-    public static NativeIterationResult of(IterationResult iterationResult, String annotationParams)
+    public static NativeIterationResult of(IterationResult iterationResult, String benchmark)
     {
         Collection<Result> primaryResults = new ArrayList<>(iterationResult.getRawPrimaryResults());
         return new NativeIterationResult(
             iterationResult.getMetadata().getAllOps()
             , iterationResult.getMetadata().getMeasuredOps()
             , primaryResults.stream().map(NativeResult::of).toList()
-            , annotationParams
+            , benchmark
         );
     }
 }

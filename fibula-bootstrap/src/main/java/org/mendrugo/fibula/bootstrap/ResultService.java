@@ -11,6 +11,7 @@ import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
+import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.util.ArrayList;
@@ -90,6 +91,6 @@ public class ResultService
 
     private BenchmarkParams getBenchmarkParams(NativeIterationResult result)
     {
-        return options.getBenchmarkParams(new NativeBenchmarkParams(result.annotationParams()));
+        return options.getBenchmarkParams(new NativeBenchmarkParams(new BenchmarkListEntry(result.benchmark())));
     }
 }

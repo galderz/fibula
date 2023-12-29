@@ -71,7 +71,7 @@ final class BenchmarkHandler
             out.iteration(null, measurement, i);
             IterationResult iterationResult = runIteration(callable, measurement, callable.infrastructure);
             out.iterationResult(null, measurement, i, iterationResult);
-            client.send(NativeIterationResult.of(iterationResult, params.getAnnotationParams()));
+            client.send(NativeIterationResult.of(iterationResult, callable.infrastructure.getBenchmark()));
         }
     }
 

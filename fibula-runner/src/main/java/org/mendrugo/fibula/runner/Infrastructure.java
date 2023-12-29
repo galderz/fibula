@@ -1,16 +1,19 @@
 package org.mendrugo.fibula.runner;
 
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
+import org.openjdk.jmh.runner.BenchmarkListEntry;
 
 public final class Infrastructure
 {
     private final NativeBenchmarkParams benchmarkParams;
+    private final String benchmark;
 
     volatile boolean isDone;
 
-    Infrastructure(String annotationParams)
+    Infrastructure(String benchmark)
     {
-        this.benchmarkParams = new NativeBenchmarkParams(annotationParams);
+        this.benchmark = benchmark;
+        this.benchmarkParams = new NativeBenchmarkParams(new BenchmarkListEntry(benchmark));
     }
 
     void markDone()
@@ -26,5 +29,10 @@ public final class Infrastructure
     NativeBenchmarkParams getBenchmarkParams()
     {
         return benchmarkParams;
+    }
+
+    public String getBenchmark()
+    {
+        return benchmark;
     }
 }

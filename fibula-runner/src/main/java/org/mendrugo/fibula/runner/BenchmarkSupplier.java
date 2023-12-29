@@ -8,5 +8,5 @@ public interface BenchmarkSupplier
 {
     Function<Infrastructure, RawResults> get();
 
-    String annotationParams();
+    String benchmark();
 }

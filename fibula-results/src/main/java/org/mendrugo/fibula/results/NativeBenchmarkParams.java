@@ -10,12 +10,10 @@ import java.util.Optional;
 public final class NativeBenchmarkParams
 {
     private final BenchmarkListEntry benchmark;
-    private final String annotationParams;
 
-    public NativeBenchmarkParams(String annotationParams)
+    public NativeBenchmarkParams(BenchmarkListEntry benchmark)
     {
-        this.annotationParams = annotationParams;
-        this.benchmark = new BenchmarkListEntry(annotationParams);
+        this.benchmark = benchmark;
     }
 
     public String getBenchmark()
@@ -68,10 +66,5 @@ public final class NativeBenchmarkParams
                 ? TimeValue.NONE
                 : Defaults.WARMUP_TIME)
             );
-    }
-
-    public String getAnnotationParams()
-    {
-        return annotationParams;
     }
 }

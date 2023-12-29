@@ -11,6 +11,7 @@ import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.BenchmarkList;
+import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.Options;
@@ -76,6 +77,7 @@ public class BootstrapMain implements QuarkusApplication
             try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
             {
                 return FileUtils.readAllLines(reader).stream()
+                    .map(BenchmarkListEntry::new)
                     .map(NativeBenchmarkParams::new)
                     .collect(Collectors.toUnmodifiableSet());
             }

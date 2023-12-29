@@ -29,7 +29,7 @@ public class RunnerMain implements QuarkusApplication
         // todo add result client to handler? Make the handler a bean?
         final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(cli);
         suppliers.stream()
-            .map(supplier -> new BenchmarkCallable(supplier.get(), new Infrastructure(supplier.annotationParams())))
+            .map(supplier -> new BenchmarkCallable(supplier.get(), new Infrastructure(supplier.benchmark())))
             .forEach(callable -> benchmarkHandler.runBenchmark(callable, resultClient));
 
         return 0;

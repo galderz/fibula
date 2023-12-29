@@ -108,15 +108,15 @@ class FibulaProcessor
             .build();
         supplier.addAnnotation(ApplicationScoped.class);
 
-        final MethodCreator getMethod = supplier.getMethodCreator("get", Function.class);
-        final ResultHandle newInstance = getMethod.newInstance(MethodDescriptor.ofConstructor(functionClassName));
-        getMethod.returnValue(newInstance);
-        getMethod.close();
+        final MethodCreator get = supplier.getMethodCreator("get", Function.class);
+        final ResultHandle newInstance = get.newInstance(MethodDescriptor.ofConstructor(functionClassName));
+        get.returnValue(newInstance);
+        get.close();
 
-        final MethodCreator annotationParams = supplier.getMethodCreator("annotationParams", String.class);
+        final MethodCreator benchmark = supplier.getMethodCreator("benchmark", String.class);
         final String params = generateAnnotationParams(userClassQName, method);
-        annotationParams.returnValue(annotationParams.load(params));
-        annotationParams.close();
+        benchmark.returnValue(benchmark.load(params));
+        benchmark.close();
 
         // Write annotation params externally for the bootstrap process to pick up
         writeAnnotationParams(params, buildSystemTarget);
