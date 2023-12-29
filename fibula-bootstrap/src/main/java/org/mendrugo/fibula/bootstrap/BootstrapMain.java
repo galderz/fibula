@@ -5,10 +5,13 @@ import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
+import org.mendrugo.fibula.results.JmhFormats;
 import org.mendrugo.fibula.results.JmhOptionals;
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.BenchmarkList;
+import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
@@ -40,7 +43,8 @@ public class BootstrapMain implements QuarkusApplication
         final NativeOptions options = new NativeOptions(jmhOptions);
         resultService.setOptions(options);
 
-        final ProcessRunner processRunner = new ProcessRunner(options);
+        final OutputFormat out = JmhFormats.outputFormat();
+        final ProcessRunner processRunner = new ProcessRunner(options, out);
         resultService.setProcessRunner(processRunner);
 
         // Build the runner and run the first fork
@@ -50,8 +54,8 @@ public class BootstrapMain implements QuarkusApplication
         final Set<NativeBenchmarkParams> benchmarks = readBenchmarks();
         final NativeBenchmarkParams benchmark = benchmarks.iterator().next();
 
-//        final OutputFormat out = JmhFormats.outputFormat();
-        // todo call out.startBenchmark()
+        out.startBenchmark(options.getBenchmarkParams(benchmark));
+        out.println("");
 
         final int forks = benchmark.getMeasurementForks(JmhOptionals.fromJmh(options.getMeasurementForks()));
         processRunner.runFork(1, forks);

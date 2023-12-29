@@ -1,6 +1,7 @@
 package org.mendrugo.fibula.bootstrap;
 
 import io.quarkus.logging.Log;
+import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -11,10 +12,12 @@ final class ProcessRunner
 {
     private final NativeOptions options;
     private final List<String> buildArguments;
+    private final OutputFormat out;
 
-    ProcessRunner(NativeOptions options)
+    ProcessRunner(NativeOptions options, OutputFormat out)
     {
         this.options = options;
+        this.out = out;
         this.buildArguments = buildArguments(options);
     }
 
@@ -28,8 +31,7 @@ final class ProcessRunner
     {
         final List<String> forkArguments = runArguments(options);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
-        // todo use destination instead of System.out
-        System.out.printf("# Fork: %d of %d%n", forkIndex, forkCount);
+        out.println("# Fork: " + forkIndex + " of " + forkCount);
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
