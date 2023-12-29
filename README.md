@@ -2,7 +2,8 @@
 
 ## TODO
 
-- [ ] Print result
+- [ ] Pass in benchmark information (rename to info or benchmarkInfo or benchmark) as is to runner
+      Doing this might reduce the need for Cli except for those parameters not in the info itself
 - [ ] Support running single benchmark with multiple methods (basic!)
 - [ ] Use jmh-samples instead of duplicating the samples
       This means you need to be able to run individual benchmark files...etc
