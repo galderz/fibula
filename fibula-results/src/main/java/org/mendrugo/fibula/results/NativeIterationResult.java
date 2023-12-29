@@ -2,6 +2,7 @@ package org.mendrugo.fibula.results;
 
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ThroughputResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +11,7 @@ import java.util.Collection;
 public record NativeIterationResult(
     long allOperations
     , long measuredOperations
-    , Collection<NativeResult> primaryResults
+    , Collection<NativeThroughputResult> primaryResults
     , String annotationParams
 )
 {
@@ -20,7 +21,10 @@ public record NativeIterationResult(
         return new NativeIterationResult(
             iterationResult.getMetadata().getAllOps()
             , iterationResult.getMetadata().getMeasuredOps()
-            , primaryResults.stream().map(NativeResult::of).toList()
+            , primaryResults.stream()
+                .map(result -> (ThroughputResult) result)
+                .map(NativeThroughputResult::of)
+                .toList()
             , annotationParams
         );
     }
