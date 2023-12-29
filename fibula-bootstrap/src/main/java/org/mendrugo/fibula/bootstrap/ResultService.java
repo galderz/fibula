@@ -26,6 +26,7 @@ public class ResultService
     private int forkCounter;
     private int iterationCounter;
     private ProcessRunner processRunner;
+    private OutputFormat out;
 
     void addIteration(NativeIterationResult result)
     {
@@ -60,6 +61,11 @@ public class ResultService
         this.processRunner = processRunner;
     }
 
+    void setOutputFormat(OutputFormat out)
+    {
+        this.out = out;
+    }
+
     private void endRun(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
     {
         final Collection<RunResult> runResults = runResults(results, benchmarkParams);
@@ -70,6 +76,7 @@ public class ResultService
     private Collection<RunResult> runResults(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
     {
         final Collection<BenchmarkResult> benchmarkResults = List.of(benchmarkResult(results, benchmarkParams));
+        benchmarkResults.forEach(out::endBenchmark);
         return List.of(new RunResult(benchmarkParams, benchmarkResults));
     }
 

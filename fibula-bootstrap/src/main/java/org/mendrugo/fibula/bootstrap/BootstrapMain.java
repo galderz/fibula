@@ -46,6 +46,7 @@ public class BootstrapMain implements QuarkusApplication
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(options, out);
         resultService.setProcessRunner(processRunner);
+        resultService.setOutputFormat(out);
 
         // Build the runner and run the first fork
         processRunner.runBuild();
