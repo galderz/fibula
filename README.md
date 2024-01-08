@@ -2,6 +2,7 @@
 
 ## TODO
 
+- [ ] Pass in serialized versions around, that might get rid of the intermediate translation layer
 - [ ] Pass in benchmark information (rename to info or benchmarkInfo or benchmark) as is to runner
       Doing this might reduce the need for Cli except for those parameters not in the info itself
 - [ ] Support running single benchmark with multiple methods (basic!)
