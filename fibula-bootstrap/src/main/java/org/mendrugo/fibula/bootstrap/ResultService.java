@@ -48,7 +48,7 @@ public class ResultService
         {
             forkCounter++;
             // Run subsequent forks
-            processRunner.runFork(forkCounter + 1, forkCount);
+            processRunner.runFork(forkCounter + 1, benchmarkParams);
         }
     }
 

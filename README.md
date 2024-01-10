@@ -2,7 +2,12 @@
 
 ## TODO
 
-- [ ] Pass in serialized versions around, that might get rid of the intermediate translation layer
+- [X] Send serialized parameters from bootstrap to runner
+- [ ] Test that sending serialized parameters from to runner works in native
+- [ ] Send serialized results from runner to bootstrap
+- [ ] Test that sending serialized results from to runner works in native
+- [ ] Send serialized parameters from runner to bootstrap, to avoid recomputing them
+- [ ] Test that ^ works in native
 - [ ] Pass in benchmark information (rename to info or benchmarkInfo or benchmark) as is to runner
       Doing this might reduce the need for Cli except for those parameters not in the info itself
 - [ ] Support running single benchmark with multiple methods (basic!)

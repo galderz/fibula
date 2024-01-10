@@ -1,6 +1,9 @@
 package org.mendrugo.fibula.bootstrap;
 
 import io.quarkus.logging.Log;
+import org.mendrugo.fibula.results.RunnerArguments;
+import org.mendrugo.fibula.results.Serializables;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.io.IOException;
@@ -27,9 +30,10 @@ final class ProcessRunner
         runSync(new ProcessBuilder(buildArguments).inheritIO());
     }
 
-    void runFork(int forkIndex, int forkCount)
+    void runFork(int forkIndex, BenchmarkParams params)
     {
-        final List<String> forkArguments = runArguments(options);
+        final int forkCount = params.getMeasurement().getCount();
+        final List<String> forkArguments = runArguments(options, params);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         out.println("# Fork: " + forkIndex + " of " + forkCount);
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
@@ -104,10 +108,9 @@ final class ProcessRunner
         return arguments;
     }
 
-    private static List<String> runArguments(NativeOptions options)
+    private static List<String> runArguments(NativeOptions options, BenchmarkParams params)
     {
         final PackageMode packageMode = options.getPackageMode();
-        final List<String> runnerArguments = options.getRunnerArguments();
         // todo avoid hardcoding sample project name
         final List<String> baseArguments = switch (packageMode)
         {
@@ -122,7 +125,8 @@ final class ProcessRunner
         };
 
         final List<String> arguments = new ArrayList<>(baseArguments);
-        arguments.addAll(runnerArguments);
+        arguments.add("--" + RunnerArguments.PARAMS);
+        arguments.add(Serializables.toBase64(params));
         return arguments;
     }
 }

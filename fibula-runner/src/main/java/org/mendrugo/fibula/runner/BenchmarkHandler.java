@@ -4,6 +4,8 @@ import org.mendrugo.fibula.results.JmhFormats;
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
 import org.mendrugo.fibula.results.RunnerArguments;
+import org.mendrugo.fibula.results.Serializables;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.results.IterationResult;
@@ -17,6 +19,7 @@ import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.TimeValue;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,17 +42,20 @@ final class BenchmarkHandler
     void runBenchmark(BenchmarkCallable callable, ResultRestClient client)
     {
         final OutputFormat out = JmhFormats.outputFormat();
-        final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
+        // final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
 
-        final int warmupIterations = params.getWarmupIterations(cli.integerOpt(RunnerArguments.WARMUP_ITERATIONS));
-        final Optional<TimeValue> cmdLineValue = cli.timeValueOpt(RunnerArguments.WARMUP_TIME);
-        final TimeValue warmupTime = params.getWarmupTime(cmdLineValue);
-        final IterationParams warmup = new IterationParams(
-            IterationType.WARMUP
-            , warmupIterations
-            , warmupTime
-            , Defaults.WARMUP_BATCHSIZE
-        );
+        final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
+
+//        final int warmupIterations = params.getWarmupIterations(cli.integerOpt(RunnerArguments.WARMUP_ITERATIONS));
+//        final Optional<TimeValue> cmdLineValue = cli.timeValueOpt(RunnerArguments.WARMUP_TIME);
+//        final TimeValue warmupTime = params.getWarmupTime(cmdLineValue);
+//        final IterationParams warmup = new IterationParams(
+//            IterationType.WARMUP
+//            , warmupIterations
+//            , warmupTime
+//            , Defaults.WARMUP_BATCHSIZE
+//        );
+        final IterationParams warmup = params.getWarmup();
         for (int i = 1; i <= warmup.getCount(); i++)
         {
             out.iteration(null, warmup, i);
@@ -57,15 +63,7 @@ final class BenchmarkHandler
             out.iterationResult(null, warmup, i, iterationResult);
         }
 
-        final int measurementIterations = params.getMeasurementIterations(cli.integerOpt(RunnerArguments.MEASUREMENT_ITERATIONS));
-        final TimeValue measurementTime = params.getMeasurementTime(cli.timeValueOpt(RunnerArguments.MEASUREMENT_TIME));
-        final IterationParams measurement = new IterationParams(
-            IterationType.MEASUREMENT
-            , measurementIterations
-            , measurementTime
-            , Defaults.MEASUREMENT_BATCHSIZE
-        );
-
+        final IterationParams measurement = params.getMeasurement();
         for (int i = 1; i <= measurement.getCount(); i++)
         {
             out.iteration(null, measurement, i);

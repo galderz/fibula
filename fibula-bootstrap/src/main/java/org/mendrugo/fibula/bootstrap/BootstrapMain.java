@@ -6,7 +6,6 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.JmhOptionals;
 import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
@@ -55,12 +54,12 @@ public class BootstrapMain implements QuarkusApplication
         // Read metadata for all benchmarks
         final Set<NativeBenchmarkParams> benchmarks = readBenchmarks();
         final NativeBenchmarkParams benchmark = benchmarks.iterator().next();
+        final BenchmarkParams params = options.getBenchmarkParams(benchmark);
 
-        out.startBenchmark(options.getBenchmarkParams(benchmark));
+        out.startBenchmark(params);
         out.println("");
 
-        final int forks = benchmark.getMeasurementForks(JmhOptionals.fromJmh(options.getMeasurementForks()));
-        processRunner.runFork(1, forks);
+        processRunner.runFork(1, params);
 
         Quarkus.waitForExit();
         return 0;
