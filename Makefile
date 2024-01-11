@@ -10,12 +10,12 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
-JAVA_HOME ?= $(HOME)/opt/java-21
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
+JAVA_HOME ?= $(GRAALVM_HOME)
 MODE ?= jvm
 
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
-java = $(JAVA_HOME)/bin/java
+java = $(GRAALVM_HOME)/bin/java
 samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
 samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
 
@@ -67,18 +67,13 @@ endif
 
 samples: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples
-> GRAALVM_HOME=$(GRAALVM_HOME) $(java) $(system_props) -jar $(samples_bootstrap_jar) $(benchmark_params)
+> $(java) $(system_props) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
 
 runner: $(bootstrap_jar)
 > $(mvnw) package -DskipTests -pl fibula-samples -Prunner
 > $(java) -jar $(samples_runner_jar)
 .PHONY: runner
-
-native: $(bootstrap_jar)
-> $(mvnw) package -DskipTests -pl fibula-samples
-> GRAALVM_HOME=$(GRAALVM_HOME) $(java) -jar $(samples_bootstrap_jar) $(benchmark_params)
-.PHONY: native
 
 $(bootstrap_jar): $(shell find . -type f -name '*.java')
 $(bootstrap_jar): $(shell find . -type f -name 'pom.xml')
