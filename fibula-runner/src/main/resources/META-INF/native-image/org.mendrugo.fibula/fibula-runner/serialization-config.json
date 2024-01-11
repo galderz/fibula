@@ -7,10 +7,16 @@
       "name":"java.lang.Enum"
     },
     {
+      "name":"java.lang.String"
+    },
+    {
       "name":"java.util.ArrayList"
     },
     {
       "name":"java.util.Collections$EmptyList"
+    },
+    {
+      "name":"java.util.Collections$SingletonSet"
     },
     {
       "name":"java.util.TreeMap"
@@ -46,6 +52,24 @@
       "name":"org.openjdk.jmh.infra.IterationParamsL4"
     },
     {
+      "name":"org.openjdk.jmh.results.AggregationPolicy"
+    },
+    {
+      "name":"org.openjdk.jmh.results.IterationResult"
+    },
+    {
+      "name":"org.openjdk.jmh.results.IterationResultMetaData"
+    },
+    {
+      "name":"org.openjdk.jmh.results.Result"
+    },
+    {
+      "name":"org.openjdk.jmh.results.ResultRole"
+    },
+    {
+      "name":"org.openjdk.jmh.results.ThroughputResult"
+    },
+    {
       "name":"org.openjdk.jmh.runner.IterationType"
     },
     {
@@ -53,6 +77,18 @@
     },
     {
       "name":"org.openjdk.jmh.runner.options.TimeValue"
+    },
+    {
+      "name":"org.openjdk.jmh.util.AbstractStatistics"
+    },
+    {
+      "name":"org.openjdk.jmh.util.DelegatingMultimap"
+    },
+    {
+      "name":"org.openjdk.jmh.util.SingletonStatistics"
+    },
+    {
+      "name":"org.openjdk.jmh.util.TreeMultimap"
     }
   ],
   "lambdaCapturingTypes":[

@@ -118,10 +118,9 @@ final class ProcessRunner
         final List<String> baseArguments = switch (packageMode)
         {
             case JVM -> List.of(
-                // todo add an option for the native image agent and fix location of java
-                // ".../graal-21/bin/java"
-                // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
                 "java"
+                // todo add an option for the native image agent and fix location of java
+                // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
                 , "-jar"
                 , "fibula-samples/target/runner-app/quarkus-run.jar"
             );
