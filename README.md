@@ -8,6 +8,10 @@
 - [ ] Test that sending serialized results from to runner works in native
 - [ ] Send serialized parameters from runner to bootstrap, to avoid recomputing them
 - [ ] Test that ^ works in native
+- [ ] Support running jvm mode with native image agent
+      Doing this will require fixing the forking to avoid errors related to writing to same native image config file
+      Once that is fixed, maybe default to running with only 1 fork and 1 warmup and 1 measurement fork, because that should be enough
+- [ ] Fix resolution of `mvn` and `java` by the bootstrap process
 - [ ] Pass in benchmark information (rename to info or benchmarkInfo or benchmark) as is to runner
       Doing this might reduce the need for Cli except for those parameters not in the info itself
 - [ ] Support running single benchmark with multiple methods (basic!)
@@ -20,6 +24,7 @@
       https://github.com/openjdk/jdk/blob/master/test/micro/org/openjdk/bench/java/io/RecordDeserialization.java
 - [ ] See how record equals/hashCode benchmark behaves with different GraalVM versions
 - [ ] Add profiler integration
+- [ ] Narrow down native issue with commons match dependency
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 

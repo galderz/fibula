@@ -36,6 +36,9 @@ final class ProcessRunner
         final List<String> forkArguments = runArguments(options, params);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         out.println("# Fork: " + forkIndex + " of " + forkCount);
+        // todo wait for fork to finish before launching the next one
+        //      otherwise when trying to use the native image agent you get error that the configuration files are in use
+        //      it should also remove some potential noise since we make sure the fork is finished before starting next
         runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
@@ -115,6 +118,9 @@ final class ProcessRunner
         final List<String> baseArguments = switch (packageMode)
         {
             case JVM -> List.of(
+                // todo add an option for the native image agent and fix location of java
+                // ".../graal-21/bin/java"
+                // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
                 "java"
                 , "-jar"
                 , "fibula-samples/target/runner-app/quarkus-run.jar"
