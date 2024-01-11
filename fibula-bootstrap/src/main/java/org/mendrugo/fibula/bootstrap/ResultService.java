@@ -21,7 +21,7 @@ import java.util.List;
 @ApplicationScoped
 public class ResultService
 {
-    private final List<NativeIterationResult> iterationResults = new ArrayList<>();
+    private final List<IterationResult> iterationResults = new ArrayList<>();
 
     private NativeOptions options;
     private int forkCounter;
@@ -29,16 +29,16 @@ public class ResultService
     private ProcessRunner processRunner;
     private OutputFormat out;
 
-    void addIteration(NativeIterationResult result)
+    void addIteration(IterationResult result)
     {
-        final BenchmarkParams benchmarkParams = getBenchmarkParams(result);
+        final BenchmarkParams benchmarkParams = result.getBenchmarkParams();
         final int forkCount = benchmarkParams.getForks();
 
         iterationResults.add(result);
         final int totalIterations = forkCount * benchmarkParams.getMeasurement().getCount();
         if (totalIterations == iterationResults.size())
         {
-            endRun(iterationResults, benchmarkParams);
+            endRun();
             Log.debug("Now exit the application");
             Quarkus.asyncExit();
         }
@@ -67,30 +67,19 @@ public class ResultService
         this.out = out;
     }
 
-    private void endRun(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
+    private void endRun()
     {
-        final Collection<RunResult> runResults = runResults(results, benchmarkParams);
+        final BenchmarkParams benchmarkParams = iterationResults.iterator().next().getBenchmarkParams();
+        final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(benchmarkParams, iterationResults));
+        benchmarkResults.forEach(out::endBenchmark);
+        final Collection<RunResult> runResults = List.of(new RunResult(benchmarkParams, benchmarkResults));
+
         final ResultFormat resultFormat = JmhFormats.resultFormat();
         resultFormat.writeOut(runResults);
     }
 
-    private Collection<RunResult> runResults(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
-    {
-        final Collection<BenchmarkResult> benchmarkResults = List.of(benchmarkResult(results, benchmarkParams));
-        benchmarkResults.forEach(out::endBenchmark);
-        return List.of(new RunResult(benchmarkParams, benchmarkResults));
-    }
-
-    private BenchmarkResult benchmarkResult(List<NativeIterationResult> results, BenchmarkParams benchmarkParams)
-    {
-        final List<IterationResult> iterationResults = results.stream()
-            .map(iterationResult -> Results.toIterationResult(iterationResult, benchmarkParams))
-            .toList();
-        return new BenchmarkResult(benchmarkParams, iterationResults);
-    }
-
-    private BenchmarkParams getBenchmarkParams(NativeIterationResult result)
-    {
-        return options.getBenchmarkParams(new NativeBenchmarkParams(new BenchmarkListEntry(result.benchmark())));
-    }
+//    private BenchmarkParams getBenchmarkParams(NativeIterationResult result)
+//    {
+//        return options.getBenchmarkParams(new NativeBenchmarkParams(new BenchmarkListEntry(result.benchmark())));
+//    }
 }

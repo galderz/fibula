@@ -1,7 +1,6 @@
 package org.mendrugo.fibula.runner;
 
 import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.mendrugo.fibula.results.NativeIterationResult;
 import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.Serializables;
@@ -14,15 +13,11 @@ import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ThroughputResult;
-import org.openjdk.jmh.runner.Defaults;
-import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -42,38 +37,27 @@ final class BenchmarkHandler
     void runBenchmark(BenchmarkCallable callable, ResultRestClient client)
     {
         final OutputFormat out = JmhFormats.outputFormat();
-        // final NativeBenchmarkParams params = callable.infrastructure.getBenchmarkParams();
-
         final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
 
-//        final int warmupIterations = params.getWarmupIterations(cli.integerOpt(RunnerArguments.WARMUP_ITERATIONS));
-//        final Optional<TimeValue> cmdLineValue = cli.timeValueOpt(RunnerArguments.WARMUP_TIME);
-//        final TimeValue warmupTime = params.getWarmupTime(cmdLineValue);
-//        final IterationParams warmup = new IterationParams(
-//            IterationType.WARMUP
-//            , warmupIterations
-//            , warmupTime
-//            , Defaults.WARMUP_BATCHSIZE
-//        );
         final IterationParams warmup = params.getWarmup();
         for (int i = 1; i <= warmup.getCount(); i++)
         {
-            out.iteration(null, warmup, i);
-            IterationResult iterationResult = runIteration(callable, warmup, callable.infrastructure);
-            out.iterationResult(null, warmup, i, iterationResult);
+            out.iteration(params, warmup, i);
+            IterationResult iterationResult = runIteration(params, callable, warmup, callable.infrastructure);
+            out.iterationResult(params, warmup, i, iterationResult);
         }
 
         final IterationParams measurement = params.getMeasurement();
         for (int i = 1; i <= measurement.getCount(); i++)
         {
-            out.iteration(null, measurement, i);
-            IterationResult iterationResult = runIteration(callable, measurement, callable.infrastructure);
-            out.iterationResult(null, measurement, i, iterationResult);
-            client.send(NativeIterationResult.of(iterationResult, callable.infrastructure.getBenchmark()));
+            out.iteration(params, measurement, i);
+            IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
+            out.iterationResult(params, measurement, i, iterationResult);
+            client.send(new NativeIterationResult(Serializables.toBase64(iterationResult)));
         }
     }
 
-    private IterationResult runIteration(BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
+    private IterationResult runIteration(BenchmarkParams params, BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
     {
         final List<Result> iterationResults = new ArrayList<>();
         final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure, iterationParams.getTime());
@@ -82,7 +66,7 @@ final class BenchmarkHandler
         long allOps = benchmarkTaskResult.getAllOps();
         long measuredOps = benchmarkTaskResult.getMeasuredOps();
 
-        IterationResult result = new IterationResult(null, iterationParams, new IterationResultMetaData(allOps, measuredOps));
+        IterationResult result = new IterationResult(params, iterationParams, new IterationResultMetaData(allOps, measuredOps));
         result.addResults(iterationResults);
         return result;
     }
