@@ -2,12 +2,6 @@
 
 ## TODO
 
-- [X] Send serialized parameters from bootstrap to runner
-- [ ] Test that sending serialized parameters from to runner works in native
-- [ ] Send serialized results from runner to bootstrap
-- [ ] Test that sending serialized results from to runner works in native
-- [ ] Send serialized parameters from runner to bootstrap, to avoid recomputing them
-- [ ] Test that ^ works in native
 - [ ] Support running jvm mode with native image agent
       Doing this will require fixing the forking to avoid errors related to writing to same native image config file
       Once that is fixed, maybe default to running with only 1 fork and 1 warmup and 1 measurement fork, because that should be enough
