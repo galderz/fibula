@@ -6,11 +6,8 @@
       Doing this will require fixing the forking to avoid errors related to writing to same native image config file
       Once that is fixed, maybe default to running with only 1 fork and 1 warmup and 1 measurement fork, because that should be enough
 - [ ] Fix resolution of `mvn` and `java` by the bootstrap process
-- [ ] Pass in benchmark information (rename to info or benchmarkInfo or benchmark) as is to runner
-      Doing this might reduce the need for Cli except for those parameters not in the info itself
 - [ ] Support running single benchmark with multiple methods (basic!)
-- [ ] Use jmh-samples instead of duplicating the samples
-      This means you need to be able to run individual benchmark files...etc
+- [ ] Support selecting which benchmark to run (right now hardcoded)
 - [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
       E.g. JMHSample_02_BenchmarkModes
 - [ ] Add a record equals/hashCode benchmark

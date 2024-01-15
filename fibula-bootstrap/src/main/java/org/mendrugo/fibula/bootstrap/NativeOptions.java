@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 final class NativeOptions
 {
-    private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.JVM;
+    private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.NATIVE;
     private static final boolean DEFAULT_DECOMPILE = false;
 
     private final Options jmhOptions;
