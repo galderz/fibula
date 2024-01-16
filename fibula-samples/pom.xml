@@ -135,6 +135,7 @@
             </activation>
             <properties>
                 <quarkus.package.main-class>bootstrap</quarkus.package.main-class>
+                <quarkus.package.output-directory>bootstrap</quarkus.package.output-directory>
             </properties>
             <dependencies>
                 <dependency>
@@ -145,10 +146,10 @@
             </dependencies>
         </profile>
         <profile>
-            <id>runner</id>
+            <id>runner-jvm</id>
             <properties>
                 <quarkus.package.main-class>runner</quarkus.package.main-class>
-                <quarkus.package.output-directory>runner-app</quarkus.package.output-directory>
+                <quarkus.package.output-directory>runner-jvm</quarkus.package.output-directory>
             </properties>
             <dependencies>
                 <dependency>
@@ -172,7 +173,7 @@
             <id>runner-native</id>
             <properties>
                 <quarkus.package.main-class>runner</quarkus.package.main-class>
-                <quarkus.package.output-directory>runner-app</quarkus.package.output-directory>
+                <quarkus.package.output-directory>runner-native</quarkus.package.output-directory>
                 <skipITs>false</skipITs>
                 <quarkus.package.type>native</quarkus.package.type>
             </properties>

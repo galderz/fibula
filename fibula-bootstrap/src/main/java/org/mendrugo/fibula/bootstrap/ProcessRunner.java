@@ -14,20 +14,12 @@ import java.util.List;
 final class ProcessRunner
 {
     private final NativeOptions options;
-    private final List<String> buildArguments;
     private final OutputFormat out;
 
     ProcessRunner(NativeOptions options, OutputFormat out)
     {
         this.options = options;
         this.out = out;
-        this.buildArguments = buildArguments(options);
-    }
-
-    void runBuild()
-    {
-        Log.debugf("Executing: %s", String.join(" ", buildArguments));
-        runSync(new ProcessBuilder(buildArguments).inheritIO());
     }
 
     void runFork(int forkIndex, BenchmarkParams params)
@@ -54,63 +46,6 @@ final class ProcessRunner
         }
     }
 
-    private void runSync(ProcessBuilder processBuilder)
-    {
-        try
-        {
-            final Process process = processBuilder.start();
-            final int exitCode = process.waitFor();
-            if (exitCode != 0)
-            {
-                throw new RuntimeException(String.format(
-                    "Error packaging runner (exit code %d)"
-                    , exitCode
-                ));
-            }
-        }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private static List<String> buildArguments(NativeOptions options)
-    {
-        final PackageMode packageMode = options.getPackageMode();
-        // todo avoid hardcoding sample project name
-        final List<String> baseArguments = switch (packageMode)
-        {
-            case JVM -> List.of(
-                "mvn"
-                , "package"
-                , "-DskipTests"
-                , "-pl"
-                , "fibula-samples"
-                , "-Prunner"
-            );
-            case NATIVE -> List.of(
-                "mvn"
-                , "package"
-                , "-DskipTests"
-                , "-pl"
-                , "fibula-samples"
-                , "-Prunner-native"
-            );
-        };
-
-        final List<String> arguments = new ArrayList<>(baseArguments);
-        if (options.isDecompile())
-        {
-            arguments.add("-Dquarkus.package.vineflower.enabled=true");
-        }
-
-        return arguments;
-    }
-
     private static List<String> runArguments(NativeOptions options, BenchmarkParams params)
     {
         final PackageMode packageMode = options.getPackageMode();
@@ -122,10 +57,10 @@ final class ProcessRunner
                 // todo add an option for the native image agent and fix location of java
                 // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
                 , "-jar"
-                , "fibula-samples/target/runner-app/quarkus-run.jar"
+                , "target/runner-jvm/quarkus-run.jar"
             );
             case NATIVE -> List.of(
-                "./fibula-samples/target/runner-app/fibula-samples-1.0.0-SNAPSHOT-runner"
+                "./target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner"
             );
         };
 

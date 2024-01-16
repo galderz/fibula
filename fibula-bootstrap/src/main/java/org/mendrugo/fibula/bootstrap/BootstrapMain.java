@@ -48,9 +48,6 @@ public class BootstrapMain implements QuarkusApplication
         resultService.setProcessRunner(processRunner);
         resultService.setOutputFormat(out);
 
-        // Build the runner and run the first fork
-        processRunner.runBuild();
-
         // Read metadata for all benchmarks
         final Set<NativeBenchmarkParams> benchmarks = readBenchmarks();
         final NativeBenchmarkParams benchmark = benchmarks.iterator().next();
@@ -67,9 +64,8 @@ public class BootstrapMain implements QuarkusApplication
 
     private Set<NativeBenchmarkParams> readBenchmarks()
     {
-        // todo avoid hardcoding sample project name
-        final File resourceDir = Path.of("fibula-samples", "target", "classes").toFile();
-        final File sourceDir = Path.of("fibula-samples", "target", "classes", "tbd").toFile();
+        final File resourceDir = Path.of("target", "classes").toFile();
+        final File sourceDir = Path.of("target", "classes", "tbd").toFile();
         final FileSystemDestination destination = new FileSystemDestination(resourceDir, sourceDir);
         try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
         {

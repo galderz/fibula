@@ -16,8 +16,7 @@ MODE ?= jvm
 
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 java = $(GRAALVM_HOME)/bin/java
-samples_bootstrap_jar = fibula-samples/target/quarkus-app/quarkus-run.jar
-samples_runner_jar = fibula-samples/target/runner-app/quarkus-run.jar
+samples_bootstrap_jar = target/bootstrap/quarkus-run.jar
 
 ifdef LOG_LEVEL
   ifeq ($(LOG_LEVEL),DEBUG)
@@ -45,16 +44,12 @@ benchmark_params += 2
 
 benchmark_params += -p
 benchmark_params += fibula.package.mode=$(MODE)
-ifdef DECOMPILE
-  benchmark_params += -p
-  benchmark_params += fibula.decompile=true
-endif
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
 ifdef DEBUG_IDE
   mvnw += $(HOME)/opt/maven/bin/mvnDebug
 else
-  mvnw += ./mvnw
+  mvnw += $(HOME)/opt/maven/bin/mvn
 endif
 
 ifdef VERBOSE
@@ -65,15 +60,17 @@ ifdef DEBUG
   java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
 endif
 
+runner_build_args += -Prunner-$(MODE)
+ifdef DECOMPILE
+  runner_build_args += -Dquarkus.package.vineflower.enabled=true
+endif
+
 samples: $(bootstrap_jar)
-> $(mvnw) package -DskipTests -pl fibula-samples
+> cd fibula-samples
+> $(mvnw) package
+> $(mvnw) package $(runner_build_args)
 > $(java) $(system_props) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
-
-runner: $(bootstrap_jar)
-> $(mvnw) package -DskipTests -pl fibula-samples -Prunner
-> $(java) -jar $(samples_runner_jar)
-.PHONY: runner
 
 $(bootstrap_jar): $(shell find . -type f -name '*.java')
 $(bootstrap_jar): $(shell find . -type f -name 'pom.xml')
