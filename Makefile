@@ -42,9 +42,6 @@ benchmark_params += 2
 benchmark_params += -w
 benchmark_params += 2
 
-benchmark_params += -p
-benchmark_params += fibula.package.mode=$(MODE)
-
 mvnw += JAVA_HOME=$(JAVA_HOME)
 ifdef DEBUG_IDE
   mvnw += $(HOME)/opt/maven/bin/mvnDebug

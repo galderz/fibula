@@ -42,7 +42,7 @@ public class BootstrapMain implements QuarkusApplication
         final NativeOptions options = new NativeOptions(jmhOptions);
 
         final OutputFormat out = JmhFormats.outputFormat();
-        final ProcessRunner processRunner = new ProcessRunner(options, out);
+        final ProcessRunner processRunner = new ProcessRunner(out);
         resultService.setProcessRunner(processRunner);
         resultService.setOutputFormat(out);
 

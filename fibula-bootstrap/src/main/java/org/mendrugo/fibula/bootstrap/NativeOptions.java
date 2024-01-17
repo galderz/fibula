@@ -19,20 +19,11 @@ import java.util.concurrent.TimeUnit;
 
 final class NativeOptions
 {
-    private static final PackageMode DEFAULT_PACKAGE_MODE = PackageMode.NATIVE;
-
     private final Options jmhOptions;
-    private final PackageMode packageMode;
 
     NativeOptions(Options jmhOptions)
     {
         this.jmhOptions = jmhOptions;
-        this.packageMode = packageModeOrDefault(jmhOptions);
-    }
-
-    PackageMode getPackageMode()
-    {
-        return packageMode;
     }
 
     BenchmarkParams getBenchmarkParams(BenchmarkListEntry benchmark)
@@ -79,16 +70,6 @@ final class NativeOptions
             , "0.1"
             , TimeValue.minutes(10)
         );
-    }
-
-    private static PackageMode packageModeOrDefault(Options jmhOptions)
-    {
-        if (jmhOptions.getParameter("fibula.package.mode").hasValue())
-        {
-            return PackageMode.valueOf(jmhOptions.getParameter("fibula.package.mode").get().iterator().next().toUpperCase());
-        }
-
-        return DEFAULT_PACKAGE_MODE;
     }
 
     private static int getMeasurementForks(BenchmarkListEntry benchmark, Optional<Integer> cmdLineValue)
