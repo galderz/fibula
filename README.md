@@ -5,7 +5,6 @@
 - [ ] Support running jvm mode with native image agent
       Doing this will require fixing the forking to avoid errors related to writing to same native image config file
       Once that is fixed, maybe default to running with only 1 fork and 1 warmup and 1 measurement fork, because that should be enough
-- [ ] Fix resolution of `mvn` and `java` by the bootstrap process
 - [ ] Support running single benchmark with multiple methods (basic!)
 - [ ] Support selecting which benchmark to run (right now hardcoded)
 - [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
