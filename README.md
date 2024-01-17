@@ -2,8 +2,8 @@
 
 ## TODO
 
+- [ ] Print executing/results as TRACE and make results/params presented not in base64 format
 - [ ] Separate building bootstrap+runner from running it (to avoid repeat build if source not changed)
-- [ ] Enable forwarding logging level from bootstrap to runner
 - [ ] The runner needs to be able to filter which benchmark supplier to run... 
       Otherwise, it runs too many iterations (both warmup and measurement)
 - [ ] Avoid the BenchmarkList file and instead emit a build item and use the recorder
