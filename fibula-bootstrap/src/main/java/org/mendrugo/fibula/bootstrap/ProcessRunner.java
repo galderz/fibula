@@ -27,9 +27,6 @@ final class ProcessRunner
         final List<String> forkArguments = runArguments(params);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         out.println("# Fork: " + forkIndex + " of " + forkCount);
-        // todo wait for fork to finish before launching the next one
-        //      otherwise when trying to use the native image agent you get error that the configuration files are in use
-        //      it should also remove some potential noise since we make sure the fork is finished before starting next
         return runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
@@ -60,13 +57,7 @@ final class ProcessRunner
         final File binary = new File("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner");
 
         final List<String> nativeArguments = List.of(binary.getPath());
-        final List<String> jvmArguments = List.of(
-            params.getJvm()
-            // todo add an option for the native image agent and fix location of java
-            // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
-            , "-jar"
-            , jar.getPath()
-        );
+        final List<String> jvmArguments = getJvmArguments(params, jar);
 
         if (jar.exists() && binary.exists())
         {
@@ -89,5 +80,26 @@ final class ProcessRunner
         }
 
         throw new IllegalStateException("Neither jar nor binary runner built");
+    }
+
+    private static List<String> getJvmArguments(BenchmarkParams params, File jar)
+    {
+        final List<String> args = new ArrayList<>();
+        args.add(params.getJvm());
+
+        final String logLevelPropertyName = "quarkus.log.category.\"org.mendrugo.fibula\".level";
+        final String logLevel = System.getProperty(logLevelPropertyName);
+        if (logLevel != null)
+        {
+            args.add(String.format("-D%s=%s", logLevelPropertyName, logLevel));
+        }
+
+        // todo add an option for the native image agent and fix location of java
+        // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
+
+        args.add("-jar");
+        args.add(jar.getPath());
+
+        return args;
     }
 }

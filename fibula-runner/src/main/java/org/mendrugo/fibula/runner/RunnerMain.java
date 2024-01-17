@@ -22,7 +22,7 @@ public class RunnerMain implements QuarkusApplication
     @Override
     public int run(String... args)
     {
-        Log.debug("Running Fibula RunnerMain");
+        Log.debug("Running forked runner");
 
         final Cli cli = Cli.read(args);
 

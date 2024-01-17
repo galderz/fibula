@@ -43,8 +43,13 @@ final class NativeOptions
 
     SortedSet<BenchmarkParams> findBenchmarkParams(OutputFormat out)
     {
-        final BenchmarkList benchmarkList = BenchmarkList.fromString(readBenchmarks());
+        final String benchmarks = readBenchmarks();
+        Log.debugf("Read from benchmark list file: %n%s", benchmarks);
+
+        final BenchmarkList benchmarkList = BenchmarkList.fromString(benchmarks);
         final SortedSet<BenchmarkListEntry> entries = benchmarkList.find(out, jmhOptions.getIncludes(), jmhOptions.getExcludes());
+        Log.debugf("Number of benchmarks: %d", entries.size());
+
         // todo would it work if do stream/map then sort?
         final TreeSet<BenchmarkParams> params = new TreeSet<>();
         for (BenchmarkListEntry entry : entries)
@@ -163,7 +168,7 @@ final class NativeOptions
             try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
             {
                 final Collection<String> lines = FileUtils.readAllLines(reader);
-                return String.join("", lines);
+                return String.join(System.lineSeparator(), lines);
             }
         }
         catch (IOException e)

@@ -36,7 +36,7 @@ public class BootstrapMain implements QuarkusApplication
     @Override
     public int run(String... args) throws Exception
     {
-        System.out.println("Running bootstrap main...");
+        Log.debug("Running bootstrap");
 
         // Read command line arguments just like JMH does
         final Options jmhOptions = new CommandLineOptions(args);
