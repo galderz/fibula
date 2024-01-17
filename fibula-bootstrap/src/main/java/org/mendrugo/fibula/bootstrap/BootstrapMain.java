@@ -63,9 +63,7 @@ public class BootstrapMain implements QuarkusApplication
     private Set<BenchmarkListEntry> readBenchmarks()
     {
         final File resourceDir = Path.of("target", "classes").toFile();
-        // todo ignore source dir because not relevant, can we null it?
-        final File sourceDir = Path.of("target", "classes", "tbd").toFile();
-        final FileSystemDestination destination = new FileSystemDestination(resourceDir, sourceDir);
+        final FileSystemDestination destination = new FileSystemDestination(resourceDir, null);
         try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
         {
             try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
