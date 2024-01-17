@@ -2,13 +2,18 @@
 
 ## TODO
 
+- [ ] Separate building bootstrap+runner from running it (to avoid repeat build if source not changed)
+- [ ] Enable forwarding logging level from bootstrap to runner
+- [ ] The runner needs to be able to filter which benchmark supplier to run... 
+      Otherwise, it runs too many iterations (both warmup and measurement)
+- [ ] Avoid the BenchmarkList file and instead emit a build item and use the recorder
+- [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
+  E.g. FibulaSample_01_MultiHelloWorld
 - [ ] Support running jvm mode with native image agent
       Doing this will require fixing the forking to avoid errors related to writing to same native image config file
       Once that is fixed, maybe default to running with only 1 fork and 1 warmup and 1 measurement fork, because that should be enough
 - [ ] Support running single benchmark with multiple methods (basic!)
 - [ ] Support selecting which benchmark to run (right now hardcoded)
-- [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
-      E.g. JMHSample_02_BenchmarkModes
 - [ ] Add a record equals/hashCode benchmark
       Some potential examples:
       https://github.com/openjdk/jdk/blob/master/test/micro/org/openjdk/bench/java/io/RecordDeserialization.java

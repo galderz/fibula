@@ -21,8 +21,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
 
 @QuarkusMain(name = "bootstrap")
@@ -44,54 +46,30 @@ public class BootstrapMain implements QuarkusApplication
         final ProcessRunner processRunner = new ProcessRunner(out);
 
         // Read metadata for all benchmarks
-        final Set<BenchmarkListEntry> benchmarks = readBenchmarks();
-        final BenchmarkListEntry benchmark = benchmarks.iterator().next();
-        final BenchmarkParams params = options.getBenchmarkParams(benchmark);
-
-        out.startBenchmark(params);
-        out.println("");
-
-        final int forkCount = params.getMeasurement().getCount();
-        for (int i = 0; i < forkCount; i++)
+        final SortedSet<BenchmarkParams> benchmarks = options.findBenchmarkParams(out);
+        for (BenchmarkParams benchmark : benchmarks)
         {
-            final Process process = processRunner.runFork(i + 1, params);
-            final int exitCode = process.waitFor();
-            if (exitCode != 0)
+            out.startBenchmark(benchmark);
+            out.println("");
+
+            final int forkCount = benchmark.getMeasurement().getCount();
+            for (int i = 0; i < forkCount; i++)
             {
-                throw new RuntimeException(String.format(
-                    "Error in forked runner (exit code %d)"
-                    , exitCode
-                ));
+                final Process process = processRunner.runFork(i + 1, benchmark);
+                final int exitCode = process.waitFor();
+                if (exitCode != 0)
+                {
+                    throw new RuntimeException(String.format(
+                        "Error in forked runner (exit code %d)"
+                        , exitCode
+                    ));
+                }
             }
+
+            resultService.endBenchmark(benchmark, out);
         }
 
-        resultService.endRun(out);
+        resultService.endRun();
         return 0;
-    }
-
-    private Set<BenchmarkListEntry> readBenchmarks()
-    {
-        final File resourceDir = Path.of("target", "classes").toFile();
-        final FileSystemDestination destination = new FileSystemDestination(resourceDir, null);
-        try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
-        {
-            try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
-            {
-                return FileUtils.readAllLines(reader).stream()
-                    .map(BenchmarkListEntry::new)
-                    .collect(Collectors.toUnmodifiableSet());
-            }
-        }
-        catch (IOException e)
-        {
-            Log.debug("Unable to read benchmark list", e);
-        }
-        catch (UnsupportedOperationException e)
-        {
-            final String msg = "Unable to read the existing benchmark list.";
-            Log.debug(msg, e);
-            destination.printError(msg, e);
-        }
-        return Collections.emptySet();
     }
 }

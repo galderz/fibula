@@ -14,7 +14,6 @@ import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
@@ -34,6 +33,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -59,42 +59,49 @@ class FibulaProcessor
     {
         System.out.println("Generating command...");
 
-        BenchmarkInfo.Builder builder = new BenchmarkInfo.Builder();
-        for (AnnotationInstance ann : index.getIndex().getAnnotations(BENCHMARK))
-        {
-            MethodInfo methodInfo = ann.target().asMethod();
-            builder.withMethod(methodInfo);
-            System.out.println(methodInfo);
-        }
+        final List<MethodInfo> methods = index.getIndex().getAnnotations(BENCHMARK).stream()
+            .map(annotation -> annotation.target().asMethod())
+            .filter(FibulaProcessor::isSupportedBenchmark)
+            .toList();
 
-        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
-        final BenchmarkInfo build = builder.build();
-        if (build.methods().isEmpty())
-        {
-            return;
-        }
-
-        build.methods()
-            // todo add support for more benchmarks in jmh-samples
-            .stream().filter(m ->
-                // m.declaringClass().simpleName().contains("MultiHelloWorld")
-                m.declaringClass().simpleName().contains("JMHSample_01")
-                // ||  m.declaringClass().simpleName().contains("JMHSample_02")
-            )
-            .forEach(m -> generate(m, beanOutput, buildSystemTarget));
+        generateBenchmarkList(methods, buildSystemTarget);
+        generateBenchmarkClasses(methods, generatedBeanClasses);
     }
 
-    private void generate(MethodInfo methodInfo, ClassOutput beanOutput, BuildSystemTargetBuildItem buildSystemTarget)
+    private static boolean isSupportedBenchmark(MethodInfo methodInfo)
     {
-        final ClassInfo classInfo = methodInfo.declaringClass();
+        return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
+            || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
+    }
 
+    private void generateBenchmarkClasses(List<MethodInfo> methods, BuildProducer<GeneratedBeanBuildItem> generatedBeans)
+    {
+        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
+        methods.forEach(m -> generateBenchmarkBytecode(m, beanOutput));
+    }
+
+    private void generateBenchmarkList(List<MethodInfo> methods, BuildSystemTargetBuildItem buildSystemTarget)
+    {
+        final File resourceDir = buildSystemTarget.getOutputDirectory().resolve(Path.of("classes")).toFile();
+        final FileSystemDestination destination = new FileSystemDestination(resourceDir, null);
+        try (OutputStream stream = destination.newResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
+        {
+            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8)))
+            {
+                methods.forEach(method -> writeAnnotationParams(method, writer));
+            }
+        } catch (IOException ex) {
+            destination.printError("Error writing benchmark list", ex);
+        }
+    }
+
+    private void generateBenchmarkBytecode(
+        MethodInfo methodInfo
+        , ClassOutput beanOutput
+    )
+    {
+        final String userClassQName = getUserClassQName(methodInfo);
         final String functionClassName = generateFunction(methodInfo, beanOutput);
-        generateSupplier(methodInfo, beanOutput, classInfo, functionClassName, buildSystemTarget);
-    }
-
-    private static void generateSupplier(MethodInfo methodInfo, ClassOutput beanOutput, ClassInfo classInfo, String functionClassName, BuildSystemTargetBuildItem buildSystemTarget)
-    {
-        final String userClassQName = String.format("%s.%s", PACKAGE_NAME, classInfo.simpleName());
         final String method = methodInfo.name();
 
         final ClassCreator supplier = ClassCreator.builder()
@@ -102,8 +109,8 @@ class FibulaProcessor
             .className(String.format(
                 "%s_%s_Supplier"
                 , userClassQName
-                , method)
-            )
+                , method
+            ))
             .interfaces("org.mendrugo.fibula.runner.BenchmarkSupplier") // todo share class
             .build();
         supplier.addAnnotation(ApplicationScoped.class);
@@ -113,31 +120,25 @@ class FibulaProcessor
         get.returnValue(newInstance);
         get.close();
 
-        final MethodCreator benchmark = supplier.getMethodCreator("benchmark", String.class);
-        final String params = generateAnnotationParams(userClassQName, method);
-        benchmark.returnValue(benchmark.load(params));
-        benchmark.close();
-
-        // Write annotation params externally for the bootstrap process to pick up
-        writeAnnotationParams(params, buildSystemTarget);
+//        final MethodCreator benchmark = supplier.getMethodCreator("benchmark", String.class);
+//        final String params = generateAnnotationParams(userClassQName, method);
+//        benchmark.returnValue(benchmark.load(params));
+//        benchmark.close();
 
         supplier.close();
     }
 
-    private static void writeAnnotationParams(String params, BuildSystemTargetBuildItem buildSystemTarget)
+    private static String getUserClassQName(MethodInfo methodInfo)
     {
-        final File resourceDir = buildSystemTarget.getOutputDirectory().resolve(Path.of("classes")).toFile();
-        final File sourceDir = buildSystemTarget.getOutputDirectory().resolve(Path.of("classes", "tbd")).toFile();
-        final FileSystemDestination destination = new FileSystemDestination(resourceDir, sourceDir);
-        try (OutputStream stream = destination.newResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
-        {
-            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8)))
-            {
-                writer.println(params);
-            }
-        } catch (IOException ex) {
-            destination.printError("Error writing benchmark list", ex);
-        }
+        final ClassInfo classInfo = methodInfo.declaringClass();
+        return String.format("%s.%s", PACKAGE_NAME, classInfo.simpleName());
+    }
+
+    private static void writeAnnotationParams(MethodInfo method, PrintWriter writer)
+    {
+        final String userClassQName = getUserClassQName(method);
+        final String params = generateAnnotationParams(userClassQName, method.name());
+        writer.println(params);
     }
 
     private static String generateAnnotationParams(String userClassQName, String method)

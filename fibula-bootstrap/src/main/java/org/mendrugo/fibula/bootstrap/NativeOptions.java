@@ -1,20 +1,35 @@
 package org.mendrugo.fibula.bootstrap;
 
+import io.quarkus.logging.Log;
 import org.mendrugo.fibula.results.JmhOptionals;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.WorkloadParams;
+import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.TimeValue;
+import org.openjdk.jmh.util.FileUtils;
 import org.openjdk.jmh.util.Utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 final class NativeOptions
@@ -26,7 +41,20 @@ final class NativeOptions
         this.jmhOptions = jmhOptions;
     }
 
-    BenchmarkParams getBenchmarkParams(BenchmarkListEntry benchmark)
+    SortedSet<BenchmarkParams> findBenchmarkParams(OutputFormat out)
+    {
+        final BenchmarkList benchmarkList = BenchmarkList.fromString(readBenchmarks());
+        final SortedSet<BenchmarkListEntry> entries = benchmarkList.find(out, jmhOptions.getIncludes(), jmhOptions.getExcludes());
+        // todo would it work if do stream/map then sort?
+        final TreeSet<BenchmarkParams> params = new TreeSet<>();
+        for (BenchmarkListEntry entry : entries)
+        {
+            params.add(getBenchmarkParams(entry));
+        }
+        return params;
+    }
+
+    private BenchmarkParams getBenchmarkParams(BenchmarkListEntry benchmark)
     {
         final IterationParams warmup = new IterationParams(
             IterationType.WARMUP
@@ -124,5 +152,30 @@ final class NativeOptions
         return cmdLineValue
             .orElse(benchmark.getJvm()
             .orElse(Utils.getCurrentJvm()));
+    }
+
+    private String readBenchmarks()
+    {
+        final File resourceDir = Path.of("target", "classes").toFile();
+        final FileSystemDestination destination = new FileSystemDestination(resourceDir, null);
+        try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
+        {
+            try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+            {
+                final Collection<String> lines = FileUtils.readAllLines(reader);
+                return String.join("", lines);
+            }
+        }
+        catch (IOException e)
+        {
+            Log.debug("Unable to read benchmark list", e);
+        }
+        catch (UnsupportedOperationException e)
+        {
+            final String msg = "Unable to read the existing benchmark list.";
+            Log.debug(msg, e);
+            destination.printError(msg, e);
+        }
+        return "";
     }
 }

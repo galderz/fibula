@@ -10,6 +10,7 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
+BENCHMARK ?= JMHSample_01
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
 JAVA_HOME ?= $(GRAALVM_HOME)
 MODE ?= jvm
@@ -25,7 +26,7 @@ ifdef LOG_LEVEL
 endif
 
 # Benchmark name
-benchmark_params += JMHSample_01
+benchmark_params += $(BENCHMARK)
 # Measurement forks
 benchmark_params += -f
 benchmark_params += 2

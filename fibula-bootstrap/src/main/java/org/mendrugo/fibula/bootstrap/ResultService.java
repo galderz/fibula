@@ -11,26 +11,44 @@ import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
 public class ResultService
 {
-    private final List<IterationResult> iterationResults = new ArrayList<>();
+    private final Map<BenchmarkParams, List<IterationResult>> iterationResults = new HashMap<>();
 
     void addIteration(IterationResult result)
     {
-        iterationResults.add(result);
+        final BenchmarkParams params = result.getBenchmarkParams();
+        iterationResults.computeIfAbsent(params, k -> new ArrayList<>()).add(result);
     }
 
-    void endRun(OutputFormat out)
+    void endBenchmark(BenchmarkParams params, OutputFormat out)
     {
-        final BenchmarkParams benchmarkParams = iterationResults.iterator().next().getBenchmarkParams();
-        final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(benchmarkParams, iterationResults));
+        final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(params, iterationResults.get(params)));
         benchmarkResults.forEach(out::endBenchmark);
-        final Collection<RunResult> runResults = List.of(new RunResult(benchmarkParams, benchmarkResults));
+    }
 
+    void endRun()
+    {
+        final Collection<RunResult> runResults = getRunResults();
         final ResultFormat resultFormat = JmhFormats.resultFormat();
         resultFormat.writeOut(runResults);
+    }
+
+    private Collection<RunResult> getRunResults()
+    {
+        final List<RunResult> runResults = new ArrayList<>();
+        // todo sort it
+        for (Map.Entry<BenchmarkParams, List<IterationResult>> entry : iterationResults.entrySet())
+        {
+            final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(entry.getKey(), entry.getValue()));
+            final RunResult runResult = new RunResult(entry.getKey(), benchmarkResults);
+            runResults.add(runResult);
+        }
+        return runResults;
     }
 }
