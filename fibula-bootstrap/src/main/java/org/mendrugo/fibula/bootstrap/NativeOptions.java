@@ -91,57 +91,57 @@ final class NativeOptions
         return DEFAULT_PACKAGE_MODE;
     }
 
-    public int getMeasurementForks(BenchmarkListEntry benchmark, Optional<Integer> cmdLineValue)
+    private static int getMeasurementForks(BenchmarkListEntry benchmark, Optional<Integer> cmdLineValue)
     {
         return cmdLineValue
             .orElse(benchmark.getForks()
-                .orElse(Defaults.MEASUREMENT_FORKS));
+            .orElse(Defaults.MEASUREMENT_FORKS));
     }
 
-    public int getMeasurementIterations(BenchmarkListEntry benchmark, java.util.Optional<Integer> cmdLineValue)
+    private static int getMeasurementIterations(BenchmarkListEntry benchmark, java.util.Optional<Integer> cmdLineValue)
     {
         return cmdLineValue
             .orElse(benchmark.getMeasurementIterations()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT
-                    : Defaults.MEASUREMENT_ITERATIONS)
+            .orElse(benchmark.getMode() == Mode.SingleShotTime
+                ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT
+                : Defaults.MEASUREMENT_ITERATIONS)
             );
     }
 
-    public TimeValue getMeasurementTime(BenchmarkListEntry benchmark, Optional<TimeValue> cmdLineValue)
+    private static TimeValue getMeasurementTime(BenchmarkListEntry benchmark, Optional<TimeValue> cmdLineValue)
     {
         return cmdLineValue
             .orElse(benchmark.getMeasurementTime()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? TimeValue.NONE
-                    : Defaults.MEASUREMENT_TIME)
+            .orElse(benchmark.getMode() == Mode.SingleShotTime
+                ? TimeValue.NONE
+                : Defaults.MEASUREMENT_TIME)
             );
     }
 
-    public int getWarmupIterations(BenchmarkListEntry benchmark, Optional<Integer> cmdLineValue)
+    private static int getWarmupIterations(BenchmarkListEntry benchmark, Optional<Integer> cmdLineValue)
     {
         return cmdLineValue
             .orElse(benchmark.getWarmupIterations()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? Defaults.WARMUP_ITERATIONS_SINGLESHOT
-                    : Defaults.WARMUP_ITERATIONS)
+            .orElse(benchmark.getMode() == Mode.SingleShotTime
+                ? Defaults.WARMUP_ITERATIONS_SINGLESHOT
+                : Defaults.WARMUP_ITERATIONS)
             );
     }
 
-    public TimeValue getWarmupTime(BenchmarkListEntry benchmark, Optional<TimeValue> cmdLineValue)
+    private static TimeValue getWarmupTime(BenchmarkListEntry benchmark, Optional<TimeValue> cmdLineValue)
     {
         return cmdLineValue
             .orElse(benchmark.getWarmupTime()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? TimeValue.NONE
-                    : Defaults.WARMUP_TIME)
+            .orElse(benchmark.getMode() == Mode.SingleShotTime
+                ? TimeValue.NONE
+                : Defaults.WARMUP_TIME)
             );
     }
 
-    public String getJvm(BenchmarkListEntry benchmark, Optional<String> cmdLineValue)
+    private static String getJvm(BenchmarkListEntry benchmark, Optional<String> cmdLineValue)
     {
         return cmdLineValue
             .orElse(benchmark.getJvm()
-                .orElse(Utils.getCurrentJvm()));
+            .orElse(Utils.getCurrentJvm()));
     }
 }
