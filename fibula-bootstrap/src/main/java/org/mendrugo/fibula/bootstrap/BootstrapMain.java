@@ -40,7 +40,6 @@ public class BootstrapMain implements QuarkusApplication
         // Read command line arguments just like JMH does
         final Options jmhOptions = new CommandLineOptions(args);
         final NativeOptions options = new NativeOptions(jmhOptions);
-        resultService.setOptions(options);
 
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(options, out);

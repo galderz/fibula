@@ -20,7 +20,6 @@ public class ResultService
 {
     private final List<IterationResult> iterationResults = new ArrayList<>();
 
-    private NativeOptions options;
     private int forkCounter;
     private int iterationCounter;
     private ProcessRunner processRunner;
@@ -49,11 +48,6 @@ public class ResultService
         }
     }
 
-    void setOptions(NativeOptions options)
-    {
-        this.options = options;
-    }
-
     void setProcessRunner(ProcessRunner processRunner)
     {
         this.processRunner = processRunner;
@@ -74,9 +68,4 @@ public class ResultService
         final ResultFormat resultFormat = JmhFormats.resultFormat();
         resultFormat.writeOut(runResults);
     }
-
-//    private BenchmarkParams getBenchmarkParams(NativeIterationResult result)
-//    {
-//        return options.getBenchmarkParams(new NativeBenchmarkParams(new BenchmarkListEntry(result.benchmark())));
-//    }
 }
