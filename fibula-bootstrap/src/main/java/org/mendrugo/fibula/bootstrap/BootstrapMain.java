@@ -6,7 +6,6 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.NativeBenchmarkParams;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.BenchmarkList;
@@ -49,8 +48,8 @@ public class BootstrapMain implements QuarkusApplication
         resultService.setOutputFormat(out);
 
         // Read metadata for all benchmarks
-        final Set<NativeBenchmarkParams> benchmarks = readBenchmarks();
-        final NativeBenchmarkParams benchmark = benchmarks.iterator().next();
+        final Set<BenchmarkListEntry> benchmarks = readBenchmarks();
+        final BenchmarkListEntry benchmark = benchmarks.iterator().next();
         final BenchmarkParams params = options.getBenchmarkParams(benchmark);
 
         out.startBenchmark(params);
@@ -62,9 +61,10 @@ public class BootstrapMain implements QuarkusApplication
         return 0;
     }
 
-    private Set<NativeBenchmarkParams> readBenchmarks()
+    private Set<BenchmarkListEntry> readBenchmarks()
     {
         final File resourceDir = Path.of("target", "classes").toFile();
+        // todo ignore source dir because not relevant, can we null it?
         final File sourceDir = Path.of("target", "classes", "tbd").toFile();
         final FileSystemDestination destination = new FileSystemDestination(resourceDir, sourceDir);
         try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
@@ -73,7 +73,6 @@ public class BootstrapMain implements QuarkusApplication
             {
                 return FileUtils.readAllLines(reader).stream()
                     .map(BenchmarkListEntry::new)
-                    .map(NativeBenchmarkParams::new)
                     .collect(Collectors.toUnmodifiableSet());
             }
         }

@@ -4,14 +4,11 @@ import io.quarkus.logging.Log;
 import io.quarkus.runtime.Quarkus;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.NativeBenchmarkParams;
-import org.mendrugo.fibula.results.NativeIterationResult;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
-import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.util.ArrayList;
