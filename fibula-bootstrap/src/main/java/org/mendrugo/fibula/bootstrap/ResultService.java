@@ -1,7 +1,5 @@
 package org.mendrugo.fibula.bootstrap;
 
-import io.quarkus.logging.Log;
-import io.quarkus.runtime.Quarkus;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.mendrugo.fibula.results.JmhFormats;
 import org.openjdk.jmh.infra.BenchmarkParams;
@@ -20,45 +18,12 @@ public class ResultService
 {
     private final List<IterationResult> iterationResults = new ArrayList<>();
 
-    private int forkCounter;
-    private int iterationCounter;
-    private ProcessRunner processRunner;
-    private OutputFormat out;
-
     void addIteration(IterationResult result)
     {
-        final BenchmarkParams benchmarkParams = result.getBenchmarkParams();
-        final int forkCount = benchmarkParams.getForks();
-
         iterationResults.add(result);
-        final int totalIterations = forkCount * benchmarkParams.getMeasurement().getCount();
-        if (totalIterations == iterationResults.size())
-        {
-            endRun();
-            Log.debug("Now exit the application");
-            Quarkus.asyncExit();
-        }
-
-        iterationCounter++;
-        if (iterationCounter == benchmarkParams.getMeasurement().getCount())
-        {
-            forkCounter++;
-            // Run subsequent forks
-            processRunner.runFork(forkCounter + 1, benchmarkParams);
-        }
     }
 
-    void setProcessRunner(ProcessRunner processRunner)
-    {
-        this.processRunner = processRunner;
-    }
-
-    void setOutputFormat(OutputFormat out)
-    {
-        this.out = out;
-    }
-
-    private void endRun()
+    void endRun(OutputFormat out)
     {
         final BenchmarkParams benchmarkParams = iterationResults.iterator().next().getBenchmarkParams();
         final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(benchmarkParams, iterationResults));

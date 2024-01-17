@@ -21,7 +21,7 @@ final class ProcessRunner
         this.out = out;
     }
 
-    void runFork(int forkIndex, BenchmarkParams params)
+    Process runFork(int forkIndex, BenchmarkParams params)
     {
         final int forkCount = params.getMeasurement().getCount();
         final List<String> forkArguments = runArguments(params);
@@ -30,14 +30,14 @@ final class ProcessRunner
         // todo wait for fork to finish before launching the next one
         //      otherwise when trying to use the native image agent you get error that the configuration files are in use
         //      it should also remove some potential noise since we make sure the fork is finished before starting next
-        runAsync(new ProcessBuilder(forkArguments).inheritIO());
+        return runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
-    private void runAsync(ProcessBuilder processBuilder)
+    private Process runAsync(ProcessBuilder processBuilder)
     {
         try
         {
-            processBuilder.start();
+            return processBuilder.start();
         }
         catch (IOException e)
         {

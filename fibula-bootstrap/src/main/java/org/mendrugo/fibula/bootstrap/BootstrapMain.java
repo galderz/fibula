@@ -1,7 +1,6 @@
 package org.mendrugo.fibula.bootstrap;
 
 import io.quarkus.logging.Log;
-import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
@@ -43,8 +42,6 @@ public class BootstrapMain implements QuarkusApplication
 
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(out);
-        resultService.setProcessRunner(processRunner);
-        resultService.setOutputFormat(out);
 
         // Read metadata for all benchmarks
         final Set<BenchmarkListEntry> benchmarks = readBenchmarks();
@@ -54,9 +51,21 @@ public class BootstrapMain implements QuarkusApplication
         out.startBenchmark(params);
         out.println("");
 
-        processRunner.runFork(1, params);
+        final int forkCount = params.getMeasurement().getCount();
+        for (int i = 0; i < forkCount; i++)
+        {
+            final Process process = processRunner.runFork(i + 1, params);
+            final int exitCode = process.waitFor();
+            if (exitCode != 0)
+            {
+                throw new RuntimeException(String.format(
+                    "Error in forked runner (exit code %d)"
+                    , exitCode
+                ));
+            }
+        }
 
-        Quarkus.waitForExit();
+        resultService.endRun(out);
         return 0;
     }
 
