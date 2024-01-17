@@ -79,7 +79,7 @@ final class NativeOptions
             , params
             , TimeUnit.SECONDS
             , 1
-            , ""
+            , nativeParams.getJvm(JmhOptionals.fromJmh(jmhOptions.getJvm()))
             , new ArrayList<>()
             , jdkVersion
             , vmName

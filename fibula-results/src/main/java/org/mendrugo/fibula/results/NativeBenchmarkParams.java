@@ -4,9 +4,11 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.options.TimeValue;
+import org.openjdk.jmh.util.Utils;
 
 import java.util.Optional;
 
+// todo get rid of class and move methods to NativeOptions
 public final class NativeBenchmarkParams
 {
     private final BenchmarkListEntry benchmark;
@@ -66,5 +68,12 @@ public final class NativeBenchmarkParams
                 ? TimeValue.NONE
                 : Defaults.WARMUP_TIME)
             );
+    }
+
+    public String getJvm(Optional<String> cmdLineValue)
+    {
+        return cmdLineValue
+            .orElse(benchmark.getJvm()
+            .orElse(Utils.getCurrentJvm()));
     }
 }

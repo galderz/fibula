@@ -49,11 +49,10 @@ final class ProcessRunner
     private static List<String> runArguments(NativeOptions options, BenchmarkParams params)
     {
         final PackageMode packageMode = options.getPackageMode();
-        // todo avoid hardcoding sample project name
         final List<String> baseArguments = switch (packageMode)
         {
             case JVM -> List.of(
-                "java"
+                params.getJvm()
                 // todo add an option for the native image agent and fix location of java
                 // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
                 , "-jar"
