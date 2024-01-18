@@ -217,24 +217,15 @@ class FibulaProcessor
             .classOutput(beanOutput)
             .className(className)
             .interfaces(Function.class)
-            // .superClass("org.mendrugo.fibula.runner.ThroughputFunction") // todo share class
             .build();
 
-//        final MethodCreator run = function.getMethodCreator("doOperation", void.class);
-//        final String typeName = classInfo.name().toString();
-//        final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
-//        final AssignableResultHandle variable = run.createVariable(typeDescriptor);
-//        run.assign(variable, run.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
-//        run.invokeVirtualMethod(MethodDescriptor.of(methodInfo), variable);
-//        run.returnValue(null);
-//        run.close();
-
-        // final MethodCreator apply = function.getMethodCreator("apply", RawResults.class, "org.mendrugo.fibula.runner.Infrastructure"); // todo share class
-        final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class); // todo share class
-        // final RawResults raw = BenchmarkLifecycle.before();
+        final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class);
+        // final RawResults raw = new RawResults();
         final AssignableResultHandle raw = apply.createVariable(RawResults.class);
-        final ResultHandle before = apply.invokeStaticMethod(MethodDescriptor.ofMethod("org.mendrugo.fibula.runner.BenchmarkLifecycle", "before", RawResults.class));
-        apply.assign(raw, before);
+        apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
+        // raw.startTime = System.nanoTime();
+        final ResultHandle startTime = apply.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+        apply.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
         // long operations = 0;
         final AssignableResultHandle operations = apply.createVariable(long.class);
         apply.assign(operations, apply.load(0L));
@@ -245,14 +236,17 @@ class FibulaProcessor
         apply.assign(benchmark, apply.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
         // Loop
         final WhileLoop whileLoop = apply.whileLoop(bc -> bc.ifFalse(
-            bc.readInstanceField(FieldDescriptor.of("org.mendrugo.fibula.runner.Infrastructure", "isDone", boolean.class), bc.getMethodParam(0))
+            bc.readInstanceField(FieldDescriptor.of("org.mendrugo.fibula.runner.Infrastructure", "isDone", boolean.class), bc.getMethodParam(0)) // todo share class
         ));
         final BytecodeCreator whileLoopBlock = whileLoop.block();
         whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark);
         whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
         whileLoopBlock.close();
-        // BenchmarkLifecycle.after(operations, raw);
-        apply.invokeStaticMethod(MethodDescriptor.ofMethod("org.mendrugo.fibula.runner.BenchmarkLifecycle", "after", void.class, long.class, RawResults.class), operations, raw);
+        // raw.stopTime = System.nanoTime();
+        final ResultHandle stopTime = apply.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+        apply.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
+        // JmhRawResults.setMeasureOps(operations, raw);
+        apply.invokeStaticMethod(MethodDescriptor.ofMethod("org.mendrugo.fibula.runner.JmhRawResults", "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw); // todo share class
         // return raw;
         apply.returnValue(raw);
         apply.close();
