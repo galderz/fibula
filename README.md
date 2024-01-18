@@ -4,21 +4,17 @@
 
 - [ ] Print executing/results as TRACE and make results/params presented not in base64 format
 - [ ] Separate building bootstrap+runner from running it (to avoid repeat build if source not changed)
-- [ ] The runner needs to be able to filter which benchmark supplier to run... 
-      Otherwise, it runs too many iterations (both warmup and measurement)
 - [ ] Avoid the BenchmarkList file and instead emit a build item and use the recorder
-- [ ] Add benchmark with multiple methods (would be supported by running jmh-samples)
-  E.g. FibulaSample_01_MultiHelloWorld
 - [ ] Support running jvm mode with native image agent
       Doing this will require fixing the forking to avoid errors related to writing to same native image config file
       Once that is fixed, maybe default to running with only 1 fork and 1 warmup and 1 measurement fork, because that should be enough
-- [ ] Support running single benchmark with multiple methods (basic!)
-- [ ] Support selecting which benchmark to run (right now hardcoded)
 - [ ] Add a record equals/hashCode benchmark
       Some potential examples:
       https://github.com/openjdk/jdk/blob/master/test/micro/org/openjdk/bench/java/io/RecordDeserialization.java
 - [ ] See how record equals/hashCode benchmark behaves with different GraalVM versions
 - [ ] Add profiler integration
+      `perf annotate` is one option
+      , another is to use `perf stat` along with `perf norm`
 - [ ] Narrow down native issue with commons match dependency
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
