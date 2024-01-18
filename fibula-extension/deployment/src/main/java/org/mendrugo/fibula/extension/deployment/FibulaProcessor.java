@@ -6,20 +6,27 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
 import io.quarkus.gizmo.AssignableResultHandle;
+import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
+import io.quarkus.gizmo.FieldDescriptor;
+import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
+import io.quarkus.gizmo.WhileLoop;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.FieldInfo;
 import org.jboss.jandex.MethodInfo;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.Optional;
@@ -53,6 +60,7 @@ class FibulaProcessor
     @BuildStep
     void generateCommand(
         BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
+        , BuildProducer<GeneratedClassBuildItem> generatedClasses
         , CombinedIndexBuildItem index
         , BuildSystemTargetBuildItem buildSystemTarget
     )
@@ -70,8 +78,8 @@ class FibulaProcessor
 
     private static boolean isSupportedBenchmark(MethodInfo methodInfo)
     {
-        return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
-            || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
+        return methodInfo.declaringClass().simpleName().contains("JMHSample_01");
+            // || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
     }
 
     private void generateBenchmarkClasses(List<MethodInfo> methods, BuildProducer<GeneratedBeanBuildItem> generatedBeans)
@@ -194,6 +202,7 @@ class FibulaProcessor
         return writer.toString();
     }
 
+    // todo use generate class build item, not a generate bean class build item
     private String generateFunction(MethodInfo methodInfo, ClassOutput beanOutput)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
@@ -207,17 +216,46 @@ class FibulaProcessor
         final ClassCreator function = ClassCreator.builder()
             .classOutput(beanOutput)
             .className(className)
-            .superClass("org.mendrugo.fibula.runner.ThroughputFunction") // todo share class
+            .interfaces(Function.class)
+            // .superClass("org.mendrugo.fibula.runner.ThroughputFunction") // todo share class
             .build();
 
-        final MethodCreator run = function.getMethodCreator("doOperation", void.class);
+//        final MethodCreator run = function.getMethodCreator("doOperation", void.class);
+//        final String typeName = classInfo.name().toString();
+//        final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
+//        final AssignableResultHandle variable = run.createVariable(typeDescriptor);
+//        run.assign(variable, run.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
+//        run.invokeVirtualMethod(MethodDescriptor.of(methodInfo), variable);
+//        run.returnValue(null);
+//        run.close();
+
+        // final MethodCreator apply = function.getMethodCreator("apply", RawResults.class, "org.mendrugo.fibula.runner.Infrastructure"); // todo share class
+        final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class); // todo share class
+        // final RawResults raw = BenchmarkLifecycle.before();
+        final AssignableResultHandle raw = apply.createVariable(RawResults.class);
+        final ResultHandle before = apply.invokeStaticMethod(MethodDescriptor.ofMethod("org.mendrugo.fibula.runner.BenchmarkLifecycle", "before", RawResults.class));
+        apply.assign(raw, before);
+        // long operations = 0;
+        final AssignableResultHandle operations = apply.createVariable(long.class);
+        apply.assign(operations, apply.load(0L));
+        // Create instance of benchmark
         final String typeName = classInfo.name().toString();
         final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
-        final AssignableResultHandle variable = run.createVariable(typeDescriptor);
-        run.assign(variable, run.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
-        run.invokeVirtualMethod(MethodDescriptor.of(methodInfo), variable);
-        run.returnValue(null);
-        run.close();
+        final AssignableResultHandle benchmark = apply.createVariable(typeDescriptor);
+        apply.assign(benchmark, apply.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
+        // Loop
+        final WhileLoop whileLoop = apply.whileLoop(bc -> bc.ifFalse(
+            bc.readInstanceField(FieldDescriptor.of("org.mendrugo.fibula.runner.Infrastructure", "isDone", boolean.class), bc.getMethodParam(0))
+        ));
+        final BytecodeCreator whileLoopBlock = whileLoop.block();
+        whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark);
+        whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
+        whileLoopBlock.close();
+        // BenchmarkLifecycle.after(operations, raw);
+        apply.invokeStaticMethod(MethodDescriptor.ofMethod("org.mendrugo.fibula.runner.BenchmarkLifecycle", "after", void.class, long.class, RawResults.class), operations, raw);
+        // return raw;
+        apply.returnValue(raw);
+        apply.close();
 
         function.close();
         return className;

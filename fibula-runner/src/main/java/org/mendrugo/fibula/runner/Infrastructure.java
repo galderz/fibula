@@ -2,7 +2,7 @@ package org.mendrugo.fibula.runner;
 
 public final class Infrastructure
 {
-    volatile boolean isDone;
+    public volatile boolean isDone;
 
     void markDone()
     {
