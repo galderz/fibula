@@ -46,6 +46,8 @@ final class ProcessRunner
     {
         final List<String> baseArguments = getBaseArguments(params);
         final List<String> arguments = new ArrayList<>(baseArguments);
+        arguments.add("--" + RunnerArguments.SUPPLIER_NAME);
+        arguments.add(params.generatedBenchmark().replace(".", "_") + "_Supplier");
         arguments.add("--" + RunnerArguments.PARAMS);
         arguments.add(Serializables.toBase64(params));
         return arguments;

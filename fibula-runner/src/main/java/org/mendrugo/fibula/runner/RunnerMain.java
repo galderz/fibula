@@ -6,6 +6,7 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.mendrugo.fibula.results.RunnerArguments;
 
 import java.util.List;
 
@@ -25,11 +26,13 @@ public class RunnerMain implements QuarkusApplication
         Log.debug("Running forked runner");
 
         final Cli cli = Cli.read(args);
+        final String supplierName = cli.text(RunnerArguments.SUPPLIER_NAME);
 
         // todo add result client to handler? Make the handler a bean?
         final Infrastructure infrastructure = new Infrastructure();
         final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(cli);
         suppliers.stream()
+            .filter(supplier -> supplier.getClass().getSimpleName().startsWith(supplierName))
             .map(supplier -> new BenchmarkCallable(supplier.get(), infrastructure))
             .forEach(callable -> benchmarkHandler.runBenchmark(callable, resultClient));
 

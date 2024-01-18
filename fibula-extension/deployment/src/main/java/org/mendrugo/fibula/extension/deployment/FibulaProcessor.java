@@ -13,7 +13,6 @@ import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.FieldDescriptor;
-import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
@@ -21,7 +20,6 @@ import io.quarkus.gizmo.WhileLoop;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
-import org.jboss.jandex.FieldInfo;
 import org.jboss.jandex.MethodInfo;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
@@ -78,8 +76,8 @@ class FibulaProcessor
 
     private static boolean isSupportedBenchmark(MethodInfo methodInfo)
     {
-        return methodInfo.declaringClass().simpleName().contains("JMHSample_01");
-            // || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
+        return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
+            || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
     }
 
     private void generateBenchmarkClasses(List<MethodInfo> methods, BuildProducer<GeneratedBeanBuildItem> generatedBeans)
@@ -104,20 +102,19 @@ class FibulaProcessor
     }
 
     private void generateBenchmarkBytecode(
-        MethodInfo methodInfo
+        MethodInfo method
         , ClassOutput beanOutput
     )
     {
-        final String userClassQName = getUserClassQName(methodInfo);
-        final String functionClassName = generateFunction(methodInfo, beanOutput);
-        final String method = methodInfo.name();
-
+        final ClassInfo classInfo = method.declaringClass();
+        final String functionClassName = generateFunction(method, beanOutput);
         final ClassCreator supplier = ClassCreator.builder()
             .classOutput(beanOutput)
             .className(String.format(
-                "%s_%s_Supplier"
-                , userClassQName
-                , method
+                "%s.%s_%s_Throughput_Supplier"
+                , PACKAGE_NAME
+                , classInfo.simpleName()
+                , method.name()
             ))
             .interfaces("org.mendrugo.fibula.runner.BenchmarkSupplier") // todo share class
             .build();
@@ -128,30 +125,18 @@ class FibulaProcessor
         get.returnValue(newInstance);
         get.close();
 
-//        final MethodCreator benchmark = supplier.getMethodCreator("benchmark", String.class);
-//        final String params = generateAnnotationParams(userClassQName, method);
-//        benchmark.returnValue(benchmark.load(params));
-//        benchmark.close();
-
         supplier.close();
-    }
-
-    private static String getUserClassQName(MethodInfo methodInfo)
-    {
-        final ClassInfo classInfo = methodInfo.declaringClass();
-        return String.format("%s.%s", PACKAGE_NAME, classInfo.simpleName());
     }
 
     private static void writeAnnotationParams(MethodInfo method, PrintWriter writer)
     {
-        final String userClassQName = getUserClassQName(method);
-        final String params = generateAnnotationParams(userClassQName, method.name());
+        final ClassInfo classInfo = method.declaringClass();
+        final String params = generateAnnotationParams(classInfo.name().toString(), classInfo.simpleName(), method.name());
         writer.println(params);
     }
 
-    private static String generateAnnotationParams(String userClassQName, String method)
+    private static String generateAnnotationParams(String className, String supplierPrefix, String method)
     {
-        final String generatedClassQName = "UNUSED";
         final Mode mode = Mode.Throughput;
         final int[] threadGroups = new int[]{1};
         final Optional<Collection<String>> threadGroupLabels = Optional.none();
@@ -175,8 +160,8 @@ class FibulaProcessor
 
         // JMH
         TestLineWriter writer = new TestLineWriter();
-        writer.putString(userClassQName);
-        writer.putString(generatedClassQName);
+        writer.putString(className);
+        writer.putString(supplierPrefix);
         writer.putString(method);
         writer.putString(mode.toString());
         writer.putOptionalInt(threads);
@@ -208,7 +193,7 @@ class FibulaProcessor
         final ClassInfo classInfo = methodInfo.declaringClass();
 
         final String className = String.format(
-            "%s.%s_%s_Function"
+            "%s.%s_%s_Throughput_Function"
             , PACKAGE_NAME
             , classInfo.simpleName()
             , methodInfo.name());

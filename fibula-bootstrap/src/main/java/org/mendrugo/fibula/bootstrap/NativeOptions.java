@@ -82,7 +82,7 @@ final class NativeOptions
 
         return new BenchmarkParams(
             benchmark.getUsername()
-            , ""
+            , benchmark.generatedTarget()
             , true
             , 1
             , new int[]{1}
