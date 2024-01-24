@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-class FibulaProcessor
+class BenchmarkProcessor
 {
     private static final String FEATURE = "fibula-extension";
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
@@ -67,7 +67,7 @@ class FibulaProcessor
 
         final List<MethodInfo> methods = index.getIndex().getAnnotations(BENCHMARK).stream()
             .map(annotation -> annotation.target().asMethod())
-            .filter(FibulaProcessor::isSupportedBenchmark)
+            .filter(BenchmarkProcessor::isSupportedBenchmark)
             .toList();
 
         generateBenchmarkList(methods, buildSystemTarget);
