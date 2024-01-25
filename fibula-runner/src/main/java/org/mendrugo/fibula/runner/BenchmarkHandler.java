@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.runner;
 
+import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhFormats;
 import org.mendrugo.fibula.results.NativeIterationResult;
 import org.mendrugo.fibula.results.RunnerArguments;

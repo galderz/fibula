@@ -21,6 +21,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
+import org.mendrugo.fibula.results.Infrastructure;
+import org.mendrugo.fibula.results.JmhRawResults;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
@@ -221,7 +223,7 @@ class BenchmarkProcessor
         apply.assign(benchmark, apply.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
         // Loop
         final WhileLoop whileLoop = apply.whileLoop(bc -> bc.ifFalse(
-            bc.readInstanceField(FieldDescriptor.of("org.mendrugo.fibula.runner.Infrastructure", "isDone", boolean.class), bc.getMethodParam(0)) // todo share class
+            bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), bc.getMethodParam(0))
         ));
         final BytecodeCreator whileLoopBlock = whileLoop.block();
         whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark);
@@ -231,7 +233,7 @@ class BenchmarkProcessor
         final ResultHandle stopTime = apply.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
         apply.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
         // JmhRawResults.setMeasureOps(operations, raw);
-        apply.invokeStaticMethod(MethodDescriptor.ofMethod("org.mendrugo.fibula.runner.JmhRawResults", "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw); // todo share class
+        apply.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
         // return raw;
         apply.returnValue(raw);
         apply.close();

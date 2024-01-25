@@ -6,6 +6,7 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.RunnerArguments;
 
 import java.util.List;

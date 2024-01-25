@@ -1,15 +1,15 @@
-package org.mendrugo.fibula.runner;
+package org.mendrugo.fibula.results;
 
 public final class Infrastructure
 {
     public volatile boolean isDone;
 
-    void markDone()
+    public void markDone()
     {
         isDone = true;
     }
 
-    void resetDone()
+    public void resetDone()
     {
         isDone = false;
     }

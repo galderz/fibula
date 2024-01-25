@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.runner;
+package org.mendrugo.fibula.results;
 
 import org.openjdk.jmh.results.RawResults;
 
