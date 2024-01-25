@@ -12,7 +12,9 @@ import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
+import io.quarkus.gizmo.DescriptorUtils;
 import io.quarkus.gizmo.FieldDescriptor;
+import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
@@ -25,6 +27,7 @@ import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhRawResults;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.runner.BenchmarkList;
@@ -205,29 +208,70 @@ class BenchmarkProcessor
             .className(className)
             .interfaces(Function.class)
             .build();
+
+        final FieldDescriptor benchmarkField = generateBenchmarkField(methodInfo, function);
+        final MethodDescriptor tryInitMethod = generateBenchmarkInit(benchmarkField, methodInfo.declaringClass(), function);
         final MethodDescriptor stubMethod = generateThroughputStub(methodInfo, function);
-        generateApply(stubMethod, methodInfo, function);
+        generateApply(stubMethod, tryInitMethod, methodInfo, function);
         function.close();
         return className;
     }
 
-    private static void generateApply(MethodDescriptor stufMethod, MethodInfo methodInfo, ClassCreator function)
+    private static MethodDescriptor generateBenchmarkInit(FieldDescriptor field, ClassInfo classInfo, ClassCreator function)
+    {
+        final String methodName = "_fib_tryInit_" + field.getName();
+        final MethodCreator tryInit = function.getMethodCreator(methodName, field.getType());
+
+        // B val = this.f;
+        final AssignableResultHandle val = tryInit.createVariable(field.getType());
+        tryInit.assign(val, tryInit.readInstanceField(field, tryInit.getThis()));
+
+        // if (var1 == null) {
+        final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch();
+        // val = new B();
+        trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
+        // this.f = val;
+        trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
+        // }
+
+        // return val
+        tryInit.returnValue(val);
+        tryInit.close();
+        return tryInit.getMethodDescriptor();
+    }
+
+    private FieldDescriptor generateBenchmarkField(MethodInfo methodInfo, ClassCreator function)
+    {
+        final ClassInfo classInfo = methodInfo.declaringClass();
+        final Identifiers identifiers = new Identifiers();
+        final String userType = classInfo.name().toString();
+        final Scope scope = Scope.Thread; // todo support other scopes, if present
+        final String id = identifiers.collapseTypeName(userType) + identifiers.identifier(scope);
+        final String fieldIdentifier = "f_" + id;
+        return function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(userType)).getFieldDescriptor();
+    }
+
+    private static void generateApply(MethodDescriptor stubMethod, MethodDescriptor tryInitMethod, MethodInfo methodInfo, ClassCreator function)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
         final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class);
         final ResultHandle infrastructure = apply.getMethodParam(0);
-        // final RawResults raw = new RawResults();
+
+        // RawResults raw = new RawResults();
         final AssignableResultHandle raw = apply.createVariable(RawResults.class);
         apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
-        // Create instance of benchmark
-        final String typeName = classInfo.name().toString(); // todo pass in "."
-        final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
-        final AssignableResultHandle benchmark = apply.createVariable(typeDescriptor);
-        apply.assign(benchmark, apply.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
-        // <stub>(infrastructure, raw, benchmark);
-        apply.invokeVirtualMethod(stufMethod, apply.getThis(), infrastructure, raw, benchmark);
+
+        // B benchmark = tryInit();
+        final String userType = classInfo.name().toString();
+        final AssignableResultHandle benchmark = apply.createVariable(DescriptorUtils.extToInt(userType));
+        apply.assign(benchmark, apply.invokeVirtualMethod(tryInitMethod, apply.getThis()));
+
+        // stub(infrastructure, raw, benchmark);
+        apply.invokeVirtualMethod(stubMethod, apply.getThis(), infrastructure, raw, benchmark);
+
         // return raw;
         apply.returnValue(raw);
+
         apply.close();
     }
 
@@ -245,12 +289,15 @@ class BenchmarkProcessor
         final ResultHandle infrastructure = stub.getMethodParam(0);
         final ResultHandle raw = stub.getMethodParam(1);
         final ResultHandle benchmark = stub.getMethodParam(2);
+
         // raw.startTime = System.nanoTime();
         final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
         stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
+
         // long operations = 0;
         final AssignableResultHandle operations = stub.createVariable(long.class);
         stub.assign(operations, stub.load(0L));
+
         // Loop
         final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
             bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
@@ -259,11 +306,14 @@ class BenchmarkProcessor
         whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark);
         whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
         whileLoopBlock.close();
+
         // raw.stopTime = System.nanoTime();
         final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
         stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
+
         // JmhRawResults.setMeasureOps(operations, raw);
         stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
+
         stub.returnVoid();
         stub.close();
         return stub.getMethodDescriptor();
