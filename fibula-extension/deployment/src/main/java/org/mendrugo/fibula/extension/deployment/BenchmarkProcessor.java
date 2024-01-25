@@ -206,20 +206,26 @@ class BenchmarkProcessor
             .interfaces(Function.class)
             .build();
         final MethodDescriptor stubMethod = generateThroughputStub(methodInfo, function);
-        generateApply(stubMethod, function);
+        generateApply(stubMethod, methodInfo, function);
         function.close();
         return className;
     }
 
-    private static void generateApply(MethodDescriptor stufMethod, ClassCreator function)
+    private static void generateApply(MethodDescriptor stufMethod, MethodInfo methodInfo, ClassCreator function)
     {
+        final ClassInfo classInfo = methodInfo.declaringClass();
         final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class);
         final ResultHandle infrastructure = apply.getMethodParam(0);
         // final RawResults raw = new RawResults();
         final AssignableResultHandle raw = apply.createVariable(RawResults.class);
         apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
-        // <stub>(infrastructure, raw);
-        apply.invokeVirtualMethod(stufMethod, apply.getThis(), infrastructure, raw);
+        // Create instance of benchmark
+        final String typeName = classInfo.name().toString(); // todo pass in "."
+        final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
+        final AssignableResultHandle benchmark = apply.createVariable(typeDescriptor);
+        apply.assign(benchmark, apply.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
+        // <stub>(infrastructure, raw, benchmark);
+        apply.invokeVirtualMethod(stufMethod, apply.getThis(), infrastructure, raw, benchmark);
         // return raw;
         apply.returnValue(raw);
         apply.close();
@@ -229,20 +235,22 @@ class BenchmarkProcessor
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
         final String stubMethodName = "thrpt_fibStub";
-        final MethodCreator stub = function.getMethodCreator(stubMethodName, void.class, Infrastructure.class, RawResults.class);
+        final MethodCreator stub = function.getMethodCreator(
+            stubMethodName
+            , "void"
+            , "org.mendrugo.fibula.results.Infrastructure"
+            , "org.openjdk.jmh.results.RawResults"
+            , classInfo.name().toString('.')
+        );
         final ResultHandle infrastructure = stub.getMethodParam(0);
         final ResultHandle raw = stub.getMethodParam(1);
+        final ResultHandle benchmark = stub.getMethodParam(2);
         // raw.startTime = System.nanoTime();
         final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
         stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
         // long operations = 0;
         final AssignableResultHandle operations = stub.createVariable(long.class);
         stub.assign(operations, stub.load(0L));
-        // Create instance of benchmark
-        final String typeName = classInfo.name().toString();
-        final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
-        final AssignableResultHandle benchmark = stub.createVariable(typeDescriptor);
-        stub.assign(benchmark, stub.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
         // Loop
         final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
             bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
