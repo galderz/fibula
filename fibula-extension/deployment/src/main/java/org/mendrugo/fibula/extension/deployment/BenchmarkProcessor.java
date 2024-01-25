@@ -205,41 +205,60 @@ class BenchmarkProcessor
             .className(className)
             .interfaces(Function.class)
             .build();
+        final MethodDescriptor stubMethod = generateThroughputStub(methodInfo, function);
+        generateApply(stubMethod, function);
+        function.close();
+        return className;
+    }
 
+    private static void generateApply(MethodDescriptor stufMethod, ClassCreator function)
+    {
         final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class);
+        final ResultHandle infrastructure = apply.getMethodParam(0);
         // final RawResults raw = new RawResults();
         final AssignableResultHandle raw = apply.createVariable(RawResults.class);
         apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
+        // <stub>(infrastructure, raw);
+        apply.invokeVirtualMethod(stufMethod, apply.getThis(), infrastructure, raw);
+        // return raw;
+        apply.returnValue(raw);
+        apply.close();
+    }
+
+    private static MethodDescriptor generateThroughputStub(MethodInfo methodInfo, ClassCreator function)
+    {
+        final ClassInfo classInfo = methodInfo.declaringClass();
+        final String stubMethodName = "thrpt_fibStub";
+        final MethodCreator stub = function.getMethodCreator(stubMethodName, void.class, Infrastructure.class, RawResults.class);
+        final ResultHandle infrastructure = stub.getMethodParam(0);
+        final ResultHandle raw = stub.getMethodParam(1);
         // raw.startTime = System.nanoTime();
-        final ResultHandle startTime = apply.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-        apply.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
+        final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+        stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
         // long operations = 0;
-        final AssignableResultHandle operations = apply.createVariable(long.class);
-        apply.assign(operations, apply.load(0L));
+        final AssignableResultHandle operations = stub.createVariable(long.class);
+        stub.assign(operations, stub.load(0L));
         // Create instance of benchmark
         final String typeName = classInfo.name().toString();
         final String typeDescriptor = "L" + typeName.replace('.', '/') + ";";
-        final AssignableResultHandle benchmark = apply.createVariable(typeDescriptor);
-        apply.assign(benchmark, apply.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
+        final AssignableResultHandle benchmark = stub.createVariable(typeDescriptor);
+        stub.assign(benchmark, stub.newInstance(MethodDescriptor.ofConstructor(classInfo.name().toString())));
         // Loop
-        final WhileLoop whileLoop = apply.whileLoop(bc -> bc.ifFalse(
-            bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), bc.getMethodParam(0))
+        final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
+            bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
         ));
         final BytecodeCreator whileLoopBlock = whileLoop.block();
         whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark);
         whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
         whileLoopBlock.close();
         // raw.stopTime = System.nanoTime();
-        final ResultHandle stopTime = apply.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-        apply.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
+        final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+        stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
         // JmhRawResults.setMeasureOps(operations, raw);
-        apply.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
-        // return raw;
-        apply.returnValue(raw);
-        apply.close();
-
-        function.close();
-        return className;
+        stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
+        stub.returnVoid();
+        stub.close();
+        return stub.getMethodDescriptor();
     }
 }
 
