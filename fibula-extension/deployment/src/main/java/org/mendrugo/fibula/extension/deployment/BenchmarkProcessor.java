@@ -201,7 +201,7 @@ class BenchmarkProcessor
             final Scope scope = Scope.valueOf(stateAnnotation.get().value().asEnum());
             return switch (scope)
             {
-                case Benchmark -> generateScopeBenchmarkState(paramInfo, function);
+                case Benchmark -> generateSharedState(paramInfo, function);
                 case Thread -> generateUnsharedState(paramInfo.type().name().toString(), function);
                 default -> throw new RuntimeException("NYI");
             };
@@ -236,25 +236,12 @@ class BenchmarkProcessor
         return tryInit.getMethodDescriptor();
     }
 
-    private MethodDescriptor generateScopeBenchmarkState(MethodParameterInfo paramInfo, ClassCreator classCreator)
+    private MethodDescriptor generateSharedState(MethodParameterInfo paramInfo, ClassCreator classCreator)
     {
         final String paramFqn = paramInfo.type().name().toString();
 
-        // static final ReentrantLock f_lock;
-        final String lockFieldIdentifier = "f_" + identifiers.collapseTypeName(ReentrantLock.class.getName()) + identifiers.identifier(Scope.Benchmark);
-        final FieldDescriptor lockField = classCreator.getFieldCreator(lockFieldIdentifier, DescriptorUtils.extToInt(ReentrantLock.class.getName()))
-            .setModifiers(Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
-            .getFieldDescriptor();
-
-        // static {
-        MethodCreator staticInit = classCreator.getMethodCreator("<clinit>", void.class);
-        staticInit.setModifiers(ACC_STATIC);
-        ResultHandle lockInstance = staticInit.newInstance(MethodDescriptor.ofConstructor(ReentrantLock.class));
-        // f_lock = new ReentrantLock();
-        staticInit.writeStaticField(lockField, lockInstance);
-        staticInit.returnVoid();
-        staticInit.close();
-        // }
+        // static final ReentrantLock f_lock = new ReentrantLock();
+        final FieldDescriptor lockField = initStateLock(classCreator);
 
         // static volatile S f_state;
         final String stateFieldIdentifier = "f_" + identifiers.collapseTypeName(paramFqn) + identifiers.identifier(Scope.Thread);
@@ -263,41 +250,64 @@ class BenchmarkProcessor
             .getFieldDescriptor();
 
         final String methodName = "_fib_tryInit_" + stateField.getName();
-        final MethodCreator tryInit = classCreator.getMethodCreator(methodName, stateField.getType());
+        try (final MethodCreator tryInit = classCreator.getMethodCreator(methodName, stateField.getType()))
+        {
+            // S val = f_state;
+            // if (val != null) return val;
+            final AssignableResultHandle val = tryInit.createVariable(stateField.getType());
+            readStaticFieldAndReturnIfNotNull(val, stateField, tryInit);
 
-        final AssignableResultHandle val = tryInit.createVariable(stateField.getType());
-        readStaticFieldAndReturnIfNotNull(val, stateField, tryInit);
+            // f_lock.lock()
+            final ResultHandle lock = tryInit.readStaticField(lockField);
+            tryInit.invokeVirtualMethod(MethodDescriptor.ofMethod(ReentrantLock.class, "lock", void.class), lock);
 
-        // f_lock.lock()
-        final ResultHandle lock = tryInit.readStaticField(lockField);
-        tryInit.invokeVirtualMethod(MethodDescriptor.ofMethod(ReentrantLock.class, "lock", void.class), lock);
+            // try {
+            try (final TryBlock tryBlock = tryInit.tryBlock())
+            {
+                // val = f_state;
+                // if (val != null) return val;
+                readStaticFieldAndReturnIfNotNull(val, stateField, tryBlock);
 
-        // try {
-        final TryBlock tryBlock = tryInit.tryBlock();
+                // val = new F();
+                final ResultHandle newVal = tryBlock.newInstance(MethodDescriptor.ofConstructor(paramFqn));
+                tryBlock.assign(val, newVal);
+                // f_state = val;
+                tryBlock.writeStaticField(stateField, val);
 
-        readStaticFieldAndReturnIfNotNull(val, stateField, tryBlock);
+                // f_lock.unlock()
+                tryBlock.invokeVirtualMethod(MethodDescriptor.ofMethod(ReentrantLock.class, "unlock", void.class), lock);
 
-        // val = new F();
-        final ResultHandle newVal = tryBlock.newInstance(MethodDescriptor.ofConstructor(paramFqn));
-        tryBlock.assign(val, newVal);
-        // f_state = val;
-        tryBlock.writeStaticField(stateField, val);
+                // } catch (Throwable) {
+                try (final CatchBlockCreator catchBlock = tryBlock.addCatch(Throwable.class))
+                {
+                    // f_lock.unlock()
+                    catchBlock.invokeVirtualMethod(MethodDescriptor.ofMethod(ReentrantLock.class, "unlock", void.class), lock);
+                }
+                // }
+            }
 
-        // f_lock.unlock()
-        tryBlock.invokeVirtualMethod(MethodDescriptor.ofMethod(ReentrantLock.class, "unlock", void.class), lock);
+            tryInit.returnValue(val);
+            return tryInit.getMethodDescriptor();
+        }
+    }
 
-        // } catch (Throwable) {
-        final CatchBlockCreator catchBlock = tryBlock.addCatch(Throwable.class);
-        // f_lock.unlock()
-        catchBlock.invokeVirtualMethod(MethodDescriptor.ofMethod(ReentrantLock.class, "unlock", void.class), lock);
-        catchBlock.close();
-        // }
+    private FieldDescriptor initStateLock(ClassCreator classCreator)
+    {
+        final String lockFieldIdentifier = "f_" + identifiers.collapseTypeName(ReentrantLock.class.getName()) + identifiers.identifier(Scope.Benchmark);
+        final FieldDescriptor lockField = classCreator.getFieldCreator(lockFieldIdentifier, DescriptorUtils.extToInt(ReentrantLock.class.getName()))
+            .setModifiers(Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)
+            .getFieldDescriptor();
 
-        tryBlock.close();
-
-        tryInit.returnValue(val);
-        tryInit.close();
-        return tryInit.getMethodDescriptor();
+        // static {
+        try (MethodCreator staticInit = classCreator.getMethodCreator("<clinit>", void.class))
+        {
+            staticInit.setModifiers(ACC_STATIC);
+            ResultHandle lockInstance = staticInit.newInstance(MethodDescriptor.ofConstructor(ReentrantLock.class));
+            // f_lock = new ReentrantLock();
+            staticInit.writeStaticField(lockField, lockInstance);
+            staticInit.returnVoid();
+        }
+        return lockField;
     }
 
     private void readStaticFieldAndReturnIfNotNull(AssignableResultHandle val, FieldDescriptor field, BytecodeCreator method)
@@ -306,11 +316,12 @@ class BenchmarkProcessor
         method.assign(val, method.readStaticField(field));
 
         // if (val != null) {
-        final BytecodeCreator trueBranch = method.ifReferencesNotEqual(val, method.loadNull()).trueBranch();
-        // return val
-        trueBranch.returnValue(val);
+        try (final BytecodeCreator trueBranch = method.ifReferencesNotEqual(val, method.loadNull()).trueBranch())
+        {
+            // return val
+            trueBranch.returnValue(val);
+        }
         // }
-        trueBranch.close();
     }
 
     private static void generateApply(
