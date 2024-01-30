@@ -168,7 +168,7 @@ class BenchmarkProcessor
             .build();
 
         // Benchmark field and initialization
-        final MethodDescriptor tryInitMethod = generateBenchmarkInit(methodInfo, function);
+        final MethodDescriptor tryInitMethod = generateUnsharedState(methodInfo.declaringClass().name().toString(), function);
 
         // State field and initialization
         final List<MethodDescriptor> paramInitMethods = methodInfo.parameters().stream()
@@ -202,22 +202,18 @@ class BenchmarkProcessor
             return switch (scope)
             {
                 case Benchmark -> generateScopeBenchmarkState(paramInfo, function);
-                case Thread -> generateScopeThreadState(paramInfo, function);
+                case Thread -> generateUnsharedState(paramInfo.type().name().toString(), function);
                 default -> throw new RuntimeException("NYI");
             };
         }
         throw new IllegalStateException("Parameter type has no @State annotation");
     }
 
-    private MethodDescriptor generateScopeThreadState(MethodParameterInfo paramInfo, ClassCreator function)
+    private MethodDescriptor generateUnsharedState(String stateFqn, ClassCreator function)
     {
-        final String classFqn = paramInfo.type().name().toString();
-
-        // todo rest of method is duplicate of generateBenchmarkInit
-
         // ...
-        final String fieldIdentifier = "f_" + identifiers.collapseTypeName(classFqn) + identifiers.identifier(Scope.Thread);
-        final FieldDescriptor field = function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(classFqn)).getFieldDescriptor();
+        final String fieldIdentifier = "f_" + identifiers.collapseTypeName(stateFqn) + identifiers.identifier(Scope.Thread);
+        final FieldDescriptor field = function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(stateFqn)).getFieldDescriptor();
 
         final String methodName = "_fib_tryInit_" + field.getName();
         final MethodCreator tryInit = function.getMethodCreator(methodName, field.getType());
@@ -229,7 +225,7 @@ class BenchmarkProcessor
         // if (val == null) {
         final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch();
         // val = new B();
-        trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(classFqn)));
+        trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(stateFqn)));
         // this.f = val;
         trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
         // }
@@ -315,35 +311,6 @@ class BenchmarkProcessor
         trueBranch.returnValue(val);
         // }
         trueBranch.close();
-    }
-
-    private MethodDescriptor generateBenchmarkInit(MethodInfo methodInfo, ClassCreator function)
-    {
-        final String classFqn = methodInfo.declaringClass().name().toString();
-
-        // ...
-        final String fieldIdentifier = "f_" + identifiers.collapseTypeName(classFqn) + identifiers.identifier(Scope.Thread);
-        final FieldDescriptor field = function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(classFqn)).getFieldDescriptor();
-
-        final String methodName = "_fib_tryInit_" + field.getName();
-        final MethodCreator tryInit = function.getMethodCreator(methodName, field.getType());
-
-        // B val = this.f;
-        final AssignableResultHandle val = tryInit.createVariable(field.getType());
-        tryInit.assign(val, tryInit.readInstanceField(field, tryInit.getThis()));
-
-        // if (val == null) {
-        final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch();
-        // val = new B();
-        trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(classFqn)));
-        // this.f = val;
-        trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
-        // }
-
-        // return val
-        tryInit.returnValue(val);
-        tryInit.close();
-        return tryInit.getMethodDescriptor();
     }
 
     private static void generateApply(
