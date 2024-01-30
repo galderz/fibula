@@ -2,6 +2,7 @@ package org.mendrugo.fibula.extension.deployment;
 
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
+import io.quarkus.deployment.GeneratedClassGizmoAdaptor;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
@@ -85,7 +86,7 @@ class BenchmarkProcessor
             .toList();
 
         generateBenchmarkList(methods, buildSystemTarget);
-        generateBenchmarkClasses(methods, generatedBeanClasses, index.getIndex());
+        generateBenchmarkClasses(methods, generatedBeanClasses, generatedClasses, index.getIndex());
     }
 
     private static boolean isSupportedBenchmark(MethodInfo methodInfo)
@@ -95,10 +96,20 @@ class BenchmarkProcessor
             || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
     }
 
-    private void generateBenchmarkClasses(List<MethodInfo> methods, BuildProducer<GeneratedBeanBuildItem> generatedBeans, IndexView index)
+    private void generateBenchmarkClasses(
+        List<MethodInfo> methods
+        , BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
+        , BuildProducer<GeneratedClassBuildItem> generatedClasses
+        , IndexView index
+    )
     {
-        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
-        methods.forEach(m -> generateBenchmarkBytecode(m, beanOutput, index));
+        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
+        final GeneratedClassGizmoAdaptor classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
+        for (MethodInfo method : methods)
+        {
+            final String functionFqn = generateBenchmarkFunction(method, classOutput, index);
+            generateBenchmarkSupplier(method, beanOutput, functionFqn);
+        }
     }
 
     private void generateBenchmarkList(List<MethodInfo> methods, BuildSystemTargetBuildItem buildSystemTarget)
@@ -116,13 +127,9 @@ class BenchmarkProcessor
         }
     }
 
-    private void generateBenchmarkBytecode(
-        MethodInfo method
-        , ClassOutput beanOutput
-        , IndexView index)
+    private void generateBenchmarkSupplier(MethodInfo method, ClassOutput beanOutput, String functionFqn)
     {
         final ClassInfo classInfo = method.declaringClass();
-        final String functionClassName = generateFunction(method, beanOutput, index);
         final ClassCreator supplier = ClassCreator.builder()
             .classOutput(beanOutput)
             .className(String.format(
@@ -136,7 +143,7 @@ class BenchmarkProcessor
         supplier.addAnnotation(ApplicationScoped.class);
 
         final MethodCreator get = supplier.getMethodCreator("get", Function.class);
-        final ResultHandle newInstance = get.newInstance(MethodDescriptor.ofConstructor(functionClassName));
+        final ResultHandle newInstance = get.newInstance(MethodDescriptor.ofConstructor(functionFqn));
         get.returnValue(newInstance);
         get.close();
 
@@ -150,8 +157,7 @@ class BenchmarkProcessor
         writer.println(params);
     }
 
-    // todo use generate class build item, not a generate bean class build item
-    private String generateFunction(MethodInfo methodInfo, ClassOutput beanOutput, IndexView index)
+    private String generateBenchmarkFunction(MethodInfo methodInfo, ClassOutput classOutput, IndexView index)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
 
@@ -162,7 +168,7 @@ class BenchmarkProcessor
             , methodInfo.name());
 
         final ClassCreator function = ClassCreator.builder()
-            .classOutput(beanOutput)
+            .classOutput(classOutput)
             .className(className)
             .interfaces(Function.class)
             .build();
