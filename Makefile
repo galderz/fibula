@@ -44,14 +44,17 @@ benchmark_params += -w
 benchmark_params += 2
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
+mvnw_runner += JAVA_HOME=$(JAVA_HOME)
 ifdef DEBUG_IDE
-  mvnw += $(HOME)/opt/maven/bin/mvnDebug
+  mvnw_runner += $(HOME)/opt/maven/bin/mvnDebug
 else
-  mvnw += $(HOME)/opt/maven/bin/mvn
+  mvnw_runner += $(HOME)/opt/maven/bin/mvn
 endif
 
+mvnw += $(HOME)/opt/maven/bin/mvn
+
 ifdef VERBOSE
-  mvnw += -X
+  mvnw_runner += -X
 endif
 
 ifdef DEBUG
@@ -66,7 +69,7 @@ endif
 samples: $(bootstrap_jar)
 > cd fibula-samples
 > $(mvnw) package
-> $(mvnw) package $(runner_build_args)
+> $(mvnw_runner) package $(runner_build_args)
 > $(java) $(system_props) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
 
