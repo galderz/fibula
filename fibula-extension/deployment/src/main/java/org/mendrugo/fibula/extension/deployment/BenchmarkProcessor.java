@@ -183,8 +183,7 @@ class BenchmarkProcessor
         final MethodDescriptor stubMethod = generateThroughputStub(methodInfo, paramNames, function);
 
         // Function implementation bringing it all together
-        // todo can you rely on method descripto return instead of passing in parameter fqns?
-        generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, paramNames, function);
+        generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, function);
 
         function.close();
         return className;
@@ -211,29 +210,31 @@ class BenchmarkProcessor
 
     private MethodDescriptor generateUnsharedState(String stateFqn, ClassCreator function)
     {
-        // ...
+        // Unshared f_unshared;
         final String fieldIdentifier = "f_" + identifiers.collapseTypeName(stateFqn) + identifiers.identifier(Scope.Thread);
         final FieldDescriptor field = function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(stateFqn)).getFieldDescriptor();
 
         final String methodName = "_fib_tryInit_" + field.getName();
-        final MethodCreator tryInit = function.getMethodCreator(methodName, field.getType());
+        try (final MethodCreator tryInit = function.getMethodCreator(methodName, field.getType()))
+        {
+            // Unshared val = this.f_unshared;
+            final AssignableResultHandle val = tryInit.createVariable(field.getType());
+            tryInit.assign(val, tryInit.readInstanceField(field, tryInit.getThis()));
 
-        // B val = this.f;
-        final AssignableResultHandle val = tryInit.createVariable(field.getType());
-        tryInit.assign(val, tryInit.readInstanceField(field, tryInit.getThis()));
+            // if (val == null) {
+            try (final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch())
+            {
+                // val = new Unshared();
+                trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(stateFqn)));
+                // this.f_unshared = val;
+                trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
+            }
+            // }
 
-        // if (val == null) {
-        final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch();
-        // val = new B();
-        trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(stateFqn)));
-        // this.f = val;
-        trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
-        // }
-
-        // return val
-        tryInit.returnValue(val);
-        tryInit.close();
-        return tryInit.getMethodDescriptor();
+            // return val
+            tryInit.returnValue(val);
+            return tryInit.getMethodDescriptor();
+        }
     }
 
     private MethodDescriptor generateSharedState(MethodParameterInfo paramInfo, ClassCreator classCreator)
@@ -329,49 +330,38 @@ class BenchmarkProcessor
         , MethodDescriptor tryInitMethod
         , MethodInfo methodInfo
         , List<MethodDescriptor> paramInitMethods
-        , List<String> paramNames
         , ClassCreator function
     )
     {
         final List<ResultHandle> stubParameters = new ArrayList<>();
 
         final ClassInfo classInfo = methodInfo.declaringClass();
-        final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class);
-        final ResultHandle infrastructure = apply.getMethodParam(0);
-        stubParameters.add(infrastructure);
+        try (final MethodCreator apply = function.getMethodCreator("apply", Object.class, Object.class))
+        {
+            final ResultHandle infrastructure = apply.getMethodParam(0);
+            stubParameters.add(infrastructure);
 
-        // RawResults raw = new RawResults();
-        final AssignableResultHandle raw = apply.createVariable(RawResults.class);
-        apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
-        stubParameters.add(raw);
+            // RawResults raw = new RawResults();
+            final AssignableResultHandle raw = apply.createVariable(RawResults.class);
+            apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
+            stubParameters.add(raw);
 
-        // B benchmark = tryInit();
-        final String userType = classInfo.name().toString();
-        final AssignableResultHandle benchmark = apply.createVariable(DescriptorUtils.extToInt(userType));
-        apply.assign(benchmark, apply.invokeVirtualMethod(tryInitMethod, apply.getThis()));
-        stubParameters.add(benchmark);
+            // B benchmark = tryInit();
+            final String userType = classInfo.name().toString();
+            final AssignableResultHandle benchmark = apply.createVariable(DescriptorUtils.extToInt(userType));
+            apply.assign(benchmark, apply.invokeVirtualMethod(tryInitMethod, apply.getThis()));
+            stubParameters.add(benchmark);
 
-        IntStream.range(0, paramInitMethods.size())
-            .mapToObj(i -> invokeTryInit(i, paramInitMethods, paramNames, apply))
-            .forEach(stubParameters::add);
+            paramInitMethods.stream()
+                .map(initMethod -> apply.invokeVirtualMethod(initMethod, apply.getThis()))
+                .forEach(stubParameters::add);
 
-        // stub(infrastructure, raw, benchmark...);
-        apply.invokeVirtualMethod(stubMethod, apply.getThis(), stubParameters.toArray(new ResultHandle[0]));
+            // stub(infrastructure, raw, benchmark...);
+            apply.invokeVirtualMethod(stubMethod, apply.getThis(), stubParameters.toArray(new ResultHandle[0]));
 
-        // return raw;
-        apply.returnValue(raw);
-
-        apply.close();
-    }
-
-    // todo make it more general and apply to benchmark
-    private static ResultHandle invokeTryInit(int i, List<MethodDescriptor> paramInitMethods, List<String> paramNames, MethodCreator creator)
-    {
-        final String paramName = paramNames.get(i);
-        final MethodDescriptor paramInitMethod = paramInitMethods.get(i);
-        final AssignableResultHandle val = creator.createVariable(DescriptorUtils.extToInt(paramName));
-        creator.assign(val, creator.invokeVirtualMethod(paramInitMethod, creator.getThis()));
-        return val;
+            // return raw;
+            apply.returnValue(raw);
+        }
     }
 
     private static MethodDescriptor generateThroughputStub(MethodInfo methodInfo, List<String> stateParamNames, ClassCreator function)
