@@ -93,7 +93,7 @@ final class NativeOptions
             , measurement
             , benchmark.getMode()
             , params
-            , TimeUnit.SECONDS
+            , getOutputTimeUnit(benchmark, JmhOptionals.fromJmh(jmhOptions.getTimeUnit()))
             , 1
             , getJvm(benchmark, JmhOptionals.fromJmh(jmhOptions.getJvm()))
             , new ArrayList<>()
@@ -129,6 +129,14 @@ final class NativeOptions
             .orElse(benchmark.getMode() == Mode.SingleShotTime
                 ? TimeValue.NONE
                 : Defaults.MEASUREMENT_TIME)
+            );
+    }
+
+    private static TimeUnit getOutputTimeUnit(BenchmarkListEntry benchmark, Optional<TimeUnit> cmdLineValue)
+    {
+        return cmdLineValue
+            .orElse(benchmark.getTimeUnit()
+                .orElse(Defaults.OUTPUT_TIMEUNIT)
             );
     }
 

@@ -11,7 +11,7 @@ public class FibulaSample_02_AverageMode
 {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
-    // @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public void measureAvgTime() throws InterruptedException
     {
         TimeUnit.MILLISECONDS.sleep(100);

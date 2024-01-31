@@ -35,6 +35,7 @@ import org.objectweb.asm.Opcodes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
@@ -64,6 +65,7 @@ class BenchmarkProcessor
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
     private static final DotName BENCHMARK = DotName.createSimple(Benchmark.class.getName());
     private static final DotName BENCHMARK_MODE = DotName.createSimple(BenchmarkMode.class.getName());
+    private static final DotName OUTPUT_TIME_UNIT = DotName.createSimple(OutputTimeUnit.class.getName());
     private static final DotName STATE = DotName.createSimple(State.class.getName());
 
     final Identifiers identifiers = new Identifiers(); // todo reuse
@@ -133,7 +135,7 @@ class BenchmarkProcessor
                 for (MethodInfo method : methods)
                 {
                     benchmarkModes(method)
-                        .forEach(mode -> writer.println(JmhParameters.asLine(method, mode)));
+                        .forEach(mode -> writer.println(JmhParameters.asLine(method, mode, method.annotation(OUTPUT_TIME_UNIT))));
                 }
             }
         } catch (IOException ex) {
@@ -338,6 +340,7 @@ class BenchmarkProcessor
             staticInit.writeStaticField(lockField, lockInstance);
             staticInit.returnVoid();
         }
+        // }
         return lockField;
     }
 

@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.extension.deployment;
 
+import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.MethodInfo;
 import org.openjdk.jmh.annotations.Mode;
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 final class JmhParameters
 {
-    static String asLine(MethodInfo methodInfo, Mode mode)
+    static String asLine(MethodInfo methodInfo, Mode mode, AnnotationInstance outputTimeUnitAnnotation)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
 
@@ -33,7 +34,9 @@ final class JmhParameters
         final Optional<Collection<String>> jvmArgsPrepend = Optional.none();
         final Optional<Collection<String>> jvmArgsAppend = Optional.none();
         final Optional<Map<String, String[]>> params = Optional.none();
-        final Optional<TimeUnit> tu = Optional.none();
+        final Optional<TimeUnit> tu = outputTimeUnitAnnotation != null
+            ? Optional.of(TimeUnit.valueOf(outputTimeUnitAnnotation.value().asEnum()))
+            : Optional.none();
         final Optional<Integer> opsPerInvocation = Optional.none();
         final Optional<TimeValue> timeout = Optional.none();
 
