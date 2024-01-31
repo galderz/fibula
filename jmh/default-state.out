@@ -1,0 +1,50 @@
+❯ java -jar target/benchmarks.jar JMHSample_04 -f 2 -i 2 -wi 2 -r 2 -w 2
+# JMH version: 1.37
+# VM version: JDK 21.0.1-internal, OpenJDK 64-Bit Server VM, 21.0.1-internal-adhoc.galder.jdk21u
+# VM invoker: /Users/galder/opt/jdk21u/build/release/images/jdk/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 2 iterations, 2 s each
+# Measurement: 2 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.openjdk.jmh.samples.JMHSample_04_DefaultState.measure
+
+# Run progress: 0.00% complete, ETA 00:00:16
+# Fork: 1 of 2
+# Warmup Iteration   1: 291409961.702 ops/s
+# Warmup Iteration   2: 291323082.703 ops/s
+Iteration   1: 290707311.230 ops/s
+Iteration   2: 290589609.620 ops/s
+
+# Run progress: 50.00% complete, ETA 00:00:08
+# Fork: 2 of 2
+# Warmup Iteration   1: 291511715.959 ops/s
+# Warmup Iteration   2: 291169216.388 ops/s
+Iteration   1: 287736148.981 ops/s
+Iteration   2: 291630905.627 ops/s
+
+
+Result "org.openjdk.jmh.samples.JMHSample_04_DefaultState.measure":
+  290165993.865 ±(99.9%) 10891591.416 ops/s [Average]
+  (min, avg, max) = (287736148.981, 290165993.865, 291630905.627), stdev = 1685485.828
+  CI (99.9%): [279274402.449, 301057585.280] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:00:16
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                           Mode  Cnt          Score          Error  Units
+JMHSample_04_DefaultState.measure  thrpt    4  290165993.865 ± 10891591.416  ops/s

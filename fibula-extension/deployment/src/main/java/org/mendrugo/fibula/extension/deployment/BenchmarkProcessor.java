@@ -28,7 +28,6 @@ import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.jboss.jandex.MethodInfo;
-import org.jboss.jandex.MethodParameterInfo;
 import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhRawResults;
 import org.objectweb.asm.Opcodes;
@@ -99,8 +98,8 @@ class BenchmarkProcessor
     {
         return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
             || methodInfo.declaringClass().simpleName().contains("JMHSample_03")
-            || methodInfo.declaringClass().simpleName().contains("FibulaSample_01")
-            || methodInfo.declaringClass().simpleName().contains("FibulaSample_02");
+            || methodInfo.declaringClass().simpleName().contains("JMHSample_04")
+            || methodInfo.declaringClass().simpleName().contains("FibulaSample");
     }
 
     private void generateBenchmarkClasses(
@@ -200,11 +199,11 @@ class BenchmarkProcessor
             .build();
 
         // Benchmark field and initialization
-        final MethodDescriptor tryInitMethod = generateUnsharedState(methodInfo.declaringClass().name().toString(), function);
+        final MethodDescriptor tryInitMethod = generateStateInitMethod(getStateAnnotation(methodInfo.declaringClass().name(), index), methodInfo.declaringClass().name(), function);
 
         // State field and initialization
         final List<MethodDescriptor> paramInitMethods = methodInfo.parameters().stream()
-            .map(paramInfo -> generateScopeState(paramInfo, function, index))
+            .map(paramInfo -> generateStateInitMethod(getStateAnnotation(paramInfo.type().name(), index), paramInfo.type().name(), function))
             .toList();
 
         final List<String> paramNames = methodInfo.parameters().stream()
@@ -221,30 +220,35 @@ class BenchmarkProcessor
         return className;
     }
 
-    private MethodDescriptor generateScopeState(MethodParameterInfo paramInfo, ClassCreator function, IndexView index)
+    private MethodDescriptor generateStateInitMethod(Optional<AnnotationInstance> stateAnnotation, DotName name, ClassCreator function)
     {
-        final Optional<AnnotationInstance> stateAnnotation = index.getAnnotations(STATE).stream()
-            .filter(annotation -> annotation.target().asClass().name().equals(paramInfo.type().name()))
-            .findFirst();
-
         if (stateAnnotation.isPresent())
         {
             final Scope scope = Scope.valueOf(stateAnnotation.get().value().asEnum());
             return switch (scope)
             {
-                case Benchmark -> generateSharedState(paramInfo, function);
-                case Thread -> generateUnsharedState(paramInfo.type().name().toString(), function);
+                case Benchmark -> generateSharedStateInitMethod(name, function);
+                case Thread -> generateUnsharedStateInitMethod(name, function);
                 default -> throw new RuntimeException("NYI");
             };
         }
-        throw new IllegalStateException("Parameter type has no @State annotation");
+        return generateUnsharedStateInitMethod(name, function);
     }
 
-    private MethodDescriptor generateUnsharedState(String stateFqn, ClassCreator function)
+    private static Optional<AnnotationInstance> getStateAnnotation(DotName name, IndexView index)
     {
+        return index.getAnnotations(STATE).stream()
+            .filter(annotation -> annotation.target().asClass().name().equals(name))
+            .findFirst();
+    }
+
+    private MethodDescriptor generateUnsharedStateInitMethod(DotName name, ClassCreator function)
+    {
+        final String fqn = name.toString();
+
         // Unshared f_unshared;
-        final String fieldIdentifier = "f_" + identifiers.collapseTypeName(stateFqn) + identifiers.identifier(Scope.Thread);
-        final FieldDescriptor field = function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(stateFqn)).getFieldDescriptor();
+        final String fieldIdentifier = "f_" + identifiers.collapseTypeName(fqn) + identifiers.identifier(Scope.Thread);
+        final FieldDescriptor field = function.getFieldCreator(fieldIdentifier, DescriptorUtils.extToInt(fqn)).getFieldDescriptor();
 
         final String methodName = "_fib_tryInit_" + field.getName();
         try (final MethodCreator tryInit = function.getMethodCreator(methodName, field.getType()))
@@ -257,7 +261,7 @@ class BenchmarkProcessor
             try (final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch())
             {
                 // val = new Unshared();
-                trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(stateFqn)));
+                trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(fqn)));
                 // this.f_unshared = val;
                 trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
             }
@@ -269,16 +273,16 @@ class BenchmarkProcessor
         }
     }
 
-    private MethodDescriptor generateSharedState(MethodParameterInfo paramInfo, ClassCreator classCreator)
+    private MethodDescriptor generateSharedStateInitMethod(DotName name, ClassCreator classCreator)
     {
-        final String paramFqn = paramInfo.type().name().toString();
+        final String fqn = name.toString();
 
         // static final ReentrantLock f_lock = new ReentrantLock();
         final FieldDescriptor lockField = initStateLock(classCreator);
 
         // static volatile S f_state;
-        final String stateFieldIdentifier = "f_" + identifiers.collapseTypeName(paramFqn) + identifiers.identifier(Scope.Thread);
-        final FieldDescriptor stateField = classCreator.getFieldCreator(stateFieldIdentifier, DescriptorUtils.extToInt(paramFqn))
+        final String stateFieldIdentifier = "f_" + identifiers.collapseTypeName(fqn) + identifiers.identifier(Scope.Thread);
+        final FieldDescriptor stateField = classCreator.getFieldCreator(stateFieldIdentifier, DescriptorUtils.extToInt(fqn))
             .setModifiers(Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE)
             .getFieldDescriptor();
 
@@ -302,7 +306,7 @@ class BenchmarkProcessor
                 readStaticFieldAndReturnIfNotNull(val, stateField, tryBlock);
 
                 // val = new F();
-                final ResultHandle newVal = tryBlock.newInstance(MethodDescriptor.ofConstructor(paramFqn));
+                final ResultHandle newVal = tryBlock.newInstance(MethodDescriptor.ofConstructor(fqn));
                 tryBlock.assign(val, newVal);
                 // f_state = val;
                 tryBlock.writeStaticField(stateField, val);
