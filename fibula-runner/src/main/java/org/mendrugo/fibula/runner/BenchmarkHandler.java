@@ -7,6 +7,7 @@ import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.Serializables;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.results.AverageTimeResult;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.IterationResultMetaData;
@@ -15,7 +16,6 @@ import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ThroughputResult;
 import org.openjdk.jmh.runner.format.OutputFormat;
-import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ final class BenchmarkHandler
     private IterationResult runIteration(BenchmarkParams params, BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
     {
         final List<Result> iterationResults = new ArrayList<>();
-        final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure, iterationParams.getTime());
+        final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure, iterationParams, params);
         iterationResults.addAll(benchmarkTaskResult.getResults());
 
         long allOps = benchmarkTaskResult.getAllOps();
@@ -72,7 +72,7 @@ final class BenchmarkHandler
         return result;
     }
 
-    private BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure, TimeValue runTime)
+    private BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure, IterationParams iterationParams, BenchmarkParams benchmarkParams)
     {
         final long defaultTimeout = TimeUnit.MINUTES.toNanos(1);
         long waitDeadline = System.nanoTime() + defaultTimeout;
@@ -85,7 +85,7 @@ final class BenchmarkHandler
         try
         {
             final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
-            final Future<RawResults> failing = completionService.poll(runTime.convertTo(timeUnit), timeUnit);
+            final Future<RawResults> failing = completionService.poll(iterationParams.getTime().convertTo(timeUnit), timeUnit);
             if (failing != null)
             {
                 System.out.println("Benchmark finished before it was due!");
@@ -100,17 +100,25 @@ final class BenchmarkHandler
 
         try
         {
-            final RawResults raw = completed.get();
+            final RawResults res = completed.get();
             infrastructure.resetDone(); // reset done for further iterations
 
-            raw.allOps += raw.measuredOps;
-            final int batchSize = 1; // todo iteration param
-            final int opsPerInv = 1; // todo bench param
-            raw.measuredOps *= opsPerInv;
-            raw.measuredOps /= batchSize;
-            final BenchmarkTaskResult results = new BenchmarkTaskResult((long) raw.allOps, (long) raw.measuredOps);
-            final TimeUnit timeUnit = TimeUnit.SECONDS; // todo bench param
-            results.add(new ThroughputResult(ResultRole.PRIMARY, "tbd", raw.measuredOps, raw.getTime(), timeUnit));
+            res.allOps += res.measuredOps;
+            final int batchSize = iterationParams.getBatchSize();
+            final int opsPerInv = benchmarkParams.getOpsPerInvocation();
+            res.allOps *= opsPerInv;
+            res.allOps /= batchSize;
+            res.measuredOps *= opsPerInv;
+            res.measuredOps /= batchSize;
+            final BenchmarkTaskResult results = new BenchmarkTaskResult((long) res.allOps, (long) res.measuredOps);
+            final Result result = switch (benchmarkParams.getMode())
+            {
+                case Throughput -> new ThroughputResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
+                case AverageTime -> new AverageTimeResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
+                default -> throw new RuntimeException("NYI");
+            };
+
+            results.add(result);
             return results;
         }
         catch (Exception e)

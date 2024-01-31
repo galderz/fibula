@@ -91,7 +91,7 @@ final class NativeOptions
             , 0
             , warmup
             , measurement
-            , Mode.Throughput
+            , benchmark.getMode()
             , params
             , TimeUnit.SECONDS
             , 1

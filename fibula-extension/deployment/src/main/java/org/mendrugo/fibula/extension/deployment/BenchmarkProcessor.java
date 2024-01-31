@@ -33,6 +33,8 @@ import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhRawResults;
 import org.objectweb.asm.Opcodes;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
@@ -47,6 +49,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,6 +63,7 @@ class BenchmarkProcessor
     private static final String FEATURE = "fibula-extension";
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
     private static final DotName BENCHMARK = DotName.createSimple(Benchmark.class.getName());
+    private static final DotName BENCHMARK_MODE = DotName.createSimple(BenchmarkMode.class.getName());
     private static final DotName STATE = DotName.createSimple(State.class.getName());
 
     final Identifiers identifiers = new Identifiers(); // todo reuse
@@ -93,7 +97,8 @@ class BenchmarkProcessor
     {
         return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
             || methodInfo.declaringClass().simpleName().contains("JMHSample_03")
-            || methodInfo.declaringClass().simpleName().contains("FibulaSample_01");
+            || methodInfo.declaringClass().simpleName().contains("FibulaSample_01")
+            || methodInfo.declaringClass().simpleName().contains("FibulaSample_02");
     }
 
     private void generateBenchmarkClasses(
@@ -105,10 +110,14 @@ class BenchmarkProcessor
     {
         final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
         final GeneratedClassGizmoAdaptor classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
+        // todo consider combining method and mode into a local benchmark info or equivalent
         for (MethodInfo method : methods)
         {
-            final String functionFqn = generateBenchmarkFunction(method, classOutput, index);
-            generateBenchmarkSupplier(method, beanOutput, functionFqn);
+            for (Mode mode : benchmarkModes(method))
+            {
+                final String functionFqn = generateBenchmarkFunction(method, mode, classOutput, index);
+                generateBenchmarkSupplier(method, mode, beanOutput, functionFqn);
+            }
         }
     }
 
@@ -120,52 +129,67 @@ class BenchmarkProcessor
         {
             try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8)))
             {
-                methods.forEach(method -> writeAnnotationParams(method, writer));
+                // todo consider combining method and mode into a local benchmark info or equivalent
+                for (MethodInfo method : methods)
+                {
+                    benchmarkModes(method)
+                        .forEach(mode -> writer.println(JmhParameters.asLine(method, mode)));
+                }
             }
         } catch (IOException ex) {
             destination.printError("Error writing benchmark list", ex);
         }
     }
 
-    private void generateBenchmarkSupplier(MethodInfo method, ClassOutput beanOutput, String functionFqn)
+    private void generateBenchmarkSupplier(MethodInfo method, Mode mode, ClassOutput beanOutput, String functionFqn)
     {
         final ClassInfo classInfo = method.declaringClass();
-        final ClassCreator supplier = ClassCreator.builder()
+        try (final ClassCreator supplier = ClassCreator.builder()
             .classOutput(beanOutput)
             .className(String.format(
-                "%s.%s_%s_Throughput_Supplier"
+                "%s.%s_%s_%s_Supplier"
                 , PACKAGE_NAME
                 , classInfo.simpleName() // todo include package name here
                 , method.name()
+                , mode.name()
             ))
             .interfaces("org.mendrugo.fibula.runner.BenchmarkSupplier") // todo share class
-            .build();
-        supplier.addAnnotation(ApplicationScoped.class);
-
-        final MethodCreator get = supplier.getMethodCreator("get", Function.class);
-        final ResultHandle newInstance = get.newInstance(MethodDescriptor.ofConstructor(functionFqn));
-        get.returnValue(newInstance);
-        get.close();
-
-        supplier.close();
+            .build()
+        )
+        {
+            supplier.addAnnotation(ApplicationScoped.class);
+            try (final MethodCreator get = supplier.getMethodCreator("get", Function.class))
+            {
+                final ResultHandle newInstance = get.newInstance(MethodDescriptor.ofConstructor(functionFqn));
+                get.returnValue(newInstance);
+            }
+        }
     }
 
-    private static void writeAnnotationParams(MethodInfo method, PrintWriter writer)
+    private static List<Mode> benchmarkModes(MethodInfo method)
     {
-        final ClassInfo classInfo = method.declaringClass();
-        final String params = JmhParameters.asLine(classInfo.name().toString(), classInfo.simpleName(), method.name());
-        writer.println(params);
+        final AnnotationInstance annotation = method.annotation(BENCHMARK_MODE);
+        if (annotation != null)
+        {
+            return Arrays.stream(annotation.value().asEnumArray())
+                .map(Mode::valueOf)
+                .toList();
+        }
+
+        return List.of(Mode.Throughput);
     }
 
-    private String generateBenchmarkFunction(MethodInfo methodInfo, ClassOutput classOutput, IndexView index)
+    private String generateBenchmarkFunction(MethodInfo methodInfo, Mode mode, ClassOutput classOutput, IndexView index)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
 
         final String className = String.format(
-            "%s.%s_%s_Throughput_Function"
+            "%s.%s_%s_%s_Function"
             , PACKAGE_NAME
             , classInfo.simpleName()
-            , methodInfo.name());
+            , methodInfo.name()
+            , mode.name()
+        );
 
         final ClassCreator function = ClassCreator.builder()
             .classOutput(classOutput)
@@ -186,7 +210,7 @@ class BenchmarkProcessor
             .toList();
 
         // Calculating stub
-        final MethodDescriptor stubMethod = generateThroughputStub(methodInfo, paramNames, function);
+        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, function);
 
         // Function implementation bringing it all together
         generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, function);
@@ -370,10 +394,10 @@ class BenchmarkProcessor
         }
     }
 
-    private static MethodDescriptor generateThroughputStub(MethodInfo methodInfo, List<String> stateParamNames, ClassCreator function)
+    private static MethodDescriptor generateThroughputOrAverageStub(MethodInfo methodInfo, Mode mode, List<String> stateParamNames, ClassCreator function)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
-        final String stubMethodName = "thrpt_fibStub";
+        final String stubMethodName = mode.shortLabel() + "_fibStub";
 
         final List<String> paramNames = new ArrayList<>();
         paramNames.add("org.mendrugo.fibula.results.Infrastructure");

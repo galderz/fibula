@@ -1,5 +1,7 @@
 package org.mendrugo.fibula.extension.deployment;
 
+import org.jboss.jandex.ClassInfo;
+import org.jboss.jandex.MethodInfo;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.Optional;
@@ -11,9 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 final class JmhParameters
 {
-    static String asLine(String className, String supplierPrefix, String method)
+    static String asLine(MethodInfo methodInfo, Mode mode)
     {
-        final Mode mode = Mode.Throughput;
+        final ClassInfo classInfo = methodInfo.declaringClass();
+
         final int[] threadGroups = new int[]{1};
         final Optional<Collection<String>> threadGroupLabels = Optional.none();
         final Optional<Integer> threads = Optional.none();
@@ -36,9 +39,9 @@ final class JmhParameters
 
         // JMH
         TestLineWriter writer = new TestLineWriter();
-        writer.putString(className);
-        writer.putString(supplierPrefix);
-        writer.putString(method);
+        writer.putString(classInfo.name().toString());
+        writer.putString(classInfo.simpleName());
+        writer.putString(methodInfo.name());
         writer.putString(mode.toString());
         writer.putOptionalInt(threads);
         writer.putIntArray(threadGroups);
