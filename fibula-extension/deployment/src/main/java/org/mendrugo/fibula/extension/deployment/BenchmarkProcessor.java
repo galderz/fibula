@@ -64,7 +64,6 @@ class BenchmarkProcessor
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
     private static final DotName BENCHMARK = DotName.createSimple(Benchmark.class.getName());
     private static final DotName BENCHMARK_MODE = DotName.createSimple(BenchmarkMode.class.getName());
-    private static final DotName OUTPUT_TIME_UNIT = DotName.createSimple(OutputTimeUnit.class.getName());
     private static final DotName STATE = DotName.createSimple(State.class.getName());
 
     final Identifiers identifiers = new Identifiers(); // todo reuse
@@ -134,7 +133,7 @@ class BenchmarkProcessor
                 for (MethodInfo method : methods)
                 {
                     benchmarkModes(method)
-                        .forEach(mode -> writer.println(JmhParameters.asLine(method, mode, method.annotation(OUTPUT_TIME_UNIT))));
+                        .forEach(mode -> writer.println(JmhParameters.asLine(method, mode)));
                 }
             }
         } catch (IOException ex) {
@@ -169,8 +168,10 @@ class BenchmarkProcessor
 
     private static List<Mode> benchmarkModes(MethodInfo method)
     {
-        final AnnotationInstance annotation = method.annotation(BENCHMARK_MODE);
-        if (annotation != null)
+        AnnotationInstance annotation;
+        if ((annotation = method.annotation(BENCHMARK_MODE)) != null
+            || (annotation = method.declaringClass().annotation(BENCHMARK_MODE)) != null
+        )
         {
             return Arrays.stream(annotation.value().asEnumArray())
                 .map(Mode::valueOf)
