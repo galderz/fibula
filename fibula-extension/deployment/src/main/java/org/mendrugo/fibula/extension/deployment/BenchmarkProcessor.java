@@ -1,5 +1,7 @@
 package org.mendrugo.fibula.extension.deployment;
 
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.deployment.GeneratedClassGizmoAdaptor;
@@ -16,6 +18,7 @@ import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.DescriptorUtils;
 import io.quarkus.gizmo.FieldDescriptor;
+import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
@@ -85,6 +88,12 @@ class BenchmarkProcessor
         , BuildSystemTargetBuildItem buildSystemTarget
     )
     {
+        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
+        final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
+
+        Log.info("Generating blackhole substitution");
+        generateBlackholeSubstitution(classOutput);
+
         Log.info("Generating benchmark bytecode");
 
         final List<MethodInfo> methods = index.getIndex().getAnnotations(BENCHMARK).stream()
@@ -93,7 +102,36 @@ class BenchmarkProcessor
             .toList();
 
         generateBenchmarkList(methods, buildSystemTarget);
-        generateBenchmarkClasses(methods, generatedBeanClasses, generatedClasses, index.getIndex());
+        generateBenchmarkClasses(methods, beanOutput, classOutput, index.getIndex());
+    }
+
+    private void generateBlackholeSubstitution(ClassOutput classOutput)
+    {
+        final String className = String.format(
+            "%s.Target_org_openjdk_jmh_infra_Blackhole"
+            , PACKAGE_NAME
+        );
+
+        try (final ClassCreator blackhole = ClassCreator.builder()
+            .classOutput(classOutput)
+            .className(className)
+            .setFinal(true)
+            .build()
+        )
+        {
+            blackhole.addAnnotation(TargetClass.class).add("className", "org.openjdk.jmh.infra.Blackhole");
+
+            // todo add other consume methods
+            try (final MethodCreator consume = blackhole.getMethodCreator("consume", void.class, double.class))
+            {
+                consume.addAnnotation(Substitute.class);
+
+                final ResultHandle value = consume.getMethodParam(0);
+                // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("jdk.graal.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
+                consume.invokeStaticMethod(MethodDescriptor.ofMethod("org.graalvm.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), value);
+                consume.returnVoid();
+            }
+        }
     }
 
     private static boolean isSupportedBenchmark(MethodInfo methodInfo)
@@ -106,13 +144,11 @@ class BenchmarkProcessor
 
     private void generateBenchmarkClasses(
         List<MethodInfo> methods
-        , BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
-        , BuildProducer<GeneratedClassBuildItem> generatedClasses
+        , ClassOutput beanOutput
+        , ClassOutput classOutput
         , IndexView index
     )
     {
-        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
-        final GeneratedClassGizmoAdaptor classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
         // todo consider combining method and mode into a local benchmark info or equivalent
         for (MethodInfo method : methods)
         {
@@ -468,10 +504,6 @@ class BenchmarkProcessor
             if (blackhole != null)
             {
                 whileLoopBlock.invokeVirtualMethod(selectBlackholeMethod(methodInfo), blackhole, result);
-
-                // todo move a substitution for native
-                // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("jdk.graal.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
-                // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("org.graalvm.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
             }
             whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
         }
