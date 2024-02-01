@@ -28,16 +28,17 @@ import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.jboss.jandex.MethodInfo;
+import org.jboss.jandex.VoidType;
 import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhRawResults;
 import org.objectweb.asm.Opcodes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.runner.BenchmarkList;
 
@@ -384,6 +385,16 @@ class BenchmarkProcessor
             apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
             stubParameters.add(raw);
 
+            if (VoidType.VOID != methodInfo.returnType())
+            {
+                final AssignableResultHandle blackhole = apply.createVariable(Blackhole.class);
+                apply.assign(blackhole, apply.newInstance(
+                    MethodDescriptor.ofConstructor(Blackhole.class, String.class)
+                    , apply.load("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.")
+                ));
+                stubParameters.add(blackhole);
+            }
+
             // B benchmark = tryInit();
             final String userType = classInfo.name().toString();
             final AssignableResultHandle benchmark = apply.createVariable(DescriptorUtils.extToInt(userType));
@@ -408,8 +419,14 @@ class BenchmarkProcessor
         final String stubMethodName = mode.shortLabel() + "_fibStub";
 
         final List<String> paramNames = new ArrayList<>();
-        paramNames.add("org.mendrugo.fibula.results.Infrastructure");
-        paramNames.add("org.openjdk.jmh.results.RawResults");
+        paramNames.add(Infrastructure.class.getName());
+        paramNames.add(RawResults.class.getName());
+
+        if (VoidType.VOID != methodInfo.returnType())
+        {
+            paramNames.add(Blackhole.class.getName());
+        }
+
         paramNames.add(classInfo.name().toString());
         paramNames.addAll(stateParamNames);
 
@@ -418,11 +435,17 @@ class BenchmarkProcessor
             , "void"
             , paramNames.toArray(new String[0])
         );
-        final ResultHandle infrastructure = stub.getMethodParam(0);
-        final ResultHandle raw = stub.getMethodParam(1);
-        final ResultHandle benchmark = stub.getMethodParam(2);
+
+        int paramIndex = 0;
+        final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
+        final ResultHandle raw = stub.getMethodParam(paramIndex++);
+        final ResultHandle blackhole = VoidType.VOID != methodInfo.returnType()
+            ? stub.getMethodParam(paramIndex++)
+            : null;
+        final ResultHandle benchmark = stub.getMethodParam(paramIndex++);
+        final int paramCount = paramIndex;
         final List<ResultHandle> params = IntStream.range(0, stateParamNames.size())
-            .mapToObj(i -> stub.getMethodParam(i + 3))
+            .mapToObj(i -> stub.getMethodParam(i + paramCount))
             .toList();
 
         // raw.startTime = System.nanoTime();
@@ -437,10 +460,16 @@ class BenchmarkProcessor
         final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
             bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
         ));
-        final BytecodeCreator whileLoopBlock = whileLoop.block();
-        whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark, params.toArray(new ResultHandle[0]));
-        whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
-        whileLoopBlock.close();
+        try (final BytecodeCreator whileLoopBlock = whileLoop.block())
+        {
+            final ResultHandle result = whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark, params.toArray(new ResultHandle[0]));
+            if (blackhole != null)
+            {
+                // todo deal with other primitive types and Object
+                whileLoopBlock.invokeVirtualMethod(MethodDescriptor.ofMethod(Blackhole.class, "consume", void.class, double.class), blackhole, result);
+            }
+            whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
+        }
 
         // raw.stopTime = System.nanoTime();
         final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
