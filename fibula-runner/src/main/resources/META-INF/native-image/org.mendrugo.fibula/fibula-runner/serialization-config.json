@@ -55,6 +55,9 @@
       "name":"org.openjdk.jmh.results.AggregationPolicy"
     },
     {
+      "name":"org.openjdk.jmh.results.AverageTimeResult"
+    },
+    {
       "name":"org.openjdk.jmh.results.IterationResult"
     },
     {
