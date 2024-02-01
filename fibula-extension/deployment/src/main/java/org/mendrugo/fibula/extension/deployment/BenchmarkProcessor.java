@@ -28,6 +28,8 @@ import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.jboss.jandex.MethodInfo;
+import org.jboss.jandex.PrimitiveType;
+import org.jboss.jandex.Type;
 import org.jboss.jandex.VoidType;
 import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhRawResults;
@@ -57,7 +59,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.jboss.jandex.Type.Kind.PRIMITIVE;
 
 class BenchmarkProcessor
 {
@@ -340,7 +342,7 @@ class BenchmarkProcessor
         // static {
         try (MethodCreator staticInit = classCreator.getMethodCreator("<clinit>", void.class))
         {
-            staticInit.setModifiers(ACC_STATIC);
+            staticInit.setModifiers(Opcodes.ACC_STATIC);
             ResultHandle lockInstance = staticInit.newInstance(MethodDescriptor.ofConstructor(ReentrantLock.class));
             // f_lock = new ReentrantLock();
             staticInit.writeStaticField(lockField, lockInstance);
@@ -465,8 +467,11 @@ class BenchmarkProcessor
             final ResultHandle result = whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark, params.toArray(new ResultHandle[0]));
             if (blackhole != null)
             {
-                // todo deal with other primitive types and Object
-                whileLoopBlock.invokeVirtualMethod(MethodDescriptor.ofMethod(Blackhole.class, "consume", void.class, double.class), blackhole, result);
+                whileLoopBlock.invokeVirtualMethod(selectBlackholeMethod(methodInfo), blackhole, result);
+
+                // todo move a substitution for native
+                // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("jdk.graal.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
+                // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("org.graalvm.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
             }
             whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
         }
@@ -481,6 +486,32 @@ class BenchmarkProcessor
         stub.returnVoid();
         stub.close();
         return stub.getMethodDescriptor();
+    }
+
+    private static MethodDescriptor selectBlackholeMethod(MethodInfo methodInfo)
+    {
+        final Type returnType = methodInfo.returnType();
+        Class<?> consumeParamClass;
+        if (PRIMITIVE == returnType.kind())
+        {
+            consumeParamClass = switch (((PrimitiveType) returnType).primitive())
+            {
+                case BYTE -> byte.class;
+                case BOOLEAN -> boolean.class;
+                case CHAR -> char.class;
+                case DOUBLE -> double.class;
+                case FLOAT -> float.class;
+                case INT -> int.class;
+                case LONG -> long.class;
+                case SHORT -> short.class;
+            };
+        }
+        else
+        {
+            consumeParamClass = Object.class;
+        }
+
+        return MethodDescriptor.ofMethod(Blackhole.class, "consume", void.class, consumeParamClass);
     }
 }
 
