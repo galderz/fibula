@@ -66,9 +66,11 @@ runner_build_args += -Prunner-$(MODE)
 ifdef DECOMPILE
   runner_build_args += -Dquarkus.package.vineflower.enabled=true
 endif
-ifeq ($(GRAALVM_VERSION),24)
-  runner_build_args += -Dfibula.graal.compiler.module=jdk.graal.compiler
-  runner_build_args += -Dfibula.graal.compiler.package.prefix=jdk.graal
+ifdef GRAALVM_VERSION
+  ifeq ($(GRAALVM_VERSION),24)
+    runner_build_args += -Dfibula.graal.compiler.module=jdk.graal.compiler
+    runner_build_args += -Dfibula.graal.compiler.package.prefix=jdk.graal
+  endif
 endif
 
 samples: $(bootstrap_jar)
