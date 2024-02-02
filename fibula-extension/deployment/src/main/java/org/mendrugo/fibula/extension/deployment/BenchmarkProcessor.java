@@ -120,6 +120,8 @@ class BenchmarkProcessor
         {
             blackhole.addAnnotation(TargetClass.class).add("className", "org.openjdk.jmh.infra.Blackhole");
 
+            final String graalCompilerPackagePrefix = System.getProperty("fibula.graal.compiler.package.prefix", "org.graalvm");
+
             List<Class<?>> consumeParameterTypes = List.of(
                 byte.class
                 , boolean.class
@@ -131,19 +133,18 @@ class BenchmarkProcessor
                 , short.class
                 , Object.class
             );
-            consumeParameterTypes.forEach(clazz -> generateBlackholeConsumeSubstitution(clazz, blackhole));
+            consumeParameterTypes.forEach(clazz -> generateBlackholeConsumeSubstitution(clazz, graalCompilerPackagePrefix, blackhole));
         }
     }
 
-    private static void generateBlackholeConsumeSubstitution(Class<?> clazz, ClassCreator blackhole)
+    private static void generateBlackholeConsumeSubstitution(Class<?> clazz, String graalCompilerPackagePrefix, ClassCreator blackhole)
     {
         try (final MethodCreator consume = blackhole.getMethodCreator("consume", void.class, clazz))
         {
             consume.addAnnotation(Substitute.class);
 
             final ResultHandle value = consume.getMethodParam(0);
-            // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("jdk.graal.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
-            consume.invokeStaticMethod(MethodDescriptor.ofMethod("org.graalvm.compiler.api.directives.GraalDirectives", "blackhole", void.class, clazz), value);
+            consume.invokeStaticMethod(MethodDescriptor.ofMethod(graalCompilerPackagePrefix + ".compiler.api.directives.GraalDirectives", "blackhole", void.class, clazz), value);
             consume.returnVoid();
         }
     }

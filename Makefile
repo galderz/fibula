@@ -19,6 +19,7 @@ bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 java = $(GRAALVM_HOME)/bin/java
 samples_bootstrap_jar = target/bootstrap/quarkus-run.jar
 
+system_props =
 ifdef LOG_LEVEL
   ifeq ($(LOG_LEVEL),DEBUG)
     system_props += -Dquarkus.log.category.\"org.mendrugo.fibula\".level=DEBUG
@@ -64,6 +65,10 @@ endif
 runner_build_args += -Prunner-$(MODE)
 ifdef DECOMPILE
   runner_build_args += -Dquarkus.package.vineflower.enabled=true
+endif
+ifeq ($(GRAALVM_VERSION),24)
+  runner_build_args += -Dfibula.graal.compiler.module=jdk.graal.compiler
+  runner_build_args += -Dfibula.graal.compiler.package.prefix=jdk.graal
 endif
 
 samples: $(bootstrap_jar)
