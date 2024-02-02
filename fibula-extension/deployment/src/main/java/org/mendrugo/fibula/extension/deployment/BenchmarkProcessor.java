@@ -18,7 +18,6 @@ import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.DescriptorUtils;
 import io.quarkus.gizmo.FieldDescriptor;
-import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
@@ -121,16 +120,31 @@ class BenchmarkProcessor
         {
             blackhole.addAnnotation(TargetClass.class).add("className", "org.openjdk.jmh.infra.Blackhole");
 
-            // todo add other consume methods
-            try (final MethodCreator consume = blackhole.getMethodCreator("consume", void.class, double.class))
-            {
-                consume.addAnnotation(Substitute.class);
+            List<Class<?>> consumeParameterTypes = List.of(
+                byte.class
+                , boolean.class
+                , char.class
+                , double.class
+                , float.class
+                , int.class
+                , long.class
+                , short.class
+                , Object.class
+            );
+            consumeParameterTypes.forEach(clazz -> generateBlackholeConsumeSubstitution(clazz, blackhole));
+        }
+    }
 
-                final ResultHandle value = consume.getMethodParam(0);
-                // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("jdk.graal.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
-                consume.invokeStaticMethod(MethodDescriptor.ofMethod("org.graalvm.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), value);
-                consume.returnVoid();
-            }
+    private static void generateBlackholeConsumeSubstitution(Class<?> clazz, ClassCreator blackhole)
+    {
+        try (final MethodCreator consume = blackhole.getMethodCreator("consume", void.class, clazz))
+        {
+            consume.addAnnotation(Substitute.class);
+
+            final ResultHandle value = consume.getMethodParam(0);
+            // whileLoopBlock.invokeStaticMethod(MethodDescriptor.ofMethod("jdk.graal.compiler.api.directives.GraalDirectives", "blackhole", void.class, double.class), result);
+            consume.invokeStaticMethod(MethodDescriptor.ofMethod("org.graalvm.compiler.api.directives.GraalDirectives", "blackhole", void.class, clazz), value);
+            consume.returnVoid();
         }
     }
 
