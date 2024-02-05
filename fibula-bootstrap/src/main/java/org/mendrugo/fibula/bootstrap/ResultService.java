@@ -14,11 +14,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @ApplicationScoped
 public class ResultService
 {
-    private final Map<BenchmarkParams, List<IterationResult>> iterationResults = new HashMap<>();
+    private final SortedMap<BenchmarkParams, List<IterationResult>> iterationResults = new TreeMap<>();
 
     void addIteration(IterationResult result)
     {
@@ -42,7 +44,6 @@ public class ResultService
     private Collection<RunResult> getRunResults()
     {
         final List<RunResult> runResults = new ArrayList<>();
-        // todo sort it
         for (Map.Entry<BenchmarkParams, List<IterationResult>> entry : iterationResults.entrySet())
         {
             final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(entry.getKey(), entry.getValue()));
