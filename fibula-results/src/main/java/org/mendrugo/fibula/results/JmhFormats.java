@@ -26,7 +26,7 @@ public final class JmhFormats
         }
     }
 
-    public static ResultFormat resultFormat()
+    public static ResultFormat textResultFormat()
     {
         try
         {

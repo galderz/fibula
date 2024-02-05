@@ -6,6 +6,9 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.results.format.ResultFormat;
+import org.openjdk.jmh.results.format.ResultFormatFactory;
+import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.Defaults;
@@ -57,6 +60,23 @@ final class NativeOptions
             params.add(getBenchmarkParams(entry));
         }
         return params;
+    }
+
+    Optional<String> resultFile()
+    {
+        if (jmhOptions.getResult().hasValue() || jmhOptions.getResultFormat().hasValue()) {
+            final String format = jmhOptions.getResultFormat()
+                .orElse(Defaults.RESULT_FORMAT).toString().toLowerCase();
+            return Optional.of(jmhOptions.getResult().orElse(Defaults.RESULT_FILE_PREFIX + "." + format));
+        }
+
+        return Optional.empty();
+    }
+
+    ResultFormat fileResultFormat(String resultFile)
+    {
+        final ResultFormatType format = jmhOptions.getResultFormat().orElse(Defaults.RESULT_FORMAT);
+        return ResultFormatFactory.getInstance(format, resultFile);
     }
 
     private BenchmarkParams getBenchmarkParams(BenchmarkListEntry benchmark)

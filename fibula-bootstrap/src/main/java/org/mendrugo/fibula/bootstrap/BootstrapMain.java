@@ -45,6 +45,8 @@ public class BootstrapMain implements QuarkusApplication
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(out);
 
+        resultService.startRun(options);
+
         // Read metadata for all benchmarks
         final SortedSet<BenchmarkParams> benchmarks = options.findBenchmarkParams(out);
         for (BenchmarkParams benchmark : benchmarks)

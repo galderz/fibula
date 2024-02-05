@@ -44,6 +44,11 @@ benchmark_params += 2
 benchmark_params += -w
 benchmark_params += 2
 
+ifdef RESULT_FORMAT
+  benchmark_params += -rf
+  benchmark_params += $(RESULT_FORMAT)
+endif
+
 mvnw += JAVA_HOME=$(JAVA_HOME)
 mvnw_runner += JAVA_HOME=$(JAVA_HOME)
 ifdef DEBUG_IDE
