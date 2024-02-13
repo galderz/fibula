@@ -95,8 +95,7 @@ build:
 .PHONY: build
 
 test: $(bootstrap_jar)
-> cd fibula-it
-> $(mvnw) test
+> $(mvnw) test -pl fibula-it -Dfibula.test.quick
 .PHONY: test
 
 clean:

@@ -14,8 +14,7 @@ record Parameters(
     , String warmupTime
 )
 {
-    // static final boolean QUICK = Boolean.getBoolean("fibula.test.quick");
-    static final boolean QUICK = true;
+    static final boolean QUICK = Boolean.getBoolean("fibula.test.quick");
 
     static final int QUICK_TIMEOUT = 1;
     static final String QUICK_MEASUREMENT_TIME = "1 s";
