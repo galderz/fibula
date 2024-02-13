@@ -13,29 +13,30 @@ public class ScoresTest
     @Test
     public void jmhSample03_States()
     {
-        System.out.println("Working Directory: " + System.getProperty("user.dir"));
+        final TestParameters test = TestParameters.parameters("JMHSample_03_States");
 
         final List<String> arguments = new ArrayList<>(List.of(
             getCurrentJvm()
             , "-jar"
             , "target/bootstrap/quarkus-run.jar"
-            , "JMHSample_03_States"
+            , test.benchmarkName()
             , "-rf"
             , "json"
             , "-rff"
-            , "target/fibula_JmhSample03_States.json"
+            , test.resultWritePath().toString()
         ));
 
-        final SpeedParameters speedParameters = SpeedSetup.parameters();
         arguments.addAll(List.of(
-            "-r", String.valueOf(speedParameters.measureTime())
-            , "-f", String.valueOf(speedParameters.measureForkCount())
-            , "-i", String.valueOf(speedParameters.measureIterationCount())
-            , "-w", String.valueOf(speedParameters.warmupTime())
-            , "-wi", String.valueOf(speedParameters.warmupIterationCount())
+            "-r", String.valueOf(test.measurementTime())
+            , "-f", String.valueOf(test.measurementForkCount())
+            , "-i", String.valueOf(test.measurementIterationCount())
+            , "-w", String.valueOf(test.warmupTime())
+            , "-wi", String.valueOf(test.warmupIterationCount())
         ));
 
-        TestProcessExecutor.runSync(arguments, speedParameters.timeoutMins());
+        TestProcessExecutor.runSync(arguments, test.timeoutMins());
+        final List<Result> results = Expects.assertSanityChecks(test);
+        System.out.println(results);
     }
 
     static String getCurrentJvm()
