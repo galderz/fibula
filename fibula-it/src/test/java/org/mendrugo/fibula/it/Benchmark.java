@@ -8,7 +8,7 @@ final class Benchmark
 {
     static List<Result> run(String benchmarkName, Provider provider)
     {
-        final TestParameters test = TestParameters.parameters(benchmarkName);
+        final Parameters test = Parameters.parameters(benchmarkName);
 
         final List<String> arguments = new ArrayList<>(List.of(
             getCurrentJvm()
@@ -18,7 +18,7 @@ final class Benchmark
             , "-rf"
             , "json"
             , "-rff"
-            , test.resultWritePath().toString()
+            , test.resultPath().toString()
         ));
 
         arguments.addAll(List.of(
@@ -30,7 +30,7 @@ final class Benchmark
         ));
 
         // todo return working directoy and use that for reading the file (avoids a method)
-        TestProcessExecutor.runSync(arguments, test.timeoutMins());
+        ProcessExecutor.runSync(arguments, test);
         return Expects.assertSanityChecks(test);
     }
 

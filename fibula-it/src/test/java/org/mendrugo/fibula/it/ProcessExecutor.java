@@ -1,7 +1,6 @@
 package org.mendrugo.fibula.it;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -9,13 +8,13 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-final class TestProcessExecutor
+final class ProcessExecutor
 {
-    static void runSync(List<String> arguments, int timeoutMins)
+    static void runSync(List<String> arguments, Parameters parameters)
     {
         System.out.println("Executing: " + String.join(" ", arguments));
-        ProcessBuilder processBuilder = new ProcessBuilder().command(arguments);
-        processBuilder.directory(new File("../fibula-samples"));
+        final ProcessBuilder processBuilder = new ProcessBuilder().command(arguments);
+        processBuilder.directory(parameters.workingDir().toFile());
         try
         {
             Process process = processBuilder.start();
@@ -24,7 +23,7 @@ final class TestProcessExecutor
             pOut.start();
             pErr.start();
 
-            final boolean success = process.waitFor(timeoutMins, TimeUnit.MINUTES);
+            final boolean success = process.waitFor(parameters.timeoutMins(), TimeUnit.MINUTES);
             if (!success)
             {
                 throw new AssertionError("Benchmark did not finish in allocated time");
@@ -52,8 +51,8 @@ final class TestProcessExecutor
         {
             try
             {
-                BufferedReader input = new BufferedReader(new InputStreamReader(in));
-                String line = null;
+                final BufferedReader input = new BufferedReader(new InputStreamReader(in));
+                String line;
                 while ((line = input.readLine()) != null)
                 {
                     out.println(line);

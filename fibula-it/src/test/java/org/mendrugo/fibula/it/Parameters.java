@@ -4,8 +4,9 @@ import org.openjdk.jmh.runner.Defaults;
 
 import java.nio.file.Path;
 
-record TestParameters(
-    String benchmarkName
+record Parameters(
+    Path workingDir
+    , String benchmarkName
     , int timeoutMins
     , int measurementForkCount
     , int measurementIterationCount
@@ -24,12 +25,14 @@ record TestParameters(
     static final String QUICK_WARMUP_TIME = "1 s";
     static final int QUICK_WARMUP_ITERATIONS = 1;
 
-    static TestParameters parameters(String benchmarkName)
+    static Parameters parameters(String benchmarkName)
     {
+        final Path workingDir = Path.of("..", "fibula-samples");
         if (QUICK)
         {
-            return new TestParameters(
-                benchmarkName
+            return new Parameters(
+                workingDir
+                , benchmarkName
                 , QUICK_TIMEOUT
                 , QUICK_MEASUREMENT_FORKS
                 , QUICK_MEASUREMENT_ITERATIONS
@@ -39,8 +42,9 @@ record TestParameters(
             );
         }
 
-        return new TestParameters(
-            benchmarkName
+        return new Parameters(
+            workingDir
+            , benchmarkName
             , 20 // todo adjust further as needed
             , Defaults.MEASUREMENT_FORKS
             , Defaults.MEASUREMENT_ITERATIONS
@@ -50,7 +54,7 @@ record TestParameters(
         );
     }
 
-    Path resultWritePath()
+    Path resultPath()
     {
         return Path.of(
             "target"
@@ -59,13 +63,5 @@ record TestParameters(
                 , benchmarkName
             )
         );
-    }
-
-    Path resultReadPath()
-    {
-        return Path.of(
-            ".."
-            , "fibula-samples"
-        ).resolve(resultWritePath());
     }
 }
