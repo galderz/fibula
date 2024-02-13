@@ -30,8 +30,8 @@ final class Benchmark
         ));
 
         // todo return working directoy and use that for reading the file (avoids a method)
-        ProcessExecutor.runSync(arguments, test);
-        return Expects.assertSanityChecks(test);
+        ProcessExecutor.runSync(arguments, test, provider);
+        return Expects.assertSanityChecks(test, provider);
     }
 
     private static String getCurrentJvm()

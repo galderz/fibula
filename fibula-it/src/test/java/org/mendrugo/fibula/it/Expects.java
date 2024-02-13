@@ -15,9 +15,9 @@ import static org.hamcrest.Matchers.*;
 
 public class Expects
 {
-    static List<Result> assertSanityChecks(Parameters test)
+    static List<Result> assertSanityChecks(Parameters test, Provider provider)
     {
-        final List<Result> results = toResults(test.workingDir().resolve(test.resultPath()));
+        final List<Result> results = toResults(provider.workingDir().resolve(test.resultPath()));
         for (Result result : results)
         {
             assertThat(result.forks(), is(test.measurementForkCount()));

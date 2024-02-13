@@ -5,8 +5,7 @@ import org.openjdk.jmh.runner.Defaults;
 import java.nio.file.Path;
 
 record Parameters(
-    Path workingDir
-    , String benchmarkName
+    String benchmarkName
     , int timeoutMins
     , int measurementForkCount
     , int measurementIterationCount
@@ -27,12 +26,10 @@ record Parameters(
 
     static Parameters parameters(String benchmarkName)
     {
-        final Path workingDir = Path.of("..", "fibula-samples");
         if (QUICK)
         {
             return new Parameters(
-                workingDir
-                , benchmarkName
+                benchmarkName
                 , QUICK_TIMEOUT
                 , QUICK_MEASUREMENT_FORKS
                 , QUICK_MEASUREMENT_ITERATIONS
@@ -43,8 +40,7 @@ record Parameters(
         }
 
         return new Parameters(
-            workingDir
-            , benchmarkName
+            benchmarkName
             , 20 // todo adjust further as needed
             , Defaults.MEASUREMENT_FORKS
             , Defaults.MEASUREMENT_ITERATIONS

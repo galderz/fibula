@@ -10,11 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 final class ProcessExecutor
 {
-    static void runSync(List<String> arguments, Parameters parameters)
+    static void runSync(List<String> arguments, Parameters parameters, Provider provider)
     {
         System.out.println("Executing: " + String.join(" ", arguments));
         final ProcessBuilder processBuilder = new ProcessBuilder().command(arguments);
-        processBuilder.directory(parameters.workingDir().toFile());
+        processBuilder.directory(provider.workingDir().toFile());
         try
         {
             Process process = processBuilder.start();
