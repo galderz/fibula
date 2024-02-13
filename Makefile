@@ -85,14 +85,19 @@ samples: $(bootstrap_jar)
 > $(java) $(system_props) -jar $(samples_bootstrap_jar) $(benchmark_params)
 .PHONY: samples
 
-$(bootstrap_jar): $(shell find . -type f -name '*.java')
-$(bootstrap_jar): $(shell find . -type f -name 'pom.xml')
+$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
+$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'pom.xml' -print)
 $(bootstrap_jar):
-> $(mvnw) install -DskipTests --projects !fibula-samples
+> $(mvnw) install -DskipTests --projects !fibula-samples,!fibula-it
 
 build:
 > $(mvnw) -DskipTests=true install -Dquarkus.package.quiltflower.enabled=true
 .PHONY: build
+
+test: $(bootstrap_jar)
+> cd fibula-it
+> $(mvnw) test
+.PHONY: test
 
 clean:
 > $(mvnw) clean
