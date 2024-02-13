@@ -3,7 +3,8 @@ package org.mendrugo.fibula.it;
 import java.util.List;
 
 public record Result(
-    int forks
+    String benchmark
+    , int forks
     , int warmupIterations
     , String warmupTime
     , int measurementIterations

@@ -13,8 +13,37 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class Expects
+final class Expects
 {
+    static void expectScoresNearEqual(String benchmarkName)
+    {
+        Expects.assertScores(
+            Benchmark.run(benchmarkName, Provider.FIBULA)
+            , Benchmark.run(benchmarkName, Provider.JMH)
+        );
+    }
+
+    private static void assertScores(List<Result> fibulaResults, List<Result> jmhResults)
+    {
+        System.out.println(fibulaResults);
+        System.out.println(jmhResults);
+
+        assertThat(fibulaResults.size(), is(jmhResults.size()));
+        for (int i = 0; i < fibulaResults.size(); i++)
+        {
+            final Result fibulaResult = fibulaResults.get(i);
+            final Result jmhResult = jmhResults.get(i);
+            assertThat(fibulaResult.benchmark(), is(equalTo(jmhResult.benchmark())));
+            double relativeTolerance = 0.05;
+            assertThat(
+                fibulaResult.primaryMetric().score()
+                , is(closeTo(
+                    jmhResult.primaryMetric().score()
+                    , jmhResult.primaryMetric().score() * relativeTolerance
+                )));
+        }
+    }
+
     static List<Result> assertSanityChecks(Parameters test, Provider provider)
     {
         final List<Result> results = toResults(provider.workingDir().resolve(test.resultPath()));
@@ -58,5 +87,9 @@ public class Expects
         {
             throw new AssertionError(e);
         }
+    }
+
+    private Expects()
+    {
     }
 }
