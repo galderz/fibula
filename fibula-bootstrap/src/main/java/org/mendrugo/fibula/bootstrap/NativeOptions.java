@@ -120,7 +120,7 @@ final class NativeOptions
             , jdkVersion
             , vmName
             , vmVersion
-            , "0.1"
+            , "fibula-999"
             , TimeValue.minutes(10)
         );
     }
