@@ -38,3 +38,9 @@ jobs:
       - name: Build Fibula
         working-directory: fibula
         run: mvn install -DskipTests
+      - name: Build native runner
+        working-directory: fibula
+        run: mvn package -pl fibula-samples -Prunner-native
+      - name: Run integration tests
+        working-directory: fibula
+        run: mvn test -pl fibula-it -Dfibula.test.quick
