@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Fibula
+        uses: actions/checkout@v4
+        with:
+          path: fibula
+      - name: Checkout JMH
+        uses: actions/checkout@v4
+        with:
+          repository: openjdk/jmh
+          path: jmh
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Show versions
+        run: |
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
+          echo "JAVA_HOME: $JAVA_HOME"
+          java --version
+          native-image --version
+      - name: Build JMH
+        working-directory: jmh
+        run: mvn install -DskipTests
+      - name: Build Fibula
+        working-directory: fibula
+        run: mvn install -DskipTests
