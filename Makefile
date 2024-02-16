@@ -79,10 +79,10 @@ ifdef GRAALVM_VERSION
   endif
 endif
 
-run: $(bootstrap_jar) $(runner_jvm) do-run
+run: $(runner_jvm) do-run
 .PHONY: run
 
-run-native: $(bootstrap_jar) $(runner_native) do-run
+run-native: $(runner_native) do-run
 .PHONY: run-native
 
 do-run:
@@ -91,18 +91,20 @@ do-run:
 .PHONY: do-run
 
 $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
-$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'pom.xml' -print)
+$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.json' -print)
+$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.xml' -print)
 $(bootstrap_jar):
 > $(mvnw) install -DskipTests --projects !fibula-samples,!fibula-it
 
-$(runner_jvm): $(samples_jar)
+$(runner_jvm): $(bootstrap_jar) $(samples_jar)
 > $(mvnw_runner) package -pl fibula-samples -Prunner-jvm $(runner_build_args)
 
-$(runner_native): $(samples_jar)
+$(runner_native): $(bootstrap_jar) $(samples_jar)
 > $(mvnw_runner) package -pl fibula-samples -Prunner-native $(runner_build_args)
 
-$(samples_jar): $(shell find fibula-samples -name '*.java' -print)
-$(samples_jar): $(shell find fibula-samples -name 'pom.xml' -print)
+$(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
+$(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.json' -print)
+$(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.xml' -print)
 $(samples_jar):
 > $(mvnw) package -pl fibula-samples
 

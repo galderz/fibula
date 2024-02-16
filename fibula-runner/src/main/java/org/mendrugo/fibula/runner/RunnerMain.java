@@ -6,16 +6,22 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.mendrugo.fibula.results.Command;
 import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.RunnerArguments;
+import org.mendrugo.fibula.results.VmInfo;
 
 import java.util.List;
+import java.util.Locale;
 
 @QuarkusMain(name = "runner")
 public class RunnerMain implements QuarkusApplication
 {
     @RestClient
     ResultRestClient resultClient;
+
+    @RestClient
+    VmInfoRestClient vmInfoRestClient;
 
     @Inject
     @All
@@ -27,6 +33,18 @@ public class RunnerMain implements QuarkusApplication
         Log.debug("Running forked runner");
 
         final Cli cli = Cli.read(args);
+        final Command command = Command.valueOf(cli.text(RunnerArguments.COMMAND));
+        switch (command)
+        {
+            case FORK -> runFork(cli);
+            case VM_INFO -> runVmInfo();
+        }
+
+        return 0;
+    }
+
+    private void runFork(Cli cli)
+    {
         final String supplierName = cli.text(RunnerArguments.SUPPLIER_NAME);
 
         // todo add result client to handler? Make the handler a bean?
@@ -36,7 +54,12 @@ public class RunnerMain implements QuarkusApplication
             .filter(supplier -> supplier.getClass().getSimpleName().startsWith(supplierName))
             .map(supplier -> new BenchmarkCallable(supplier.get(), infrastructure))
             .forEach(callable -> benchmarkHandler.runBenchmark(callable, resultClient));
+    }
 
-        return 0;
+    private void runVmInfo()
+    {
+        vmInfoRestClient.set(new VmInfo(
+            System.getProperty("java.vm.name")
+        ));
     }
 }

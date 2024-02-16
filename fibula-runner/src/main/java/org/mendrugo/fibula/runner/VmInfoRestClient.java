@@ -6,14 +6,14 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.mendrugo.fibula.results.NativeIterationResult;
+import org.mendrugo.fibula.results.VmInfo;
 
-@Path("/results")
+@Path("/vm/info")
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.APPLICATION_JSON)
 @RegisterRestClient(configKey = "bootstrap")
-public interface ResultRestClient
+public interface VmInfoRestClient
 {
     @POST
-    String send(NativeIterationResult result);
+    String set(VmInfo info);
 }

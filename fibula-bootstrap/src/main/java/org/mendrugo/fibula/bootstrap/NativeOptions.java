@@ -98,7 +98,6 @@ final class NativeOptions
 
         String jdkVersion = System.getProperty("java.version");
         String vmVersion = System.getProperty("java.vm.version");
-        String vmName = System.getProperty("java.vm.name");
 
         return new BenchmarkParams(
             benchmark.getUsername()
@@ -118,7 +117,7 @@ final class NativeOptions
             , getJvm(benchmark, JmhOptionals.fromJmh(jmhOptions.getJvm()))
             , new ArrayList<>()
             , jdkVersion
-            , vmName
+            , null // fixed at runtime based on vm running fork
             , vmVersion
             , "fibula-999"
             , TimeValue.minutes(10)

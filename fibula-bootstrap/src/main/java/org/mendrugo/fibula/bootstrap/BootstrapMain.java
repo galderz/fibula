@@ -5,26 +5,18 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.JmhFormats;
-import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.mendrugo.fibula.results.JmhOptionals;
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.runner.BenchmarkList;
-import org.openjdk.jmh.runner.BenchmarkListEntry;
+import org.openjdk.jmh.runner.WorkloadParams;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.util.FileUtils;
+import org.openjdk.jmh.runner.options.TimeValue;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @QuarkusMain(name = "bootstrap")
@@ -32,6 +24,9 @@ public class BootstrapMain implements QuarkusApplication
 {
     @Inject
     ResultService resultService;
+
+    @Inject
+    VmInfoService vmInfoService;
 
     @Override
     public int run(String... args) throws Exception
@@ -45,10 +40,25 @@ public class BootstrapMain implements QuarkusApplication
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(out);
 
+        final Process infoProcess = processRunner.runInfo();
+        final int infoExitCode = infoProcess.waitFor();
+        if (infoExitCode != 0)
+        {
+            throw new RuntimeException(String.format(
+                "Error in process to get VM info (exit code %d)"
+                , infoExitCode
+            ));
+        }
+
         resultService.startRun(options);
 
         // Read metadata for all benchmarks
-        final SortedSet<BenchmarkParams> benchmarks = options.findBenchmarkParams(out);
+        final SortedSet<BenchmarkParams> benchmarks = options
+            .findBenchmarkParams(out)
+            .stream()
+            .map(this::applyVmInfo)
+            .collect(Collectors.toCollection(TreeSet::new));
+
         for (BenchmarkParams benchmark : benchmarks)
         {
             out.startBenchmark(benchmark);
@@ -73,5 +83,32 @@ public class BootstrapMain implements QuarkusApplication
 
         resultService.endRun();
         return 0;
+    }
+
+    private BenchmarkParams applyVmInfo(BenchmarkParams base)
+    {
+        return new BenchmarkParams(
+            base.getBenchmark()
+            , base.generatedBenchmark()
+            , base.shouldSynchIterations()
+            , base.getThreads()
+            , base.getThreadGroups()
+            , base.getThreadGroupLabels()
+            , base.getForks()
+            , base.getWarmupForks()
+            , base.getWarmup()
+            , base.getMeasurement()
+            , base.getMode()
+            , new WorkloadParams() // todo need to bring them from base but not exposed? Order?
+            , base.getTimeUnit()
+            , base.getOpsPerInvocation()
+            , base.getJvm()
+            , base.getJvmArgs()
+            , base.getJdkVersion()
+            , vmInfoService.vmName()
+            , base.getVmVersion()
+            , base.getJmhVersion()
+            , base.getTimeout()
+        );
     }
 }
