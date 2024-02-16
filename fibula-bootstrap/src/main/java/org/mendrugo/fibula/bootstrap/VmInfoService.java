@@ -13,8 +13,18 @@ public class VmInfoService
         this.info = info;
     }
 
+    String jdkVersion()
+    {
+        return info.jdkVersion();
+    }
+
     String vmName()
     {
         return info.vmName();
+    }
+
+    String vmVersion()
+    {
+        return info.vmVersion();
     }
 }

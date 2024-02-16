@@ -96,9 +96,7 @@ final class NativeOptions
         );
         final WorkloadParams params = new WorkloadParams();
 
-        String jdkVersion = System.getProperty("java.version");
-        String vmVersion = System.getProperty("java.vm.version");
-
+        // Null values fixed at runtime based on vm running fork
         return new BenchmarkParams(
             benchmark.getUsername()
             , benchmark.generatedTarget()
@@ -116,9 +114,9 @@ final class NativeOptions
             , 1
             , getJvm(benchmark, JmhOptionals.fromJmh(jmhOptions.getJvm()))
             , new ArrayList<>()
-            , jdkVersion
-            , null // fixed at runtime based on vm running fork
-            , vmVersion
+            , null
+            , null
+            , null
             , "fibula-999"
             , TimeValue.minutes(10)
         );

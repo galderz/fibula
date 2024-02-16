@@ -59,7 +59,9 @@ public class RunnerMain implements QuarkusApplication
     private void runVmInfo()
     {
         vmInfoRestClient.set(new VmInfo(
-            System.getProperty("java.vm.name")
+            System.getProperty("java.version")
+            , System.getProperty("java.vm.name")
+            , System.getProperty("java.vm.version")
         ));
     }
 }

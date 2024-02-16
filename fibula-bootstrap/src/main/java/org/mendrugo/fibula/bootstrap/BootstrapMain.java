@@ -104,9 +104,9 @@ public class BootstrapMain implements QuarkusApplication
             , base.getOpsPerInvocation()
             , base.getJvm()
             , base.getJvmArgs()
-            , base.getJdkVersion()
+            , vmInfoService.jdkVersion()
             , vmInfoService.vmName()
-            , base.getVmVersion()
+            , vmInfoService.vmVersion()
             , base.getJmhVersion()
             , base.getTimeout()
         );

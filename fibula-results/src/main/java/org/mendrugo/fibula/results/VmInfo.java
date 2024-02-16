@@ -1,7 +1,7 @@
 package org.mendrugo.fibula.results;
 
 public record VmInfo(
-    String vmName
-)
-{
-}
+    String jdkVersion
+    , String vmName
+    , String vmVersion
+) {}
