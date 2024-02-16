@@ -5,16 +5,12 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.JmhOptionals;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.WorkloadParams;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.TimeValue;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -37,10 +33,13 @@ public class BootstrapMain implements QuarkusApplication
         final Options jmhOptions = new CommandLineOptions(args);
         final NativeOptions options = new NativeOptions(jmhOptions);
 
+        final VmInvoker vmInvoker = VmInvoker.get();
+        Log.debugf("VM invoker is: %s", vmInvoker);
+
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(out);
 
-        final Process infoProcess = processRunner.runInfo();
+        final Process infoProcess = processRunner.runInfo(vmInvoker);
         final int infoExitCode = infoProcess.waitFor();
         if (infoExitCode != 0)
         {
@@ -56,7 +55,7 @@ public class BootstrapMain implements QuarkusApplication
         final SortedSet<BenchmarkParams> benchmarks = options
             .findBenchmarkParams(out)
             .stream()
-            .map(this::applyVmInfo)
+            .map(params -> applyVmInfo(params, vmInvoker))
             .collect(Collectors.toCollection(TreeSet::new));
 
         for (BenchmarkParams benchmark : benchmarks)
@@ -67,7 +66,7 @@ public class BootstrapMain implements QuarkusApplication
             final int forkCount = benchmark.getMeasurement().getCount();
             for (int i = 0; i < forkCount; i++)
             {
-                final Process process = processRunner.runFork(i + 1, benchmark);
+                final Process process = processRunner.runFork(i + 1, benchmark, vmInvoker);
                 final int exitCode = process.waitFor();
                 if (exitCode != 0)
                 {
@@ -85,30 +84,30 @@ public class BootstrapMain implements QuarkusApplication
         return 0;
     }
 
-    private BenchmarkParams applyVmInfo(BenchmarkParams base)
+    private BenchmarkParams applyVmInfo(BenchmarkParams params, VmInvoker vmInvoker)
     {
         return new BenchmarkParams(
-            base.getBenchmark()
-            , base.generatedBenchmark()
-            , base.shouldSynchIterations()
-            , base.getThreads()
-            , base.getThreadGroups()
-            , base.getThreadGroupLabels()
-            , base.getForks()
-            , base.getWarmupForks()
-            , base.getWarmup()
-            , base.getMeasurement()
-            , base.getMode()
+            params.getBenchmark()
+            , params.generatedBenchmark()
+            , params.shouldSynchIterations()
+            , params.getThreads()
+            , params.getThreadGroups()
+            , params.getThreadGroupLabels()
+            , params.getForks()
+            , params.getWarmupForks()
+            , params.getWarmup()
+            , params.getMeasurement()
+            , params.getMode()
             , new WorkloadParams() // todo need to bring them from base but not exposed? Order?
-            , base.getTimeUnit()
-            , base.getOpsPerInvocation()
-            , base.getJvm()
-            , base.getJvmArgs()
+            , params.getTimeUnit()
+            , params.getOpsPerInvocation()
+            , vmInvoker.vm(params.getJvm())
+            , params.getJvmArgs()
             , vmInfoService.jdkVersion()
             , vmInfoService.vmName()
             , vmInfoService.vmVersion()
-            , base.getJmhVersion()
-            , base.getTimeout()
+            , params.getJmhVersion()
+            , params.getTimeout()
         );
     }
 }

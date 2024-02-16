@@ -8,12 +8,10 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.util.Utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 final class ProcessRunner
 {
@@ -24,18 +22,19 @@ final class ProcessRunner
         this.out = out;
     }
 
-    Process runFork(int forkIndex, BenchmarkParams params)
+
+    Process runFork(int forkIndex, BenchmarkParams params, VmInvoker vmInvoker)
     {
         final int forkCount = params.getMeasurement().getCount();
-        final List<String> forkArguments = forkArguments(params);
+        final List<String> forkArguments = forkArguments(params, vmInvoker);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         out.println("# Fork: " + forkIndex + " of " + forkCount);
         return runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
-    Process runInfo()
+    Process runInfo(VmInvoker vmInvoker)
     {
-        final List<String> baseArguments = getBaseArguments(Utils.getCurrentJvm());
+        final List<String> baseArguments = vmInvoker.vmArguments(Utils.getCurrentJvm());
         final List<String> arguments = new ArrayList<>(baseArguments);
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.VM_INFO.toString());
@@ -55,9 +54,9 @@ final class ProcessRunner
         }
     }
 
-    private static List<String> forkArguments(BenchmarkParams params)
+    private static List<String> forkArguments(BenchmarkParams params, VmInvoker vmInvoker)
     {
-        final List<String> baseArguments = getBaseArguments(params.getJvm());
+        final List<String> baseArguments = vmInvoker.vmArguments(params.getJvm());
         final List<String> arguments = new ArrayList<>(baseArguments);
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.FORK.toString());
@@ -66,57 +65,5 @@ final class ProcessRunner
         arguments.add("--" + RunnerArguments.PARAMS);
         arguments.add(Serializables.toBase64(params));
         return arguments;
-    }
-
-    private static List<String> getBaseArguments(String jvm)
-    {
-        final File jar = new File("target/runner-jvm/quarkus-run.jar");
-        final File binary = new File("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner");
-
-        final List<String> nativeArguments = List.of(binary.getPath());
-        final List<String> jvmArguments = getJvmArguments(jvm, jar);
-
-        if (jar.exists() && binary.exists())
-        {
-            if (jar.lastModified() > binary.lastModified())
-            {
-                return jvmArguments;
-            }
-
-            return nativeArguments;
-        }
-
-        if (jar.exists())
-        {
-            return jvmArguments;
-        }
-
-        if (binary.exists())
-        {
-            return nativeArguments;
-        }
-
-        throw new IllegalStateException("Neither jar nor binary runner built");
-    }
-
-    private static List<String> getJvmArguments(String jvm, File jar)
-    {
-        final List<String> args = new ArrayList<>();
-        args.add(jvm);
-
-        final String logLevelPropertyName = "quarkus.log.category.\"org.mendrugo.fibula\".level";
-        final String logLevel = System.getProperty(logLevelPropertyName);
-        if (logLevel != null)
-        {
-            args.add(String.format("-D%s=%s", logLevelPropertyName, logLevel));
-        }
-
-        // todo add an option for the native image agent and fix location of java
-        // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
-
-        args.add("-jar");
-        args.add(jar.getPath());
-
-        return args;
     }
 }
