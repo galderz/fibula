@@ -21,6 +21,10 @@ jobs:
         with:
           repository: openjdk/jmh
           path: jmh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: '21'
@@ -30,6 +34,7 @@ jobs:
         run: |
           echo "GRAALVM_HOME: $GRAALVM_HOME"
           echo "JAVA_HOME: $JAVA_HOME"
+          echo "JAVA_HOME_21_X64: $JAVA_HOME_21_X64"
           java --version
           native-image --version
       - name: Build JMH
@@ -43,4 +48,6 @@ jobs:
         run: mvn package -pl fibula-samples -Prunner-native
       - name: Run integration tests
         working-directory: fibula
-        run: mvn test -pl fibula-it
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
+        run: mvn test -pl fibula-it -Dfibula.test.quick
