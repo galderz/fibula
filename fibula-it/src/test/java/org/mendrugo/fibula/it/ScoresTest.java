@@ -11,4 +11,10 @@ public class ScoresTest
     {
         Expects.expectScoresNearEqual("JMHSample_03_States");
     }
+
+    @Test
+    public void jmhSample04_DefaultState()
+    {
+        Expects.expectScoresNearEqual("JMHSample_04_DefaultState");
+    }
 }
