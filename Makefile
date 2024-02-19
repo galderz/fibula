@@ -15,7 +15,7 @@ GRAALVM_HOME ?= $(HOME)/opt/graal-21
 JAVA_HOME ?= $(GRAALVM_HOME)
 
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
-java = $(GRAALVM_HOME)/bin/java
+java = $(JAVA_HOME)/bin/java
 runner_jvm = fibula-samples/target/runner-jvm/quarkus-run.jar
 runner_native = fibula-samples/target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner
 samples_jar = fibula-samples/target/fibula-samples-1.0.0-SNAPSHOT.jar
@@ -79,6 +79,11 @@ ifdef GRAALVM_VERSION
   endif
 endif
 
+test_args = test
+ifdef TEST
+  test_args += -Dtest=$(TEST)
+endif
+
 run: $(runner_jvm) do-run
 .PHONY: run
 
@@ -109,11 +114,11 @@ $(samples_jar):
 > $(mvnw) package -pl fibula-samples
 
 test: $(bootstrap_jar) $(runner_jvm)
-> $(mvnw) test -pl fibula-it -Dfibula.test.quick
+> $(mvnw) $(test_args) -pl fibula-it -Dfibula.test.quick
 .PHONY: test
 
 test-native: $(bootstrap_jar) $(runner_native)
-> $(mvnw) test -pl fibula-it -Dfibula.test.quick
+> $(mvnw) $(test_args) -pl fibula-it -Dfibula.test.quick
 .PHONY: test-native
 
 clean:
