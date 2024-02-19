@@ -55,7 +55,6 @@ final class Expects
             assertThat(result.warmupIterations(), is(test.warmupIterationCount()));
             assertThat(result.warmupTime(), is(test.warmupTime()));
             assertThat(result.primaryMetric().score(), is(greaterThan(0d)));
-            assertThat(result.primaryMetric().score(), is(greaterThan(0d)));
             assertThat(result.primaryMetric().rawDataSize(), is(test.measurementForkCount() * test.measurementIterationCount()));
         }
         return results;
