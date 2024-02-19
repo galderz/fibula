@@ -69,6 +69,7 @@ class BenchmarkProcessor
     private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
     private static final DotName BENCHMARK = DotName.createSimple(Benchmark.class.getName());
     private static final DotName BENCHMARK_MODE = DotName.createSimple(BenchmarkMode.class.getName());
+    private static final DotName BLACKHOLE = DotName.createSimple(Blackhole.class.getName());
     private static final DotName STATE = DotName.createSimple(State.class.getName());
 
     final Identifiers identifiers = new Identifiers(); // todo reuse
@@ -154,6 +155,7 @@ class BenchmarkProcessor
         return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
             || methodInfo.declaringClass().simpleName().contains("JMHSample_03")
             || methodInfo.declaringClass().simpleName().contains("JMHSample_04")
+            || methodInfo.declaringClass().simpleName().contains("JMHSample_09")
             || methodInfo.declaringClass().simpleName().contains("FibulaSample");
     }
 
@@ -315,8 +317,9 @@ class BenchmarkProcessor
             // if (val == null) {
             try (final BytecodeCreator trueBranch = tryInit.ifReferencesEqual(val, tryInit.loadNull()).trueBranch())
             {
-                // val = new Unshared();
-                trueBranch.assign(val, trueBranch.newInstance(MethodDescriptor.ofConstructor(fqn)));
+                // val = new Unshared(); or new Blackhole();
+                final ResultHandle instance = instantiateBlackholeOrOther(trueBranch, name);
+                trueBranch.assign(val, instance);
                 // this.f_unshared = val;
                 trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
             }
@@ -326,6 +329,17 @@ class BenchmarkProcessor
             tryInit.returnValue(val);
             return tryInit.getMethodDescriptor();
         }
+    }
+
+    private static ResultHandle instantiateBlackholeOrOther(BytecodeCreator creator, DotName name)
+    {
+        final String fqn = name.toString();
+        return BLACKHOLE.equals(name)
+            ? creator.newInstance(
+                MethodDescriptor.ofConstructor(fqn, String.class)
+                , creator.load("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.")
+            )
+            : creator.newInstance(MethodDescriptor.ofConstructor(fqn));
     }
 
     private MethodDescriptor generateSharedStateInitMethod(DotName name, ClassCreator classCreator)
@@ -360,8 +374,8 @@ class BenchmarkProcessor
                 // if (val != null) return val;
                 readStaticFieldAndReturnIfNotNull(val, stateField, tryBlock);
 
-                // val = new F();
-                final ResultHandle newVal = tryBlock.newInstance(MethodDescriptor.ofConstructor(fqn));
+                // val = new F(); or new Blackhole();
+                final ResultHandle newVal = instantiateBlackholeOrOther(tryBlock, name);
                 tryBlock.assign(val, newVal);
                 // f_state = val;
                 tryBlock.writeStaticField(stateField, val);
