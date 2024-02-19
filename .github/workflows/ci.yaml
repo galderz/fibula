@@ -39,6 +39,8 @@ jobs:
           native-image --version
       - name: Build JMH
         working-directory: jmh
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: mvn install -DskipTests
       - name: Build Fibula
         working-directory: fibula
