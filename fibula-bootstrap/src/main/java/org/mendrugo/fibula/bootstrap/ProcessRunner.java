@@ -22,7 +22,6 @@ final class ProcessRunner
         this.out = out;
     }
 
-
     Process runFork(int forkIndex, BenchmarkParams params, VmInvoker vmInvoker)
     {
         final int forkCount = params.getMeasurement().getCount();

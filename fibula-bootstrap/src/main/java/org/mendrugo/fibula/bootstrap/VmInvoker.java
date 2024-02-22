@@ -6,7 +6,6 @@ import java.util.List;
 
 public enum VmInvoker
 {
-
     JVM
     , NATIVE;
 

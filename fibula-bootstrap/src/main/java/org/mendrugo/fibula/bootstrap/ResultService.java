@@ -7,12 +7,13 @@ import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
+import org.openjdk.jmh.results.format.ResultFormatFactory;
+import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.format.OutputFormat;
+import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
-import org.openjdk.jmh.util.UnCloseablePrintStream;
 
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,12 +31,15 @@ public class ResultService
     private Optional<String> resultFile;
     private ResultFormat resultFileFormat;
 
-    void startRun(NativeOptions nativeOptions)
+    void startRun(Options jmhOptions)
     {
-        resultFile = nativeOptions.resultFile();
+        resultFile = resultFile(jmhOptions);
         if (resultFile.isPresent())
         {
-            resultFileFormat = nativeOptions.fileResultFormat(resultFile.get());
+            resultFileFormat = ResultFormatFactory.getInstance(
+                jmhOptions.getResultFormat().orElse(Defaults.RESULT_FORMAT)
+                , resultFile.get()
+            );
             try
             {
                 FileUtils.touch(resultFile.get());
@@ -45,6 +49,17 @@ public class ResultService
                 throw new RuntimeException("Can not touch the result file: " + resultFile);
             }
         }
+    }
+
+    private Optional<String> resultFile(Options jmhOptions)
+    {
+        if (jmhOptions.getResult().hasValue() || jmhOptions.getResultFormat().hasValue()) {
+            final String format = jmhOptions.getResultFormat()
+                .orElse(Defaults.RESULT_FORMAT).toString().toLowerCase();
+            return Optional.of(jmhOptions.getResult().orElse(Defaults.RESULT_FILE_PREFIX + "." + format));
+        }
+
+        return Optional.empty();
     }
 
     void addIteration(IterationResult result)
