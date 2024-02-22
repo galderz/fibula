@@ -4,20 +4,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum VmInvoker
+public enum Vm
 {
-    JVM
-    , NATIVE;
+    HOTSPOT
+    , SUBSTRATE;
 
-    private static final File JVM_JAR = new File("target/runner-jvm/quarkus-run.jar");
-    private static final File NATIVE_RUNNER = new File("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner");
+    private static final File RUN_JAR = new File("target/runner-jvm/quarkus-run.jar");
+    private static final File RUN_BINARY = new File("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner");
 
-    String vm(String jvm)
+    String executablePath(String jvm)
     {
         return switch (this)
         {
-            case JVM -> new File(jvm).getPath();
-            case NATIVE -> NATIVE_RUNNER.getPath();
+            case HOTSPOT -> new File(jvm).getPath();
+            case SUBSTRATE -> RUN_BINARY.getPath();
         };
     }
 
@@ -25,37 +25,37 @@ public enum VmInvoker
     {
         return switch (this)
         {
-            case JVM -> getJvmArguments(jvm);
-            case NATIVE -> List.of(NATIVE_RUNNER.getPath());
+            case HOTSPOT -> getHotSpotArguments(jvm);
+            case SUBSTRATE -> List.of(RUN_BINARY.getPath());
         };
     }
 
-    static VmInvoker get()
+    static Vm instance()
     {
-        if (JVM_JAR.exists() && NATIVE_RUNNER.exists())
+        if (RUN_JAR.exists() && RUN_BINARY.exists())
         {
-            if (JVM_JAR.lastModified() > NATIVE_RUNNER.lastModified())
+            if (RUN_JAR.lastModified() > RUN_BINARY.lastModified())
             {
-                return VmInvoker.JVM;
+                return Vm.HOTSPOT;
             }
 
-            return VmInvoker.NATIVE;
+            return Vm.SUBSTRATE;
         }
 
-        if (JVM_JAR.exists())
+        if (RUN_JAR.exists())
         {
-            return VmInvoker.JVM;
+            return Vm.HOTSPOT;
         }
 
-        if (NATIVE_RUNNER.exists())
+        if (RUN_BINARY.exists())
         {
-            return VmInvoker.NATIVE;
+            return Vm.SUBSTRATE;
         }
 
         throw new IllegalStateException("Could not resolve which VM invoker to use");
     }
 
-    private static List<String> getJvmArguments(String jvm)
+    private static List<String> getHotSpotArguments(String jvm)
     {
         final List<String> args = new ArrayList<>();
         args.add(jvm);
@@ -71,7 +71,7 @@ public enum VmInvoker
         // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
 
         args.add("-jar");
-        args.add(VmInvoker.JVM_JAR.getPath());
+        args.add(Vm.RUN_JAR.getPath());
 
         return args;
     }

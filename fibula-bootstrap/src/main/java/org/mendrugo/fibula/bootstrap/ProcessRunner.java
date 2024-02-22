@@ -22,18 +22,18 @@ final class ProcessRunner
         this.out = out;
     }
 
-    Process runFork(int forkIndex, BenchmarkParams params, VmInvoker vmInvoker)
+    Process runFork(int forkIndex, BenchmarkParams params, Vm vm)
     {
         final int forkCount = params.getMeasurement().getCount();
-        final List<String> forkArguments = forkArguments(params, vmInvoker);
+        final List<String> forkArguments = forkArguments(params, vm);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         out.println("# Fork: " + forkIndex + " of " + forkCount);
         return runAsync(new ProcessBuilder(forkArguments).inheritIO());
     }
 
-    Process runInfo(VmInvoker vmInvoker)
+    Process runInfo(Vm vm)
     {
-        final List<String> baseArguments = vmInvoker.vmArguments(Utils.getCurrentJvm());
+        final List<String> baseArguments = vm.vmArguments(Utils.getCurrentJvm());
         final List<String> arguments = new ArrayList<>(baseArguments);
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.VM_INFO.toString());
@@ -53,7 +53,7 @@ final class ProcessRunner
         }
     }
 
-    private static List<String> forkArguments(BenchmarkParams params, VmInvoker vmInvoker)
+    private static List<String> forkArguments(BenchmarkParams params, Vm vmInvoker)
     {
         final List<String> baseArguments = vmInvoker.vmArguments(params.getJvm());
         final List<String> arguments = new ArrayList<>(baseArguments);

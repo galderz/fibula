@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -55,13 +54,13 @@ public class BootstrapMain implements QuarkusApplication
         // Read command line arguments just like JMH does
         final Options jmhOptions = new CommandLineOptions(args);
 
-        final VmInvoker vmInvoker = VmInvoker.get();
-        Log.debugf("VM invoker is: %s", vmInvoker);
+        final Vm vm = Vm.instance();
+        Log.debugf("Virtual machine is: %s", vm);
 
         final OutputFormat out = JmhFormats.outputFormat();
         final ProcessRunner processRunner = new ProcessRunner(out);
 
-        final Process infoProcess = processRunner.runInfo(vmInvoker);
+        final Process infoProcess = processRunner.runInfo(vm);
         final int infoExitCode = infoProcess.waitFor();
         if (infoExitCode != 0)
         {
@@ -76,7 +75,7 @@ public class BootstrapMain implements QuarkusApplication
         // Read metadata for all benchmarks
         final SortedSet<BenchmarkParams> benchmarks = findBenchmarkParams(out, jmhOptions)
             .stream()
-            .map(params -> applyVmInfo(params, vmInvoker))
+            .map(params -> applyVmInfo(params, vm))
             .collect(Collectors.toCollection(TreeSet::new));
 
         for (BenchmarkParams benchmark : benchmarks)
@@ -87,7 +86,7 @@ public class BootstrapMain implements QuarkusApplication
             final int forkCount = benchmark.getMeasurement().getCount();
             for (int i = 0; i < forkCount; i++)
             {
-                final Process process = processRunner.runFork(i + 1, benchmark, vmInvoker);
+                final Process process = processRunner.runFork(i + 1, benchmark, vm);
                 final int exitCode = process.waitFor();
                 if (exitCode != 0)
                 {
@@ -105,7 +104,7 @@ public class BootstrapMain implements QuarkusApplication
         return 0;
     }
 
-    private BenchmarkParams applyVmInfo(BenchmarkParams params, VmInvoker vmInvoker)
+    private BenchmarkParams applyVmInfo(BenchmarkParams params, Vm vm)
     {
         return new BenchmarkParams(
             params.getBenchmark()
@@ -122,7 +121,7 @@ public class BootstrapMain implements QuarkusApplication
             , new WorkloadParams() // todo need to bring them from base but not exposed? Order?
             , params.getTimeUnit()
             , params.getOpsPerInvocation()
-            , vmInvoker.vm(params.getJvm())
+            , vm.executablePath(params.getJvm())
             , params.getJvmArgs()
             , vmInfoService.jdkVersion()
             , vmInfoService.vmName()
