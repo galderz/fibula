@@ -6,17 +6,17 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import org.mendrugo.fibula.results.VmInfo;
 
-@Path("/vm/info")
-public class VmInfoResource
+@Path("/vm")
+public class VmResource
 {
     @Inject
-    VmInfoService infoService;
+    VmService vmService;
 
     @POST
     public String set(VmInfo info)
     {
         Log.debugf("Received VM info: %s", info);
-        infoService.set(info);
+        vmService.setInfo(info);
         return "Ok";
     }
 }

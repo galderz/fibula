@@ -1,6 +1,7 @@
 package org.mendrugo.fibula.bootstrap;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.JmhFormats;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.BenchmarkResult;
@@ -9,22 +10,18 @@ import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
 import org.openjdk.jmh.runner.Defaults;
-import org.openjdk.jmh.runner.format.OutputFormat;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 @ApplicationScoped
 public class ResultService
 {
+    @Inject
+    FormatService formatService;
+
     private final SortedMap<BenchmarkParams, List<IterationResult>> iterationResults = new TreeMap<>();
 
     // todo consider moving these two to bean of their own
@@ -68,10 +65,10 @@ public class ResultService
         iterationResults.computeIfAbsent(params, k -> new ArrayList<>()).add(result);
     }
 
-    void endBenchmark(BenchmarkParams params, OutputFormat out)
+    void endBenchmark(BenchmarkParams params)
     {
         final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(params, iterationResults.get(params)));
-        benchmarkResults.forEach(out::endBenchmark);
+        benchmarkResults.forEach(formatService.output()::endBenchmark);
     }
 
     void endRun()

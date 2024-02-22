@@ -8,11 +8,11 @@ import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mendrugo.fibula.results.VmInfo;
 
-@Path("/vm/info")
+@Path("/vm")
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.APPLICATION_JSON)
 @RegisterRestClient(configKey = "bootstrap")
-public interface VmInfoRestClient
+public interface VmRestClient
 {
     @POST
     String set(VmInfo info);

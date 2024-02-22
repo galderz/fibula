@@ -12,7 +12,6 @@ import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.VmInfo;
 
 import java.util.List;
-import java.util.Locale;
 
 @QuarkusMain(name = "runner")
 public class RunnerMain implements QuarkusApplication
@@ -21,7 +20,7 @@ public class RunnerMain implements QuarkusApplication
     ResultRestClient resultClient;
 
     @RestClient
-    VmInfoRestClient vmInfoRestClient;
+    VmRestClient vmClient;
 
     @Inject
     @All
@@ -58,7 +57,7 @@ public class RunnerMain implements QuarkusApplication
 
     private void runVmInfo()
     {
-        vmInfoRestClient.set(new VmInfo(
+        vmClient.set(new VmInfo(
             System.getProperty("java.version")
             , System.getProperty("java.vm.name")
             , System.getProperty("java.vm.version")
