@@ -1,6 +1,7 @@
 package org.mendrugo.fibula.bootstrap;
 
 import io.quarkus.logging.Log;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.mendrugo.fibula.results.Command;
 import org.mendrugo.fibula.results.RunnerArguments;
@@ -15,10 +16,11 @@ import java.util.List;
 @ApplicationScoped
 public class VmService
 {
-    private final Vm vm;
+    private Vm vm;
     private VmInfo info;
 
-    public VmService()
+    @PostConstruct
+    void init()
     {
         this.vm = Vm.instance();
     }
