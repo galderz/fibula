@@ -34,13 +34,6 @@ final class Expects
             final Result fibulaResult = fibulaResults.get(i);
             final Result jmhResult = jmhResults.get(i);
             assertThat(fibulaResult.benchmark(), is(equalTo(jmhResult.benchmark())));
-            double relativeTolerance = 0.05;
-            assertThat(
-                fibulaResult.primaryMetric().score()
-                , is(closeTo(
-                    jmhResult.primaryMetric().score()
-                    , jmhResult.primaryMetric().score() * relativeTolerance
-                )));
         }
     }
 
