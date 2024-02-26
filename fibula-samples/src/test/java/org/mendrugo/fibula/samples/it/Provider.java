@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.it;
+package org.mendrugo.fibula.samples.it;
 
 import java.nio.file.Path;
 
@@ -8,7 +8,7 @@ record Provider(
 )
 {
     static final Provider FIBULA = new Provider(
-        Path.of("..", "fibula-samples")
+        Path.of(".")
         , Path.of("target", "bootstrap", "quarkus-run.jar")
     );
 

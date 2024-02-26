@@ -1,10 +1,15 @@
-name: CI
+name: samples
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  schedule:
+    - cron: '5 1 * * 1-5'
+  # enable users to manually trigger with workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: 'Run samples quickly'
+        required: true
+        default: 'false'
 
 jobs:
   build:
@@ -47,9 +52,9 @@ jobs:
         run: mvn install -DskipTests
       - name: Build native runner
         working-directory: fibula
-        run: mvn package -pl fibula-samples -Prunner-native
+        run: mvn package -DskipTests -pl fibula-samples -Prunner-native
       - name: Run integration tests
         working-directory: fibula
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
-        run: mvn test -pl fibula-it
+        run: mvn test -pl fibula-samples -Dfibula.test.quick=${{ github.event.inputs.quick }}

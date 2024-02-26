@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.it;
+package org.mendrugo.fibula.samples.it;
 
 import java.io.BufferedReader;
 import java.io.IOException;

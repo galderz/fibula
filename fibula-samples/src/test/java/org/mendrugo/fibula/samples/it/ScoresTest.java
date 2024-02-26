@@ -1,6 +1,5 @@
-package org.mendrugo.fibula.it;
+package org.mendrugo.fibula.samples.it;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ScoresTest
@@ -20,7 +19,6 @@ public class ScoresTest
     }
 
     @Test
-    @Disabled("Difference with HotSpot is > 10%, needs further investigation")
     public void jmhSample09_Blackholes()
     {
         Expects.expectScoresNearEqual("JMHSample_09_Blackholes");

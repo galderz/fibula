@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.it;
+package org.mendrugo.fibula.samples.it;
 
 import java.io.File;
 import java.util.ArrayList;
