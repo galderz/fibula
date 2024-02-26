@@ -113,13 +113,13 @@ $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.xml' -print)
 $(samples_jar):
 > $(mvnw) package -pl fibula-samples
 
-test: $(bootstrap_jar) $(runner_jvm)
-> $(mvnw) $(test_args) -pl fibula-it -Dfibula.test.quick
-.PHONY: test
+samples: $(bootstrap_jar) $(runner_jvm)
+> $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
+.PHONY: samples
 
-test-native: $(bootstrap_jar) $(runner_native)
-> $(mvnw) $(test_args) -pl fibula-it -Dfibula.test.quick
-.PHONY: test-native
+samples-native: $(bootstrap_jar) $(runner_native)
+> $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
+.PHONY: samples-native
 
 clean:
 > $(mvnw) clean
