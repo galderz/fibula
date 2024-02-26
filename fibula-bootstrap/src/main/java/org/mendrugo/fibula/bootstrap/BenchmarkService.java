@@ -33,7 +33,10 @@ public class BenchmarkService
     @Inject
     VmService vmService;
 
-    void run(Options jmhOptions) throws InterruptedException
+    @Inject
+    Options jmhOptions;
+
+    void run() throws InterruptedException
     {
         Log.debugf("Virtual machine is: %s", vmService.vm());
 
