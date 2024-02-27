@@ -102,10 +102,10 @@ $(bootstrap_jar):
 > $(mvnw) install -DskipTests --projects !fibula-samples,!fibula-it
 
 $(runner_jvm): $(bootstrap_jar) $(samples_jar)
-> $(mvnw_runner) -DskipTests package -pl fibula-samples -Prunner-jvm $(runner_build_args)
+> $(mvnw_runner) package -DskipTests -pl fibula-samples -Prunner-jvm $(runner_build_args)
 
 $(runner_native): $(bootstrap_jar) $(samples_jar)
-> $(mvnw_runner) -DskipTests package -pl fibula-samples -Prunner-native $(runner_build_args)
+> $(mvnw_runner) package -DskipTests -pl fibula-samples -Prunner-native $(runner_build_args)
 
 $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
 $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.json' -print)
@@ -120,6 +120,10 @@ samples: $(bootstrap_jar) $(runner_jvm)
 samples-native: $(bootstrap_jar) $(runner_native)
 > $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
 .PHONY: samples-native
+
+test: $(bootstrap_jar) $(runner_jvm)
+> $(mvnw) $(test_args) -pl fibula-it
+.PHONY: test
 
 clean:
 > $(mvnw) clean
