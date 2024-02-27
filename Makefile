@@ -97,7 +97,8 @@ do-run:
 
 $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
 $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.json' -print)
-$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.xml' -print)
+$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'pom.xml' -print)
+$(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'application.properties' -print)
 $(bootstrap_jar):
 > $(mvnw) install -DskipTests --projects !fibula-samples,!fibula-it
 
@@ -109,7 +110,8 @@ $(runner_native): $(bootstrap_jar) $(samples_jar)
 
 $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
 $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.json' -print)
-$(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.xml' -print)
+$(samples_jar): $(shell find . -path ./fibula-it -prune -o -name 'pom.xml' -print)
+$(samples_jar): $(shell find . -path ./fibula-it -prune -o -name 'application.properties' -print)
 $(samples_jar):
 > $(mvnw) package -DskipTests -pl fibula-samples
 
