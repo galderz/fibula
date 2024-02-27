@@ -4,6 +4,7 @@ import io.quarkus.logging.Log;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
+import org.openjdk.jmh.runner.options.CommandLineOptions;
 
 @QuarkusMain(name = "bootstrap")
 public class BootstrapMain implements QuarkusApplication
@@ -16,7 +17,8 @@ public class BootstrapMain implements QuarkusApplication
     {
         Log.debug("Running bootstrap");
         // Read command line arguments just like JMH does
-        benchmarkService.run();
+        final CommandLineOptions options = new CommandLineOptions(args);
+        benchmarkService.run(options);
         return 0;
     }
 }
