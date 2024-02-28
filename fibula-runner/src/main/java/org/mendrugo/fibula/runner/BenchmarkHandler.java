@@ -1,10 +1,6 @@
 package org.mendrugo.fibula.runner;
 
-import org.mendrugo.fibula.results.Infrastructure;
-import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.NativeIterationResult;
-import org.mendrugo.fibula.results.RunnerArguments;
-import org.mendrugo.fibula.results.Serializables;
+import org.mendrugo.fibula.results.*;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.AverageTimeResult;
@@ -35,26 +31,24 @@ final class BenchmarkHandler
         this.cli = cli;
     }
 
-    void runBenchmark(BenchmarkCallable callable, ResultRestClient client)
+    void runBenchmark(BenchmarkCallable callable, IterationRestClient client)
     {
-        final OutputFormat out = JmhFormats.outputFormat();
         final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
 
         final IterationParams warmup = params.getWarmup();
         for (int i = 1; i <= warmup.getCount(); i++)
         {
-            out.iteration(params, warmup, i);
+            client.send(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(warmup), i));
             IterationResult iterationResult = runIteration(params, callable, warmup, callable.infrastructure);
-            out.iterationResult(params, warmup, i, iterationResult);
+            client.send(new IterationEnd(i, Serializables.toBase64(iterationResult)));
         }
 
         final IterationParams measurement = params.getMeasurement();
         for (int i = 1; i <= measurement.getCount(); i++)
         {
-            out.iteration(params, measurement, i);
+            client.send(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
             IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
-            out.iterationResult(params, measurement, i, iterationResult);
-            client.send(new NativeIterationResult(Serializables.toBase64(iterationResult)));
+            client.send(new IterationEnd(i, Serializables.toBase64(iterationResult)));
         }
     }
 

@@ -1,12 +1,6 @@
 package org.mendrugo.fibula.results;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.util.Base64;
 
 public final class Serializables
@@ -31,7 +25,8 @@ public final class Serializables
     {
         final byte[] bytes = Base64.getDecoder().decode(encoded);
         ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        try (ObjectInputStream ois = new ObjectInputStream(bis)) {
+        try (ObjectInputStream ois = new ObjectInputStream(bis))
+        {
             return Unchecked.cast(ois.readObject());
         }
         catch (IOException e)
@@ -43,7 +38,7 @@ public final class Serializables
             throw new RuntimeException(e);
         }
     }
-    
+
     private Serializables()
     {
     }

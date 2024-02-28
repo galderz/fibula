@@ -11,7 +11,8 @@ public class BenchmarkCallable implements Callable<RawResults>
     final Function<Infrastructure, RawResults> function;
     final Infrastructure infrastructure;
 
-    public BenchmarkCallable(Function<Infrastructure, RawResults> function, Infrastructure infrastructure) {
+    public BenchmarkCallable(Function<Infrastructure, RawResults> function, Infrastructure infrastructure)
+    {
         this.function = function;
         this.infrastructure = infrastructure;
     }

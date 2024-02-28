@@ -4,12 +4,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.JmhFormats;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
 import org.openjdk.jmh.runner.Defaults;
+import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
 
@@ -59,10 +61,20 @@ public class ResultService
         return Optional.empty();
     }
 
-    void addIteration(IterationResult result)
+    public void startIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams, int iteration)
     {
-        final BenchmarkParams params = result.getBenchmarkParams();
-        iterationResults.computeIfAbsent(params, k -> new ArrayList<>()).add(result);
+        formatService.output().iteration(benchmarkParams, iterationParams, iteration);
+    }
+
+    void endIteration(int iteration, IterationResult result)
+    {
+        final BenchmarkParams benchmarkParams = result.getBenchmarkParams();
+        final IterationParams iterationParams = result.getParams();
+        formatService.output().iterationResult(benchmarkParams, iterationParams, iteration, result);
+        if (IterationType.MEASUREMENT == iterationParams.getType())
+        {
+            iterationResults.computeIfAbsent(benchmarkParams, k -> new ArrayList<>()).add(result);
+        }
     }
 
     void endBenchmark(BenchmarkParams params)

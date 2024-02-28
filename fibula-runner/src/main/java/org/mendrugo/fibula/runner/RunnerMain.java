@@ -1,7 +1,6 @@
 package org.mendrugo.fibula.runner;
 
 import io.quarkus.arc.All;
-import io.quarkus.logging.Log;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
@@ -17,7 +16,7 @@ import java.util.List;
 public class RunnerMain implements QuarkusApplication
 {
     @RestClient
-    ResultRestClient resultClient;
+    IterationRestClient resultClient;
 
     @RestClient
     VmRestClient vmClient;
@@ -29,8 +28,6 @@ public class RunnerMain implements QuarkusApplication
     @Override
     public int run(String... args)
     {
-        Log.debug("Running forked runner");
-
         final Cli cli = Cli.read(args);
         final Command command = Command.valueOf(cli.text(RunnerArguments.COMMAND));
         switch (command)

@@ -11,6 +11,7 @@ import org.openjdk.jmh.util.Utils;
 
 import java.io.UnsupportedEncodingException;
 
+// todo move to bootstrap and make take options and other info into account
 public final class JmhFormats
 {
     public static OutputFormat outputFormat()

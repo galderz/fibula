@@ -6,14 +6,19 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.mendrugo.fibula.results.NativeIterationResult;
+import org.mendrugo.fibula.results.IterationEnd;
+import org.mendrugo.fibula.results.IterationStart;
 
-@Path("/results")
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.APPLICATION_JSON)
 @RegisterRestClient(configKey = "bootstrap")
-public interface ResultRestClient
+public interface IterationRestClient
 {
+    @Path("/iteration/start")
     @POST
-    String send(NativeIterationResult result);
+    String send(IterationStart result);
+
+    @Path("/iteration/end")
+    @POST
+    String send(IterationEnd result);
 }
