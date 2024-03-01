@@ -154,9 +154,8 @@ public class BenchmarkService
 
     private static String readBenchmarks()
     {
-        // todo move to storing the benchmarks via a recorder and avoid the root issue
-        final Path root = Path.of(System.getProperty("fibula.root", "."));
-        final File resourceDir = root.resolve(Path.of("target", "classes")).toFile();
+        // todo move to storing the benchmarks via a recorder
+        final File resourceDir = Path.of("target", "classes").toFile();
         final FileSystemDestination destination = new FileSystemDestination(resourceDir, null);
         try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
         {

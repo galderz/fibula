@@ -1,20 +1,38 @@
 package org.mendrugo.fibula.bootstrap;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public enum Vm
 {
     HOTSPOT
     , SUBSTRATE;
 
-    // todo make it more CDI idiomatic
-    private static final Path ROOT = Path.of(System.getProperty("fibula.root", "."));
+    private static final File RUN_JAR = Path.of("target/runner-jvm/quarkus-run.jar").toFile();
+    private static final File RUN_BINARY = findRunBinary();
 
-    private static final File RUN_JAR = ROOT.resolve(Path.of("target/runner-jvm/quarkus-run.jar")).toFile();
-    private static final File RUN_BINARY = ROOT.resolve(Path.of("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner")).toFile();
+    private static File findRunBinary()
+    {
+        try (Stream<Path> walk = Files.walk(Path.of("target/runner-native"))) {
+            return walk
+                .filter(p -> !Files.isDirectory(p))
+                .map(Path::toString)
+                .filter(f -> f.endsWith("-runner"))
+                .findFirst()
+                .map(File::new)
+                .orElse(new File("NOT_FOUND"));
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
+    }
 
     String executablePath(String jvm)
     {
