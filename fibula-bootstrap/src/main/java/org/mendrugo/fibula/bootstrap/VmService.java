@@ -3,19 +3,23 @@ package org.mendrugo.fibula.bootstrap;
 import io.quarkus.logging.Log;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.Command;
+import org.mendrugo.fibula.results.ProcessExecutor;
 import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.VmInfo;
+import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.util.Utils;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
 public class VmService
 {
+    @Inject
+    FormatService formatService;
+
     private Vm vm;
     private VmInfo info;
 
@@ -32,11 +36,13 @@ public class VmService
 
     VmInfo queryInfo() throws InterruptedException
     {
-        final Process infoProcess = runInfo(vm);
-        final int infoExitCode = infoProcess.waitFor();
-        if (infoExitCode != 0)
+        final int exitValue = runInfo(vm);
+        if (exitValue != 0)
         {
-            throw new RuntimeException(String.format("Error in process to get VM info (exit code %d)", infoExitCode));
+            throw new BenchmarkException(new IllegalStateException(String.format(
+                "Error in process to get VM info (exit code %d)"
+                , exitValue
+            )));
         }
         return info;
     }
@@ -46,20 +52,26 @@ public class VmService
         this.info = info;
     }
 
-    private Process runInfo(Vm vm)
+    private int runInfo(Vm vm)
     {
         final List<String> baseArguments = vm.vmArguments(Utils.getCurrentJvm());
         final List<String> arguments = new ArrayList<>(baseArguments);
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.VM_INFO.toString());
         Log.debugf("Executing: %s", String.join(" ", arguments));
-        try
-        {
-            return new ProcessBuilder(arguments).inheritIO().start();
-        }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
+
+        final ProcessExecutor processExec = new ProcessExecutor(formatService.output());
+        return processExec.runSync(arguments);
+//        try
+//        {
+//            final ProcessBuilder processBuilder = new ProcessBuilder(arguments);
+//            final Process process = processBuilder.start();
+//
+//            return process;
+//        }
+//        catch (IOException e)
+//        {
+//            throw new UncheckedIOException(e);
+//        }
     }
 }

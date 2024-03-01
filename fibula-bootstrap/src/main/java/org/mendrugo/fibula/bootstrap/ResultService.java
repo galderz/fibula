@@ -83,7 +83,7 @@ public class ResultService
         benchmarkResults.forEach(formatService.output()::endBenchmark);
     }
 
-    void endRun()
+    Collection<RunResult> endRun()
     {
         final Collection<RunResult> runResults = getRunResults();
         final ResultFormat textResultFormat = JmhFormats.textResultFormat();
@@ -97,6 +97,8 @@ public class ResultService
             System.out.println("");
             System.out.println("Benchmark result is saved to " + resultFile.get());
         }
+
+        return runResults;
     }
 
     private Collection<RunResult> getRunResults()

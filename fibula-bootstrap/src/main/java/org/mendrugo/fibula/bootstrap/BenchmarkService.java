@@ -8,6 +8,7 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.TimeValue;
@@ -33,7 +34,8 @@ public class BenchmarkService
     @Inject
     VmService vmService;
 
-    void run(Options jmhOptions) throws InterruptedException
+    // todo remove the thrown exception
+    public Collection<RunResult> run(Options jmhOptions) throws InterruptedException
     {
         Log.debugf("Virtual machine is: %s", vmService.vm());
 
@@ -69,7 +71,7 @@ public class BenchmarkService
             resultService.endBenchmark(benchmark);
         }
 
-        resultService.endRun();
+        return resultService.endRun();
     }
 
     Process runFork(int forkIndex, BenchmarkParams params)
@@ -152,7 +154,9 @@ public class BenchmarkService
 
     private static String readBenchmarks()
     {
-        final File resourceDir = Path.of("target", "classes").toFile();
+        // todo move to storing the benchmarks via a recorder and avoid the root issue
+        final Path root = Path.of(System.getProperty("fibula.root", "."));
+        final File resourceDir = root.resolve(Path.of("target", "classes")).toFile();
         final FileSystemDestination destination = new FileSystemDestination(resourceDir, null);
         try (InputStream stream = destination.getResource(BenchmarkList.BENCHMARK_LIST.substring(1)))
         {

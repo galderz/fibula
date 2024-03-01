@@ -53,10 +53,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -94,9 +91,10 @@ class BenchmarkProcessor
         Log.info("Generating blackhole substitution");
         generateBlackholeSubstitution(classOutput);
 
-        Log.info("Generating benchmark bytecode");
+        final Collection<AnnotationInstance> benchmarkAnnotatedMethods = index.getIndex().getAnnotations(BENCHMARK);
+        Log.infof("Generating benchmark bytecode, %d benchmark methods found", benchmarkAnnotatedMethods.size());
 
-        final List<MethodInfo> methods = index.getIndex().getAnnotations(BENCHMARK).stream()
+        final List<MethodInfo> methods = benchmarkAnnotatedMethods.stream()
             .map(annotation -> annotation.target().asMethod())
             .filter(BenchmarkProcessor::isSupportedBenchmark)
             .toList();
@@ -152,11 +150,15 @@ class BenchmarkProcessor
 
     private static boolean isSupportedBenchmark(MethodInfo methodInfo)
     {
-        return methodInfo.declaringClass().simpleName().contains("JMHSample_01")
-            || methodInfo.declaringClass().simpleName().contains("JMHSample_03")
-            || methodInfo.declaringClass().simpleName().contains("JMHSample_04")
-            || methodInfo.declaringClass().simpleName().contains("JMHSample_09")
-            || methodInfo.declaringClass().simpleName().contains("FibulaSample");
+        final ClassInfo classInfo = methodInfo.declaringClass();
+        final boolean supported = classInfo.name().packagePrefix().startsWith("org.mendrugo.fibula.it")
+            || classInfo.simpleName().contains("JMHSample_01")
+            || classInfo.simpleName().contains("JMHSample_03")
+            || classInfo.simpleName().contains("JMHSample_04")
+            || classInfo.simpleName().contains("JMHSample_09")
+            || classInfo.simpleName().contains("FibulaSample");
+        Log.debugf("Benchmark method %s is%s supported", supported ? "" : " not");
+        return supported;
     }
 
     private void generateBenchmarkClasses(

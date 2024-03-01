@@ -1,6 +1,7 @@
 package org.mendrugo.fibula.bootstrap;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,8 +10,11 @@ public enum Vm
     HOTSPOT
     , SUBSTRATE;
 
-    private static final File RUN_JAR = new File("target/runner-jvm/quarkus-run.jar");
-    private static final File RUN_BINARY = new File("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner");
+    // todo make it more CDI idiomatic
+    private static final Path ROOT = Path.of(System.getProperty("fibula.root", "."));
+
+    private static final File RUN_JAR = ROOT.resolve(Path.of("target/runner-jvm/quarkus-run.jar")).toFile();
+    private static final File RUN_BINARY = ROOT.resolve(Path.of("target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner")).toFile();
 
     String executablePath(String jvm)
     {

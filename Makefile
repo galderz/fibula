@@ -16,9 +16,11 @@ JAVA_HOME ?= $(GRAALVM_HOME)
 
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 java = $(JAVA_HOME)/bin/java
-runner_jvm = fibula-samples/target/runner-jvm/quarkus-run.jar
-runner_native = fibula-samples/target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner
+samples_runner_jvm = fibula-samples/target/runner-jvm/quarkus-run.jar
+samples_runner_native = fibula-samples/target/runner-native/fibula-samples-1.0.0-SNAPSHOT-runner
 samples_jar = fibula-samples/target/fibula-samples-1.0.0-SNAPSHOT.jar
+test_jar = fibula-it/target/fibula-it-1.0.0-SNAPSHOT.jar
+test_runner_jvm = fibula-it/target/runner-jvm/quarkus-run.jar
 
 system_props =
 ifdef LOG_LEVEL
@@ -84,10 +86,10 @@ ifdef TEST
   test_args += -Dtest=$(TEST)
 endif
 
-run: $(runner_jvm) do-run
+run: $(samples_runner_jvm) do-run
 .PHONY: run
 
-run-native: $(runner_native) do-run
+run-native: $(samples_runner_native) do-run
 .PHONY: run-native
 
 do-run:
@@ -102,10 +104,10 @@ $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'application.
 $(bootstrap_jar):
 > $(mvnw) install -DskipTests --projects !fibula-samples,!fibula-it
 
-$(runner_jvm): $(bootstrap_jar) $(samples_jar)
+$(samples_runner_jvm): $(bootstrap_jar) $(samples_jar)
 > $(mvnw_runner) package -DskipTests -pl fibula-samples -Prunner-jvm $(runner_build_args)
 
-$(runner_native): $(bootstrap_jar) $(samples_jar)
+$(samples_runner_native): $(bootstrap_jar) $(samples_jar)
 > $(mvnw_runner) package -DskipTests -pl fibula-samples -Prunner-native $(runner_build_args)
 
 $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)
@@ -115,16 +117,24 @@ $(samples_jar): $(shell find . -path ./fibula-it -prune -o -name 'application.pr
 $(samples_jar):
 > $(mvnw) package -DskipTests -pl fibula-samples
 
-samples: $(bootstrap_jar) $(runner_jvm)
+samples: $(samples_runner_jvm)
 > $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
 .PHONY: samples
 
-samples-native: $(bootstrap_jar) $(runner_native)
+samples-native: $(samples_runner_native)
 > $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
 .PHONY: samples-native
 
-test: $(bootstrap_jar) $(runner_jvm)
-> $(mvnw) $(test_args) -pl fibula-it
+$(test_jar): $(shell find fibula-it -name '*.java' -print)
+$(test_jar): $(shell find fibula-it -name 'pom.xml' -print)
+$(test_jar):
+> $(mvnw) package -DskipTests -pl fibula-it
+
+$(test_runner_jvm): $(bootstrap_jar) $(test_jar)
+> $(mvnw_runner) package -DskipTests -pl fibula-it -Prunner-jvm $(runner_build_args)
+
+test: $(bootstrap_jar) $(test_runner_jvm)
+> $(mvnw) $(test_args) -pl fibula-it $(system_props)
 .PHONY: test
 
 clean:
