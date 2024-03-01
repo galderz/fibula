@@ -21,6 +21,7 @@ samples_runner_native = fibula-samples/target/runner-native/fibula-samples-1.0.0
 samples_jar = fibula-samples/target/fibula-samples-1.0.0-SNAPSHOT.jar
 test_jar = fibula-it/target/fibula-it-1.0.0-SNAPSHOT.jar
 test_runner_jvm = fibula-it/target/runner-jvm/quarkus-run.jar
+test_runner_native = fibula-it/target/runner-jvm/runner-native/fibula-it-1.0.0-SNAPSHOT-runner
 
 system_props =
 ifdef LOG_LEVEL
@@ -133,9 +134,16 @@ $(test_jar):
 $(test_runner_jvm): $(bootstrap_jar) $(test_jar)
 > $(mvnw_runner) package -DskipTests -pl fibula-it -Prunner-jvm $(runner_build_args)
 
+$(test_runner_native): $(bootstrap_jar) $(test_jar)
+> $(mvnw_runner) package -DskipTests -pl fibula-it -Prunner-native $(runner_build_args)
+
 test: $(bootstrap_jar) $(test_runner_jvm)
 > $(mvnw) $(test_args) -pl fibula-it $(system_props)
 .PHONY: test
+
+test-native: $(bootstrap_jar) $(test_runner_native)
+> $(mvnw) $(test_args) -pl fibula-it $(system_props)
+.PHONY: test-native
 
 clean:
 > $(mvnw) clean
