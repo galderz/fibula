@@ -1,0 +1,33 @@
+name: samples
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Fibula
+        uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Show versions
+        run: |
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
+          echo "JAVA_HOME: $JAVA_HOME"
+          java --version
+          native-image --version
+      - name: Build Fibula
+        run: mvn install -DskipTests --projects !fibula-it
+      - name: Build native runner
+        run: mvn -X package -DskipTests -pl fibula-it -Prunner-native
+      - name: Run integration tests
+        run: mvn test -pl fibula-it
