@@ -36,18 +36,20 @@ public class BenchmarkModesTest
             .build();
 
         final Collection<RunResult> results = benchmarkService.run(opt);
-        assertThat(results.size(), is(1));
-        final RunResult result = results.iterator().next();
-        final BenchmarkParams params = result.getParams();
-        final String[] benchmarkElements = params.getBenchmark().split("\\.");
-        switch (benchmarkElements[benchmarkElements.length - 1])
+        for (RunResult result : results)
         {
-            case "defaultMode":
-                assertThat(params.getMode(), is(Mode.Throughput));
-                assertThat(result.getPrimaryResult().getScoreUnit(), is("ops/s"));
-                break;
-            default:
-                throw new AssertionError("Unknonw benchmark: " + params.getBenchmark());
+            final BenchmarkParams params = result.getParams();
+            final String[] benchmarkElements = params.getBenchmark().split("\\.");
+            switch (benchmarkElements[benchmarkElements.length - 1])
+            {
+                case "defaultMode":
+                case "throughputMode":
+                    assertThat(params.getMode(), is(Mode.Throughput));
+                    assertThat(result.getPrimaryResult().getScoreUnit(), is("ops/s"));
+                    break;
+                default:
+                    throw new AssertionError("Unknonw benchmark: " + params.getBenchmark());
+            }
         }
 
     }
