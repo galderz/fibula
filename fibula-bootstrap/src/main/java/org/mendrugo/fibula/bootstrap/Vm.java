@@ -19,7 +19,13 @@ public enum Vm
 
     private static File findRunBinary()
     {
-        try (Stream<Path> walk = Files.walk(Path.of("target/runner-native"))) {
+        final Path runnerNative = Path.of("target/runner-native");
+        if (!runnerNative.toFile().exists())
+        {
+            return new File("NOT_FOUND");
+        }
+
+        try (Stream<Path> walk = Files.walk(runnerNative)) {
             return walk
                 .filter(p -> !Files.isDirectory(p))
                 .map(Path::toString)
