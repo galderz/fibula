@@ -16,7 +16,7 @@ import java.util.List;
 public class RunnerMain implements QuarkusApplication
 {
     @RestClient
-    IterationRestClient resultClient;
+    IterationClient iterationClient;
 
     @RestClient
     VmRestClient vmClient;
@@ -49,7 +49,7 @@ public class RunnerMain implements QuarkusApplication
         suppliers.stream()
             .filter(supplier -> supplier.getClass().getSimpleName().startsWith(supplierName))
             .map(supplier -> new BenchmarkCallable(supplier.get(), infrastructure))
-            .forEach(callable -> benchmarkHandler.runBenchmark(callable, resultClient));
+            .forEach(callable -> benchmarkHandler.runBenchmark(callable, iterationClient));
     }
 
     private void runVmInfo()

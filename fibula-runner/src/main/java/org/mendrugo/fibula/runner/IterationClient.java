@@ -9,16 +9,17 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mendrugo.fibula.results.IterationEnd;
 import org.mendrugo.fibula.results.IterationStart;
 
+@Path("/iteration")
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.APPLICATION_JSON)
 @RegisterRestClient(configKey = "bootstrap")
-public interface IterationRestClient
+public interface IterationClient
 {
-    @Path("/iteration/start")
+    @Path("/start")
     @POST
-    String send(IterationStart result);
+    String notifyStart(IterationStart result);
 
-    @Path("/iteration/end")
+    @Path("/end")
     @POST
-    String send(IterationEnd result);
+    String notifyEnd(IterationEnd result);
 }

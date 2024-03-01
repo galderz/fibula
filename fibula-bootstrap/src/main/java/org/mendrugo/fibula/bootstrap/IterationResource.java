@@ -11,14 +11,15 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.IterationResult;
 
+@Path("/iteration")
 public class IterationResource
 {
     @Inject
     ResultService resultService;
 
-    @Path("/iteration/start")
+    @Path("/start")
     @POST
-    public String receive(IterationStart iterationStart)
+    public String start(IterationStart iterationStart)
     {
         Log.debugf("Received: %s", iterationStart);
         final BenchmarkParams benchmarkParams = Serializables.fromBase64(iterationStart.benchmarkParams());
@@ -27,9 +28,9 @@ public class IterationResource
         return "Ok";
     }
 
-    @Path("/iteration/end")
+    @Path("/end")
     @POST
-    public String receiveIterationEnd(IterationEnd iterationEnd)
+    public String end(IterationEnd iterationEnd)
     {
         Log.debugf("Received: %s", iterationEnd);
         final IterationResult result = Serializables.fromBase64(iterationEnd.result());

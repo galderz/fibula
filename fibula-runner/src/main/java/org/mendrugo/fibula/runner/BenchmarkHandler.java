@@ -11,7 +11,6 @@ import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ThroughputResult;
-import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,24 +30,24 @@ final class BenchmarkHandler
         this.cli = cli;
     }
 
-    void runBenchmark(BenchmarkCallable callable, IterationRestClient client)
+    void runBenchmark(BenchmarkCallable callable, IterationClient client)
     {
         final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
 
         final IterationParams warmup = params.getWarmup();
         for (int i = 1; i <= warmup.getCount(); i++)
         {
-            client.send(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(warmup), i));
+            client.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(warmup), i));
             IterationResult iterationResult = runIteration(params, callable, warmup, callable.infrastructure);
-            client.send(new IterationEnd(i, Serializables.toBase64(iterationResult)));
+            client.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
         }
 
         final IterationParams measurement = params.getMeasurement();
         for (int i = 1; i <= measurement.getCount(); i++)
         {
-            client.send(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
+            client.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
             IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
-            client.send(new IterationEnd(i, Serializables.toBase64(iterationResult)));
+            client.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
         }
     }
 
