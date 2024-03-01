@@ -1,4 +1,4 @@
-name: samples
+name: Fibula Samples
 
 on:
   schedule:
@@ -12,7 +12,7 @@ on:
         default: 'false'
 
 jobs:
-  build:
+  run:
 
     runs-on: ubuntu-latest
 
