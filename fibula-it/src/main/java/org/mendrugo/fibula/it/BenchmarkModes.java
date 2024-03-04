@@ -28,4 +28,8 @@ public class BenchmarkModes
     {
         Work.work();
     }
+
+    // todo add SampleTime
+    // todo add SingleShotTime
+    // todo add All
 }
