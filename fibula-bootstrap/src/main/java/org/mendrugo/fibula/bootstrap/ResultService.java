@@ -110,6 +110,7 @@ public class ResultService
             final RunResult runResult = new RunResult(entry.getKey(), benchmarkResults);
             runResults.add(runResult);
         }
+        iterationResults.clear();
         return runResults;
     }
 }
