@@ -36,6 +36,7 @@ public class BenchmarkModesTest
             .build();
 
         final Collection<RunResult> results = benchmarkService.run(opt);
+        assertThat(results.size(), is(3));
         for (RunResult result : results)
         {
             final BenchmarkParams params = result.getParams();
