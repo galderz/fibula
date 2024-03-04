@@ -47,6 +47,10 @@ public class BenchmarkModesTest
                     assertThat(params.getMode(), is(Mode.Throughput));
                     assertThat(result.getPrimaryResult().getScoreUnit(), is("ops/s"));
                     break;
+                case "averageTimeMode":
+                    assertThat(params.getMode(), is(Mode.AverageTime));
+                    assertThat(result.getPrimaryResult().getScoreUnit(), is("s/op"));
+                    break;
                 default:
                     throw new AssertionError("Unknonw benchmark: " + params.getBenchmark());
             }

@@ -21,4 +21,11 @@ public class BenchmarkModes
     {
         Work.work();
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public void averageTimeMode()
+    {
+        Work.work();
+    }
 }
