@@ -4,7 +4,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
-import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.options.Options;
@@ -23,7 +22,7 @@ public class OutputUnitsTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void allModes() throws InterruptedException
+    public void outputUnits() throws InterruptedException
     {
         final Options opt = new OptionsBuilder()
             .include(OutputTimeUnits.class.getCanonicalName())
