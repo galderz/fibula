@@ -16,9 +16,8 @@ jobs:
       - name: Checkout Quarkus
         uses: actions/checkout@v4
         with:
+          ref: topic.0305.native-jar-building-extra-logging
           repository: galderz/quarkus
-      - name: Checkout snapshot branch
-        run: git checkout topic.0305.native-jar-building-extra-logging
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
