@@ -50,7 +50,7 @@ jobs:
         run: mvn install -DskipTests
       - name: Build native runner
         working-directory: fibula
-        run: mvn -X package -DskipTests -pl fibula-samples -Pnative
+        run: mvn package -DskipTests -pl fibula-samples -Pnative
       - name: Run integration tests
         working-directory: fibula
         env:
