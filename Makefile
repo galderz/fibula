@@ -102,7 +102,7 @@ run-native: $(samples_runner_native) do-run
 
 do-run:
 > cd fibula-samples
-> $(java) $(system_props) -jar target/bootstrap/quarkus-run.jar $(benchmark_params)
+> $(java) $(system_props) -jar ../$(bootstrap_jar) $(benchmark_params)
 .PHONY: do-run
 
 $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.java' -print)

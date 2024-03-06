@@ -112,23 +112,6 @@
             </properties>
         </profile>
         <profile>
-            <id>bootstrap</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <quarkus.package.main-class>bootstrap</quarkus.package.main-class>
-                <quarkus.package.output-directory>bootstrap</quarkus.package.output-directory>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.mendrugo.fibula</groupId>
-                    <artifactId>fibula-bootstrap</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
             <id>runner-jvm</id>
             <properties>
                 <quarkus.package.main-class>runner</quarkus.package.main-class>
