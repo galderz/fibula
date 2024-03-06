@@ -9,7 +9,7 @@ record Provider(
 {
     static final Provider FIBULA = new Provider(
         Path.of(".")
-        , Path.of("..", "fibula-bootstrap", "target", "quarkus-app", "quarkus-run.jar")
+        , Path.of("target", "benchmarks.jar")
     );
 
     static final Provider JMH = new Provider(

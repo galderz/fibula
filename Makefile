@@ -14,6 +14,7 @@ BENCHMARK ?= JMHSample_01
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
 JAVA_HOME ?= $(GRAALVM_HOME)
 
+benchmarks_jar = target/benchmarks.jar
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 java = $(JAVA_HOME)/bin/java
 samples_runner_jvm = fibula-samples/target/quarkus-app/quarkus-run.jar
@@ -100,7 +101,7 @@ run-native: $(samples_runner_native) do-run
 
 do-run:
 > cd fibula-samples
-> $(java) $(system_props) -jar ../$(bootstrap_jar) $(benchmark_params)
+> $(java) $(system_props) -jar $(benchmarks_jar) $(benchmark_params)
 .PHONY: do-run
 
 $(bootstrap_jar): $(shell find . -type f -name "*.java" ! -path "./fibula-it/*" ! -path "./fibula-samples/*" ! -path "./*/target/*")

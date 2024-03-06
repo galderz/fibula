@@ -110,6 +110,34 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactItems>
+                        <artifactItem>
+                            <groupId>org.mendrugo.fibula</groupId>
+                            <artifactId>fibula-benchmarks</artifactId>
+                            <version>${project.version}</version>
+                            <type>jar</type>
+                            <classifier>runner</classifier>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <destFileName>benchmarks.jar</destFileName>
+                        </artifactItem>
+                    </artifactItems>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <profiles>

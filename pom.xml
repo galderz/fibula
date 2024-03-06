@@ -13,6 +13,7 @@
         <module>fibula-results</module>
         <module>fibula-runner</module>
         <module>fibula-bootstrap</module>
+        <module>fibula-benchmarks</module>
         <module>fibula-samples</module>
         <module>fibula-it</module>
     </modules>
