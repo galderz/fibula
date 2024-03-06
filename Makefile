@@ -87,6 +87,13 @@ ifdef TEST
   test_args += -Dtest=$(TEST)
 endif
 
+common_maven_args =
+ifdef QUARKUS_SNAPSHOT
+  common_maven_args += -Dquarkus.platform.group-id=io.quarkus
+  common_maven_args += -Dquarkus.platform.version=999-SNAPSHOT
+  common_maven_args += -Dquarkus-plugin.version=999-SNAPSHOT
+endif
+
 run: $(samples_runner_jvm) do-run
 .PHONY: run
 
@@ -103,7 +110,7 @@ $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name '*.json' -pri
 $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'pom.xml' -print)
 $(bootstrap_jar): $(shell find . -path ./fibula-it -prune -o -name 'application.properties' -print)
 $(bootstrap_jar):
-> $(mvnw) install -DskipTests --projects !fibula-samples,!fibula-it
+> $(mvnw) install $(common_maven_args) -DskipTests --projects !fibula-samples,!fibula-it
 
 $(samples_runner_jvm): $(bootstrap_jar) $(samples_jar)
 > $(mvnw_runner) package -DskipTests -pl fibula-samples -Prunner-jvm $(runner_build_args)
@@ -129,22 +136,34 @@ samples-native: $(samples_runner_native)
 $(test_jar): $(shell find fibula-it -name '*.java' -print)
 $(test_jar): $(shell find fibula-it -name 'pom.xml' -print)
 $(test_jar):
-> $(mvnw) package -DskipTests -pl fibula-it
+> $(mvnw) package $(common_maven_args) -DskipTests -pl fibula-it
 
 $(test_runner_jvm): $(bootstrap_jar) $(test_jar)
-> $(mvnw_runner) package -DskipTests -pl fibula-it -Prunner-jvm $(runner_build_args)
+> $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it -Prunner-jvm $(runner_build_args)
 
 $(test_runner_native): $(bootstrap_jar) $(test_jar)
-> $(mvnw_runner) package -DskipTests -pl fibula-it -Prunner-native $(runner_build_args)
+> $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it -Prunner-native $(runner_build_args)
 
 test: $(bootstrap_jar) $(test_runner_jvm)
 > $(mvnw) $(test_args) -pl fibula-it $(system_props)
 .PHONY: test
 
 test-native: $(bootstrap_jar) $(test_runner_native)
-> $(mvnw) $(test_args) -pl fibula-it $(system_props)
+> $(mvnw) $(test_args) $(common_maven_args) -pl fibula-it $(system_props)
 .PHONY: test-native
 
 clean:
 > $(mvnw) clean
 .PHONY: clean
+
+QUARKUS_HOME ?= $(HOME)/1/quarkus-quarkus
+
+build-quarkus:
+> cd $(QUARKUS_HOME)
+> GRADLE_JAVA_HOME=$(HOME)/opt/java-17u-dev JAVA_HOME=$(JAVA_HOME) ./mvnw -Dquickly
+.PHONY: build-quarkus
+
+clean-quarkus:
+> cd $(QUARKUS_HOME)
+> JAVA_HOME=$(JAVA_HOME) ./mvnw clean
+.PHONY: clean-quarkus
