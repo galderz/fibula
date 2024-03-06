@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test_native:
+  test-native:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
@@ -26,10 +26,11 @@ jobs:
       - name: Build Fibula
         run: mvn install -DskipTests --projects !fibula-it
       - name: Build native runner
-        run: mvn -X package -DskipTests -pl fibula-it -Prunner-native
+        run: mvn package -DskipTests -pl fibula-it -Pnative
       - name: Run integration tests
         run: mvn test -pl fibula-it
-  test_jvm:
+
+  test-jvm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
@@ -47,6 +48,6 @@ jobs:
       - name: Build Fibula
         run: mvn install -DskipTests --projects !fibula-it
       - name: Build native runner
-        run: mvn -X package -DskipTests -pl fibula-it -Prunner-jvm
+        run: mvn package -DskipTests -pl fibula-it
       - name: Run integration tests
         run: mvn test -pl fibula-it

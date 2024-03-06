@@ -13,9 +13,7 @@ on:
 
 jobs:
   run:
-
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Fibula
         uses: actions/checkout@v4
@@ -52,7 +50,7 @@ jobs:
         run: mvn install -DskipTests
       - name: Build native runner
         working-directory: fibula
-        run: mvn -X package -DskipTests -pl fibula-samples -Prunner-native
+        run: mvn -X package -DskipTests -pl fibula-samples -Pnative
       - name: Run integration tests
         working-directory: fibula
         env:

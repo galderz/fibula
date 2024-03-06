@@ -14,18 +14,18 @@ public enum Vm
     HOTSPOT
     , SUBSTRATE;
 
-    private static final File RUN_JAR = Path.of("target/runner-jvm/quarkus-run.jar").toFile();
+    private static final File RUN_JAR = Path.of("target/quarkus-app/quarkus-run.jar").toFile();
     private static final File RUN_BINARY = findRunBinary();
 
     private static File findRunBinary()
     {
-        final Path runnerNative = Path.of("target/runner-native");
-        if (!runnerNative.toFile().exists())
+        final Path targetDir = Path.of("target");
+        if (!targetDir.toFile().exists())
         {
             return new File("NOT_FOUND");
         }
 
-        try (Stream<Path> walk = Files.walk(runnerNative)) {
+        try (Stream<Path> walk = Files.walk(targetDir)) {
             return walk
                 .filter(p -> !Files.isDirectory(p))
                 .map(Path::toString)

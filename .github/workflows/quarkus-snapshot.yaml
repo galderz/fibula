@@ -57,7 +57,7 @@ jobs:
         working-directory: fibula
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-        run: mvn -X package $COMMON_MAVEN_ARGS -DskipTests -pl fibula-it -Prunner-native
+        run: mvn package $COMMON_MAVEN_ARGS -DskipTests -pl fibula-it -Pnative
       - name: Run integration tests
         working-directory: fibula
         env:
