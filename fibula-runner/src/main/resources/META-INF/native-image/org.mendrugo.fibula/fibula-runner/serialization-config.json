@@ -10,6 +10,9 @@
       "name":"java.lang.String"
     },
     {
+      "name":"java.lang.Throwable"
+    },
+    {
       "name":"java.util.ArrayList"
     },
     {
