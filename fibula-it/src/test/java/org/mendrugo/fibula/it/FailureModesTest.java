@@ -21,7 +21,7 @@ public class FailureModesTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void shouldNotFailByDefault() throws InterruptedException
+    public void shouldNotFailByDefault()
     {
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName())

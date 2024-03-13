@@ -23,7 +23,7 @@ public class BenchmarkModesTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void benchmarkModes() throws InterruptedException
+    public void benchmarkModes()
     {
         final Options opt = new OptionsBuilder()
             .include(BenchmarkModes.class.getCanonicalName())

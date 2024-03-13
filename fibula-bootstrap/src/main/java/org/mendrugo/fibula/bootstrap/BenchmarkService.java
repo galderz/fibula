@@ -35,43 +35,50 @@ public class BenchmarkService
     VmService vmService;
 
     // todo remove the thrown exception
-    public Collection<RunResult> run(Options jmhOptions) throws InterruptedException
+    public Collection<RunResult> run(Options jmhOptions)
     {
-        Log.debugf("Virtual machine is: %s", vmService.vm());
-
-        final VmInfo vmInfo = vmService.queryInfo();
-
-        resultService.startRun(jmhOptions);
-
-        // Read metadata for all benchmarks
-        final SortedSet<BenchmarkParams> benchmarks = findBenchmarkParams(jmhOptions)
-            .stream()
-            .map(params -> applyVmInfo(params, vmInfo))
-            .collect(Collectors.toCollection(TreeSet::new));
-
-        for (BenchmarkParams benchmark : benchmarks)
+        try
         {
-            formatService.output().startBenchmark(benchmark);
-            formatService.output().println("");
+            Log.debugf("Virtual machine is: %s", vmService.vm());
 
-            final int forkCount = benchmark.getMeasurement().getCount();
-            for (int i = 0; i < forkCount; i++)
+            final VmInfo vmInfo = vmService.queryInfo();
+
+            resultService.startRun(jmhOptions);
+
+            // Read metadata for all benchmarks
+            final SortedSet<BenchmarkParams> benchmarks = findBenchmarkParams(jmhOptions)
+                .stream()
+                .map(params -> applyVmInfo(params, vmInfo))
+                .collect(Collectors.toCollection(TreeSet::new));
+
+            for (BenchmarkParams benchmark : benchmarks)
             {
-                final Process process = runFork(i + 1, benchmark);
-                final int exitCode = process.waitFor();
-                if (exitCode != 0)
+                formatService.output().startBenchmark(benchmark);
+                formatService.output().println("");
+
+                final int forkCount = benchmark.getMeasurement().getCount();
+                for (int i = 0; i < forkCount; i++)
                 {
-                    throw new RuntimeException(String.format(
-                        "Error in forked runner (exit code %d)"
-                        , exitCode
-                    ));
+                    final Process process = runFork(i + 1, benchmark);
+                    final int exitCode = process.waitFor();
+                    if (exitCode != 0)
+                    {
+                        throw new RuntimeException(String.format(
+                            "Error in forked runner (exit code %d)"
+                            , exitCode
+                        ));
+                    }
                 }
+
+                resultService.endBenchmark(benchmark);
             }
 
-            resultService.endBenchmark(benchmark);
+            return resultService.endRun();
         }
-
-        return resultService.endRun();
+        catch (InterruptedException e)
+        {
+            throw new BenchmarkException(e);
+        }
     }
 
     Process runFork(int forkIndex, BenchmarkParams params)

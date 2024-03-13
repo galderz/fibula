@@ -22,7 +22,7 @@ public class OutputUnitsTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void outputUnits() throws InterruptedException
+    public void outputUnits()
     {
         final Options opt = new OptionsBuilder()
             .include(OutputTimeUnits.class.getCanonicalName())
