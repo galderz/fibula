@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkException;
+import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
@@ -23,7 +24,7 @@ public class FailureModesTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void shouldNotFailOnErrorByDefault()
+    public void shouldNotFailOnErrorByDefault() throws RunnerException
     {
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName())
@@ -54,9 +55,10 @@ public class FailureModesTest
             benchmarkService.run(opt);
             throw new AssertionError("Expected exception to be thrown");
         }
-        catch (BenchmarkException e)
+        catch (RunnerException e)
         {
-            final Throwable suppressed = e.getSuppressed()[0];
+            final BenchmarkException cause = (BenchmarkException) e.getCause();
+            final Throwable suppressed = cause.getSuppressed()[0];
             assertThat(suppressed, is(instanceOf(IllegalStateException.class)));
             assertThat(suppressed.getMessage(), is("Provoke exception in @Benchmark"));
         }

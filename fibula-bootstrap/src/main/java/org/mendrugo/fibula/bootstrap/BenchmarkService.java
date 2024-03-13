@@ -34,7 +34,7 @@ public class BenchmarkService
     @Inject
     VmService vmService;
 
-    public Collection<RunResult> run(Options options)
+    public Collection<RunResult> run(Options options) throws RunnerException
     {
         try
         {
@@ -76,7 +76,13 @@ public class BenchmarkService
         }
         catch (InterruptedException e)
         {
-            throw new BenchmarkException(e);
+            formatService.output().println("<host VM has been interrupted waiting for forked VM: " + e.getMessage() + ">");
+            formatService.output().println("");
+            throw new RunnerException(e);
+        }
+        catch (BenchmarkException e)
+        {
+            throw new RunnerException("Benchmark caught the exception", e);
         }
     }
 

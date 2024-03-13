@@ -7,6 +7,7 @@ import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.RunResult;
+import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
@@ -23,7 +24,7 @@ public class BenchmarkModesTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void benchmarkModes()
+    public void benchmarkModes() throws RunnerException
     {
         final Options opt = new OptionsBuilder()
             .include(BenchmarkModes.class.getCanonicalName())

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.RunResult;
+import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
@@ -22,7 +23,7 @@ public class OutputUnitsTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void outputUnits()
+    public void outputUnits() throws RunnerException
     {
         final Options opt = new OptionsBuilder()
             .include(OutputTimeUnits.class.getCanonicalName())
