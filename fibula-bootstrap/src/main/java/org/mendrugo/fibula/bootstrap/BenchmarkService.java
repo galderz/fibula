@@ -190,7 +190,7 @@ public class BenchmarkService
         final int measurementForks = JmhOptionals.<Integer>fromJmh(jmhOptions.getForkCount())
             .orElse(benchmark.getForks()
                 .orElse(Defaults.MEASUREMENT_FORKS));
-        final int measurementIterations = JmhOptionals.<Integer>fromJmh(jmhOptions.getWarmupIterations())
+        final int measurementIterations = JmhOptionals.<Integer>fromJmh(jmhOptions.getMeasurementIterations())
             .orElse(benchmark.getMeasurementIterations()
                 .orElse(benchmark.getMode() == Mode.SingleShotTime
                     ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT

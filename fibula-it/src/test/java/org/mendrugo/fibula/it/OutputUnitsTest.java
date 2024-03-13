@@ -30,8 +30,7 @@ public class OutputUnitsTest
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
-            .warmupIterations(1)
-            .warmupTime(TimeValue.milliseconds(100))
+            .warmupIterations(0)
             .build();
 
         final Collection<RunResult> results = benchmarkService.run(opt);
