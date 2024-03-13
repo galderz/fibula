@@ -7,6 +7,6 @@ public class FailAtBenchmark
     @Benchmark
     public void failBench()
     {
-        throw new IllegalStateException("Reproduce exception from @Benchmark");
+        throw new IllegalStateException("Provoke exception in @Benchmark");
     }
 }
