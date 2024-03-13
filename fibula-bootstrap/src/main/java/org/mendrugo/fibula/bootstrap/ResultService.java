@@ -10,13 +10,21 @@ import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
+import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
+import org.openjdk.jmh.util.Utils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @ApplicationScoped
 public class ResultService
@@ -24,7 +32,7 @@ public class ResultService
     @Inject
     FormatService formatService;
 
-    private final SortedMap<BenchmarkParams, List<IterationResult>> iterationResults = new TreeMap<>();
+    private final SortedMap<BenchmarkParams, Either<BenchmarkException, List<IterationResult>>> iterationResults = new TreeMap<>();
 
     // todo consider moving these two to bean of their own
     private Optional<String> resultFile;
@@ -61,7 +69,7 @@ public class ResultService
         return Optional.empty();
     }
 
-    public void startIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams, int iteration)
+    void startIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams, int iteration)
     {
         formatService.output().iteration(benchmarkParams, iterationParams, iteration);
     }
@@ -73,14 +81,37 @@ public class ResultService
         formatService.output().iterationResult(benchmarkParams, iterationParams, iteration, result);
         if (IterationType.MEASUREMENT == iterationParams.getType())
         {
-            iterationResults.computeIfAbsent(benchmarkParams, k -> new ArrayList<>()).add(result);
+            iterationResults
+                .computeIfAbsent(benchmarkParams, k -> Either.right(new ArrayList<>()))
+                .right()
+                .add(result);
         }
+    }
+
+    void failIteration(BenchmarkParams params, BenchmarkException exception)
+    {
+        formatService.output().println("<failure>");
+        formatService.output().println("");
+        for (Throwable cause : exception.getSuppressed())
+        {
+            formatService.output().println(Utils.throwableToString(cause));
+        }
+        formatService.output().println("");
+        iterationResults.put(params, Either.left(exception));
     }
 
     void endBenchmark(BenchmarkParams params)
     {
-        final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(params, iterationResults.get(params)));
-        benchmarkResults.forEach(formatService.output()::endBenchmark);
+        final Either<BenchmarkException, List<IterationResult>> either = iterationResults.get(params);
+        switch (either)
+        {
+            case Either.Right<BenchmarkException, List<IterationResult>> right ->
+            {
+                final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(params, right.right()));
+                benchmarkResults.forEach(formatService.output()::endBenchmark);
+            }
+            default -> {}
+        }
     }
 
     Collection<RunResult> endRun()
@@ -104,11 +135,19 @@ public class ResultService
     private Collection<RunResult> getRunResults()
     {
         final List<RunResult> runResults = new ArrayList<>();
-        for (Map.Entry<BenchmarkParams, List<IterationResult>> entry : iterationResults.entrySet())
+        for (Map.Entry<BenchmarkParams, Either<BenchmarkException, List<IterationResult>>> entry : iterationResults.entrySet())
         {
-            final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(entry.getKey(), entry.getValue()));
-            final RunResult runResult = new RunResult(entry.getKey(), benchmarkResults);
-            runResults.add(runResult);
+            final Either<BenchmarkException, List<IterationResult>> value = entry.getValue();
+            switch (value)
+            {
+                case Either.Right<BenchmarkException, List<IterationResult>> right ->
+                {
+                    final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(entry.getKey(), right.right()));
+                    final RunResult runResult = new RunResult(entry.getKey(), benchmarkResults);
+                    runResults.add(runResult);
+                }
+                default -> {}
+            }
         }
         iterationResults.clear();
         return runResults;

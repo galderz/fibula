@@ -157,7 +157,7 @@ class BenchmarkProcessor
             || classInfo.simpleName().contains("JMHSample_04")
             || classInfo.simpleName().contains("JMHSample_09")
             || classInfo.simpleName().contains("FibulaSample");
-        Log.debugf("Benchmark method %s is%s supported", supported ? "" : " not");
+        Log.debugf("Benchmark method %s is%s supported", methodInfo.name(), supported ? "" : " not");
         return supported;
     }
 

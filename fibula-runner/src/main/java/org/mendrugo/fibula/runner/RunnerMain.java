@@ -7,8 +7,12 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.mendrugo.fibula.results.Command;
 import org.mendrugo.fibula.results.Infrastructure;
+import org.mendrugo.fibula.results.IterationFail;
 import org.mendrugo.fibula.results.RunnerArguments;
+import org.mendrugo.fibula.results.Serializables;
 import org.mendrugo.fibula.results.VmInfo;
+import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.runner.BenchmarkException;
 
 import java.util.List;
 
@@ -42,14 +46,43 @@ public class RunnerMain implements QuarkusApplication
     private void runFork(Cli cli)
     {
         final String supplierName = cli.text(RunnerArguments.SUPPLIER_NAME);
+        final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
 
-        // todo add result client to handler? Make the handler a bean?
         final Infrastructure infrastructure = new Infrastructure();
-        final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(cli);
         suppliers.stream()
             .filter(supplier -> supplier.getClass().getSimpleName().startsWith(supplierName))
             .map(supplier -> new BenchmarkCallable(supplier.get(), infrastructure))
-            .forEach(callable -> benchmarkHandler.runBenchmark(callable, iterationClient));
+            .forEach(callable -> runSingle(params, callable));
+    }
+
+    private void runSingle(BenchmarkParams params, BenchmarkCallable callable)
+    {
+        try
+        {
+            runBenchmark(params, callable);
+        }
+        catch (BenchmarkException be)
+        {
+            iterationClient.notifyFail(new IterationFail(Serializables.toBase64(params), Serializables.toBase64(be)));
+        }
+    }
+
+    private void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)
+    {
+        final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(iterationClient);
+        try
+        {
+            benchmarkHandler.runBenchmark(params, callable);
+        }
+        catch (BenchmarkException be)
+        {
+            throw be;
+        }
+        catch (Throwable t)
+        {
+            throw new BenchmarkException(t);
+        }
+        // todo add finally to shutdown handler (e.g. executor...etc)
     }
 
     private void runVmInfo()
