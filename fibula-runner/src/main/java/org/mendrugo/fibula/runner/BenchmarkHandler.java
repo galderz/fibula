@@ -78,11 +78,7 @@ final class BenchmarkHandler
         try
         {
             final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
-            final Future<RawResults> failing = completionService.poll(iterationParams.getTime().convertTo(timeUnit), timeUnit);
-            if (failing != null)
-            {
-                System.out.println("Benchmark finished before it was due!");
-            }
+            completionService.poll(iterationParams.getTime().convertTo(timeUnit), timeUnit);
         }
         catch (InterruptedException e)
         {
