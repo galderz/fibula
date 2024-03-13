@@ -38,7 +38,7 @@ public class FailureModesTest
     }
 
     @Test
-    public void shouldFailOnErrorIfSet()
+    public void shouldFailOnErrorAtBenchmark()
     {
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName())
@@ -52,12 +52,13 @@ public class FailureModesTest
         try
         {
             benchmarkService.run(opt);
+            throw new AssertionError("Expected exception to be thrown");
         }
         catch (BenchmarkException e)
         {
-            final Throwable cause = e.getCause();
-            assertThat(cause, is(instanceOf(IllegalStateException.class)));
-            assertThat(cause.getMessage(), is("Provoke exception in @Benchmark"));
+            final Throwable suppressed = e.getSuppressed()[0];
+            assertThat(suppressed, is(instanceOf(IllegalStateException.class)));
+            assertThat(suppressed.getMessage(), is("Provoke exception in @Benchmark"));
         }
     }
 

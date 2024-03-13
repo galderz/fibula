@@ -100,7 +100,7 @@ public class ResultService
         iterationResults.put(params, Either.left(exception));
     }
 
-    void endBenchmark(BenchmarkParams params)
+    void endBenchmark(BenchmarkParams params, Options options)
     {
         final Either<BenchmarkException, List<IterationResult>> either = iterationResults.get(params);
         switch (either)
@@ -110,7 +110,13 @@ public class ResultService
                 final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(params, right.right()));
                 benchmarkResults.forEach(formatService.output()::endBenchmark);
             }
-            default -> {}
+            case Either.Left<BenchmarkException, List<IterationResult>> left ->
+            {
+                if (options.shouldFailOnError().orElse(Defaults.FAIL_ON_ERROR))
+                {
+                    throw left.left();
+                }
+            }
         }
     }
 

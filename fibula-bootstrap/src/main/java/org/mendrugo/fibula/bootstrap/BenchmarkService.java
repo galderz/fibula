@@ -34,8 +34,7 @@ public class BenchmarkService
     @Inject
     VmService vmService;
 
-    // todo remove the thrown exception
-    public Collection<RunResult> run(Options jmhOptions)
+    public Collection<RunResult> run(Options options)
     {
         try
         {
@@ -43,10 +42,10 @@ public class BenchmarkService
 
             final VmInfo vmInfo = vmService.queryInfo();
 
-            resultService.startRun(jmhOptions);
+            resultService.startRun(options);
 
             // Read metadata for all benchmarks
-            final SortedSet<BenchmarkParams> benchmarks = findBenchmarkParams(jmhOptions)
+            final SortedSet<BenchmarkParams> benchmarks = findBenchmarkParams(options)
                 .stream()
                 .map(params -> applyVmInfo(params, vmInfo))
                 .collect(Collectors.toCollection(TreeSet::new));
@@ -70,7 +69,7 @@ public class BenchmarkService
                     }
                 }
 
-                resultService.endBenchmark(benchmark);
+                resultService.endBenchmark(benchmark, options);
             }
 
             return resultService.endRun();
