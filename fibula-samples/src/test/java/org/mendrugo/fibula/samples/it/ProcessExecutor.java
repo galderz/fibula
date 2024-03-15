@@ -12,7 +12,7 @@ final class ProcessExecutor
 {
     static void runSync(List<String> arguments, Parameters parameters, Provider provider)
     {
-        System.out.println("Executing: " + String.join(" ", arguments));
+        System.out.println("Executing: " + String.join(" ", arguments) + " with parameters " + parameters);
         final ProcessBuilder processBuilder = new ProcessBuilder().command(arguments);
         processBuilder.directory(provider.workingDir().toFile());
         try
