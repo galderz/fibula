@@ -5,6 +5,12 @@ import org.openjdk.jmh.annotations.Benchmark;
 public class FailAtBenchmark
 {
     @Benchmark
+    public void avoidFailure()
+    {
+        throw new IllegalArgumentException("Provoke exception in @Benchmark but do not cause failure");
+    }
+
+    @Benchmark
     public void singleException()
     {
         throw new IllegalStateException("Provoke exception in @Benchmark");

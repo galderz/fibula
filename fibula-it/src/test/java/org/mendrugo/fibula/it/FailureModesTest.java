@@ -27,7 +27,7 @@ public class FailureModesTest
     public void shouldNotFailOnErrorByDefault() throws RunnerException
     {
         final Options opt = new OptionsBuilder()
-            .include(FailAtBenchmark.class.getCanonicalName())
+            .include(FailAtBenchmark.class.getCanonicalName() + ".avoidFailure")
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
@@ -41,7 +41,6 @@ public class FailureModesTest
     @Test
     public void shouldFailOnSingleExceptionAtBenchmark()
     {
-        // todo make sure only this method is executed
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName() + ".singleException")
             .forks(1)
@@ -68,7 +67,6 @@ public class FailureModesTest
     @Test
     public void shouldFailOnChainedExceptionAtBenchmark()
     {
-        // todo make sure only this method is executed
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName() + ".chainedException")
             .forks(1)

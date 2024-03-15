@@ -142,16 +142,19 @@ public class BenchmarkService
         );
     }
 
-    private SortedSet<BenchmarkParams> findBenchmarkParams(Options jmhOptions)
+    private SortedSet<BenchmarkParams> findBenchmarkParams(Options options)
     {
         final String benchmarks = readBenchmarks();
         Log.debugf("Read from benchmark list file: %n%s", benchmarks);
 
         final BenchmarkList benchmarkList = BenchmarkList.fromString(benchmarks);
+        final List<String> includes = options.getIncludes();
+        final List<String> excludes = options.getExcludes();
+        Log.debugf("Find benchmarks with includes=%s and excludes=%s", includes, excludes);
         final SortedSet<BenchmarkListEntry> entries = benchmarkList.find(
             formatService.output()
-            , jmhOptions.getIncludes()
-            , jmhOptions.getExcludes()
+            , includes
+            , excludes
         );
         Log.debugf("Number of benchmarks: %d", entries.size());
 
@@ -159,7 +162,7 @@ public class BenchmarkService
         final TreeSet<BenchmarkParams> params = new TreeSet<>();
         for (BenchmarkListEntry entry : entries)
         {
-            params.add(getBenchmarkParams(entry, jmhOptions));
+            params.add(getBenchmarkParams(entry, options));
         }
         return params;
     }
