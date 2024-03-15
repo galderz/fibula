@@ -12,5 +12,6 @@ public record IterationError(
         String className
         , String message
         , StackTraceElement[] stackTrace
+        , Detail cause
     ) {}
 }

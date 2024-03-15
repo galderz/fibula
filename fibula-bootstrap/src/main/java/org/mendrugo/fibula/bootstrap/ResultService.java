@@ -121,6 +121,11 @@ public class ResultService
             final Constructor<?> constructor = errorClass.getDeclaredConstructor(String.class);
             final Throwable throwable = (Throwable) constructor.newInstance(errorDetail.message());
             throwable.setStackTrace(errorDetail.stackTrace());
+            if (errorDetail.cause() != null)
+            {
+                final Throwable cause = toSuppressedException(errorDetail.cause());
+                throwable.initCause(cause);
+            }
             return throwable;
         }
         catch (Exception e)

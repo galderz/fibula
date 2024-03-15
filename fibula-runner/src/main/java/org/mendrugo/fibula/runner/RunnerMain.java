@@ -71,9 +71,19 @@ public class RunnerMain implements QuarkusApplication
     private static IterationError createIterationError(BenchmarkParams params, BenchmarkException exception)
     {
         final List<IterationError.Detail> errorDetails = Arrays.stream(exception.getSuppressed())
-            .map(t -> new IterationError.Detail(t.getClass().getName(), t.getMessage(), t.getStackTrace()))
+            .map(RunnerMain::toErrorDetail)
             .toList();
         return new IterationError(Serializables.toBase64(params), exception.getMessage(), errorDetails);
+    }
+
+    private static IterationError.Detail toErrorDetail(Throwable t)
+    {
+        if (t.getCause() != null)
+        {
+            final IterationError.Detail cause = toErrorDetail(t.getCause());
+            return new IterationError.Detail(t.getClass().getName(), t.getMessage(), t.getStackTrace(), cause);
+        }
+        return new IterationError.Detail(t.getClass().getName(), t.getMessage(), t.getStackTrace(), null);
     }
 
     private void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)

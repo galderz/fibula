@@ -39,10 +39,11 @@ public class FailureModesTest
     }
 
     @Test
-    public void shouldFailOnErrorAtBenchmark()
+    public void shouldFailOnSingleExceptionAtBenchmark()
     {
+        // todo make sure only this method is executed
         final Options opt = new OptionsBuilder()
-            .include(FailAtBenchmark.class.getCanonicalName())
+            .include(FailAtBenchmark.class.getCanonicalName() + ".singleException")
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
@@ -61,6 +62,35 @@ public class FailureModesTest
             final Throwable suppressed = cause.getSuppressed()[0];
             assertThat(suppressed, is(instanceOf(IllegalStateException.class)));
             assertThat(suppressed.getMessage(), is("Provoke exception in @Benchmark"));
+        }
+    }
+
+    @Test
+    public void shouldFailOnChainedExceptionAtBenchmark()
+    {
+        // todo make sure only this method is executed
+        final Options opt = new OptionsBuilder()
+            .include(FailAtBenchmark.class.getCanonicalName() + ".chainedException")
+            .forks(1)
+            .measurementIterations(1)
+            .measurementTime(TimeValue.milliseconds(100))
+            .warmupIterations(0)
+            .shouldFailOnError(true)
+            .build();
+
+        try
+        {
+            benchmarkService.run(opt);
+            throw new AssertionError("Expected exception to be thrown");
+        }
+        catch (RunnerException e)
+        {
+            final Throwable suppressed = e.getCause().getSuppressed()[0];
+            assertThat(suppressed, is(instanceOf(RuntimeException.class)));
+            assertThat(suppressed.getMessage(), is("Provoke a runtime exception with cause"));
+            final Throwable cause = suppressed.getCause();
+            assertThat(cause, is(instanceOf(NullPointerException.class)));
+            assertThat(cause.getMessage(), is("Provoke null pointer exception"));
         }
     }
 

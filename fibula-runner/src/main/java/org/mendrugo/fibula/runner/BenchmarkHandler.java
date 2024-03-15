@@ -113,11 +113,7 @@ final class BenchmarkHandler
         }
         catch (ExecutionException ex)
         {
-            Throwable cause = ex;
-            for (int c = 0; (c < 3) && (cause.getCause() != null); c++) {
-                cause = cause.getCause();
-            }
-
+            Throwable cause = ex.getCause();
             // todo skip recording assist exception
             errors.add(cause);
         }
