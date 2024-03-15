@@ -2,6 +2,7 @@ package org.mendrugo.fibula.bootstrap;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.JmhFormats;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
@@ -18,7 +19,9 @@ import org.openjdk.jmh.util.FileUtils;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -88,16 +91,42 @@ public class ResultService
         }
     }
 
-    void failIteration(BenchmarkParams params, BenchmarkException exception)
+    void errorIteration(BenchmarkParams params, String errorMessage, List<IterationError.Detail> errorDetails)
     {
         formatService.output().println("<failure>");
         formatService.output().println("");
-        for (Throwable cause : exception.getSuppressed())
-        {
-            formatService.output().println(Utils.throwableToString(cause));
-        }
+        final BenchmarkException benchmarkException = toBenchmarkException(errorMessage, errorDetails);
+        Arrays.stream(benchmarkException.getSuppressed())
+            .map(Utils::throwableToString)
+            .forEach(formatService.output()::println);
+
         formatService.output().println("");
-        iterationResults.put(params, Either.left(exception));
+        iterationResults.put(params, Either.left(benchmarkException));
+    }
+
+    private static BenchmarkException toBenchmarkException(String errorMessage, List<IterationError.Detail> errorDetails)
+    {
+        final List<Throwable> suppressedExceptions = errorDetails.stream()
+            .map(ResultService::toSuppressedException)
+            .toList();
+
+        return new BenchmarkException(errorMessage, suppressedExceptions);
+    }
+
+    private static Throwable toSuppressedException(IterationError.Detail errorDetail)
+    {
+        try
+        {
+            final Class<?> errorClass = Class.forName(errorDetail.className());
+            final Constructor<?> constructor = errorClass.getDeclaredConstructor(String.class);
+            final Throwable throwable = (Throwable) constructor.newInstance(errorDetail.message());
+            throwable.setStackTrace(errorDetail.stackTrace());
+            return throwable;
+        }
+        catch (Exception e)
+        {
+            throw new BenchmarkException(e);
+        }
     }
 
     void endBenchmark(BenchmarkParams params, Options options)

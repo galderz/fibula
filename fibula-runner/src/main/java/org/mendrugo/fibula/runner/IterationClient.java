@@ -7,7 +7,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mendrugo.fibula.results.IterationEnd;
-import org.mendrugo.fibula.results.IterationFail;
+import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.IterationStart;
 
 @Path("/iteration")
@@ -18,13 +18,13 @@ public interface IterationClient
 {
     @Path("/start")
     @POST
-    String notifyStart(IterationStart result);
+    String notifyStart(IterationStart start);
 
     @Path("/end")
     @POST
-    String notifyEnd(IterationEnd result);
+    String notifyEnd(IterationEnd end);
 
-    @Path("/fail")
+    @Path("/error")
     @POST
-    String notifyFail(IterationFail fail);
+    String notifyError(IterationError error);
 }

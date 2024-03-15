@@ -5,13 +5,12 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import org.mendrugo.fibula.results.IterationEnd;
-import org.mendrugo.fibula.results.IterationFail;
+import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.IterationStart;
 import org.mendrugo.fibula.results.Serializables;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.IterationResult;
-import org.openjdk.jmh.runner.BenchmarkException;
 
 @Path("/iteration")
 public class IterationResource
@@ -40,14 +39,13 @@ public class IterationResource
         return "Ok";
     }
 
-    @Path("/fail")
+    @Path("/error")
     @POST
-    public String fail(IterationFail iterationFail)
+    public String error(IterationError iterationError)
     {
-        Log.debugf("Received: %s", iterationFail);
-        final BenchmarkParams params = Serializables.fromBase64(iterationFail.benchmarkParams());
-        final BenchmarkException exception = Serializables.fromBase64(iterationFail.exception());
-        resultService.failIteration(params, exception);
+        Log.debugf("Received: %s", iterationError);
+        final BenchmarkParams params = Serializables.fromBase64(iterationError.benchmarkParams());
+        resultService.errorIteration(params, iterationError.errorMessage(), iterationError.details());
         return "Ok";
     }
 }

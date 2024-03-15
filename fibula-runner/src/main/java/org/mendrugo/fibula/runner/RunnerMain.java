@@ -7,13 +7,14 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.mendrugo.fibula.results.Command;
 import org.mendrugo.fibula.results.Infrastructure;
-import org.mendrugo.fibula.results.IterationFail;
+import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.Serializables;
 import org.mendrugo.fibula.results.VmInfo;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.BenchmarkException;
 
+import java.util.Arrays;
 import java.util.List;
 
 @QuarkusMain(name = "runner")
@@ -63,8 +64,16 @@ public class RunnerMain implements QuarkusApplication
         }
         catch (BenchmarkException be)
         {
-            iterationClient.notifyFail(new IterationFail(Serializables.toBase64(params), Serializables.toBase64(be)));
+            iterationClient.notifyError(createIterationError(params, be));
         }
+    }
+
+    private static IterationError createIterationError(BenchmarkParams params, BenchmarkException exception)
+    {
+        final List<IterationError.Detail> errorDetails = Arrays.stream(exception.getSuppressed())
+            .map(t -> new IterationError.Detail(t.getClass().getName(), t.getMessage(), t.getStackTrace()))
+            .toList();
+        return new IterationError(Serializables.toBase64(params), exception.getMessage(), errorDetails);
     }
 
     private void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)
