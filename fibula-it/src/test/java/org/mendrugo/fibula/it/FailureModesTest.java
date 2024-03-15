@@ -92,6 +92,32 @@ public class FailureModesTest
         }
     }
 
+    @Test
+    public void shouldFailOnCustomExceptionAtBenchmark()
+    {
+        final Options opt = new OptionsBuilder()
+            .include(FailAtBenchmark.class.getCanonicalName() + ".customException")
+            .forks(1)
+            .measurementIterations(1)
+            .measurementTime(TimeValue.milliseconds(100))
+            .warmupIterations(0)
+            .shouldFailOnError(true)
+            .build();
+
+        try
+        {
+            benchmarkService.run(opt);
+            throw new AssertionError("Expected exception to be thrown");
+        }
+        catch (RunnerException e)
+        {
+            final BenchmarkException cause = (BenchmarkException) e.getCause();
+            final Throwable suppressed = cause.getSuppressed()[0];
+            assertThat(suppressed, is(instanceOf(CustomException.class)));
+            assertThat(suppressed.getMessage(), is("Provoke a custom exception in @Benchmark"));
+        }
+    }
+
     // todo add test to fail from @Setup
     // todo add test to fail from @Teardown
 }

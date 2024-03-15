@@ -33,4 +33,10 @@ public class FailAtBenchmark
     {
         throw new NullPointerException("Provoke null pointer exception");
     }
+
+    @Benchmark
+    public void customException()
+    {
+        throw new CustomException("Provoke a custom exception in @Benchmark");
+    }
 }
