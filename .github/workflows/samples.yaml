@@ -55,4 +55,4 @@ jobs:
         working-directory: fibula
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
-        run: mvn -X test -pl fibula-samples -Dfibula.test.quick=${{ github.event.inputs.quick }}
+        run: mvn test -pl fibula-samples -Dfibula.test.quick=${{ github.event.inputs.quick }}

@@ -40,7 +40,7 @@ record Parameters(
 
         return new Parameters(
             benchmarkName
-            , 20 // todo adjust further as needed
+            , 120 // minutes
             , Defaults.MEASUREMENT_FORKS
             , Defaults.MEASUREMENT_ITERATIONS
             , Defaults.MEASUREMENT_TIME.toString()
