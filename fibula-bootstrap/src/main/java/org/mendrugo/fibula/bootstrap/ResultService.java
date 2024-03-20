@@ -118,7 +118,8 @@ public class ResultService
         try
         {
             final Class<?> errorClass = Class.forName(errorDetail.className());
-            final Constructor<?> constructor = errorClass.getDeclaredConstructor(String.class);
+            final Class<?> paramType = AssertionError.class == errorClass ? Object.class : String.class;
+            final Constructor<?> constructor = errorClass.getDeclaredConstructor(paramType);
             final Throwable throwable = (Throwable) constructor.newInstance(errorDetail.message());
             throwable.setStackTrace(errorDetail.stackTrace());
             if (errorDetail.cause() != null)

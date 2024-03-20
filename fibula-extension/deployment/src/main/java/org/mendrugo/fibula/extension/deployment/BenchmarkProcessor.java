@@ -38,9 +38,12 @@ import org.mendrugo.fibula.results.JmhRawResults;
 import org.objectweb.asm.Opcodes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.RawResults;
@@ -67,6 +70,8 @@ class BenchmarkProcessor
     private static final DotName BENCHMARK = DotName.createSimple(Benchmark.class.getName());
     private static final DotName BENCHMARK_MODE = DotName.createSimple(BenchmarkMode.class.getName());
     private static final DotName BLACKHOLE = DotName.createSimple(Blackhole.class.getName());
+    private static final DotName SETUP = DotName.createSimple(Setup.class.getName());
+    private static final DotName TEAR_DOWN = DotName.createSimple(TearDown.class.getName());
     private static final DotName STATE = DotName.createSimple(State.class.getName());
 
     final Identifiers identifiers = new Identifiers(); // todo reuse
@@ -242,6 +247,7 @@ class BenchmarkProcessor
     private String generateBenchmarkFunction(MethodInfo methodInfo, Mode mode, ClassOutput classOutput, IndexView index)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
+        final DotName dotClassName = classInfo.name();
 
         final String className = String.format(
             "%s.%s_%s_%s_Function"
@@ -257,12 +263,16 @@ class BenchmarkProcessor
             .interfaces(Function.class)
             .build();
 
+        final List<AnnotationInstance> setupAnnotations = getAroundAnnotation(dotClassName, SETUP, index);
+        final List<AnnotationInstance> tearDownAnnotations = getAroundAnnotation(dotClassName, TEAR_DOWN, index);
+
         // Benchmark field and initialization
-        final MethodDescriptor tryInitMethod = generateStateInitMethod(getStateAnnotation(methodInfo.declaringClass().name(), index), methodInfo.declaringClass().name(), function);
+        final MethodDescriptor tryInitMethod = generateStateInitMethod(getStateAnnotation(methodInfo.declaringClass().name(), index), setupAnnotations, methodInfo.declaringClass().name(), function);
 
         // State field and initialization
+        // todo avoid paramInfo.type().name() and extract from annotation? Simplifies potential refactoring
         final List<MethodDescriptor> paramInitMethods = methodInfo.parameters().stream()
-            .map(paramInfo -> generateStateInitMethod(getStateAnnotation(paramInfo.type().name(), index), paramInfo.type().name(), function))
+            .map(paramInfo -> generateStateInitMethod(getStateAnnotation(paramInfo.type().name(), index), setupAnnotations, paramInfo.type().name(), function))
             .toList();
 
         final List<String> paramNames = methodInfo.parameters().stream()
@@ -270,7 +280,7 @@ class BenchmarkProcessor
             .toList();
 
         // Calculating stub
-        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, function);
+        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, tearDownAnnotations, function);
 
         // Function implementation bringing it all together
         generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, function);
@@ -279,19 +289,19 @@ class BenchmarkProcessor
         return className;
     }
 
-    private MethodDescriptor generateStateInitMethod(Optional<AnnotationInstance> stateAnnotation, DotName name, ClassCreator function)
+    private MethodDescriptor generateStateInitMethod(Optional<AnnotationInstance> stateAnnotation, List<AnnotationInstance> setupAnnotations, DotName name, ClassCreator function)
     {
         if (stateAnnotation.isPresent())
         {
             final Scope scope = Scope.valueOf(stateAnnotation.get().value().asEnum());
             return switch (scope)
             {
-                case Benchmark -> generateSharedStateInitMethod(name, function);
-                case Thread -> generateUnsharedStateInitMethod(name, function);
+                case Benchmark -> generateSharedStateInitMethod(name, setupAnnotations, function);
+                case Thread -> generateUnsharedStateInitMethod(name, setupAnnotations, function);
                 default -> throw new RuntimeException("NYI");
             };
         }
-        return generateUnsharedStateInitMethod(name, function);
+        return generateUnsharedStateInitMethod(name, setupAnnotations, function);
     }
 
     private static Optional<AnnotationInstance> getStateAnnotation(DotName name, IndexView index)
@@ -301,7 +311,14 @@ class BenchmarkProcessor
             .findFirst();
     }
 
-    private MethodDescriptor generateUnsharedStateInitMethod(DotName name, ClassCreator function)
+    private static List<AnnotationInstance> getAroundAnnotation(DotName name, DotName annotationName, IndexView index)
+    {
+        return index.getAnnotations(annotationName).stream()
+            .filter(annotation -> annotation.target().asMethod().declaringClass().name().equals(name))
+            .toList();
+    }
+
+    private MethodDescriptor generateUnsharedStateInitMethod(DotName name, List<AnnotationInstance> setupAnnotations, ClassCreator function)
     {
         final String fqn = name.toString();
 
@@ -322,6 +339,10 @@ class BenchmarkProcessor
                 // val = new Unshared(); or new Blackhole();
                 final ResultHandle instance = instantiateBlackholeOrOther(trueBranch, name);
                 trueBranch.assign(val, instance);
+                // val.setup(); for each trial setup methods
+                setupAnnotations
+                    .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
+                    .forEach(ann -> trueBranch.invokeVirtualMethod(ann.target().asMethod(), val));
                 // this.f_unshared = val;
                 trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
             }
@@ -344,7 +365,7 @@ class BenchmarkProcessor
             : creator.newInstance(MethodDescriptor.ofConstructor(fqn));
     }
 
-    private MethodDescriptor generateSharedStateInitMethod(DotName name, ClassCreator classCreator)
+    private MethodDescriptor generateSharedStateInitMethod(DotName name, List<AnnotationInstance> setupAnnotations, ClassCreator classCreator)
     {
         final String fqn = name.toString();
 
@@ -379,6 +400,10 @@ class BenchmarkProcessor
                 // val = new F(); or new Blackhole();
                 final ResultHandle newVal = instantiateBlackholeOrOther(tryBlock, name);
                 tryBlock.assign(val, newVal);
+                // val.setup(); for each trial setup methods
+                setupAnnotations
+                    .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
+                    .forEach(ann -> tryBlock.invokeVirtualMethod(ann.target().asMethod(), val));
                 // f_state = val;
                 tryBlock.writeStaticField(stateField, val);
 
@@ -482,7 +507,7 @@ class BenchmarkProcessor
         }
     }
 
-    private static MethodDescriptor generateThroughputOrAverageStub(MethodInfo methodInfo, Mode mode, List<String> stateParamNames, ClassCreator function)
+    private static MethodDescriptor generateThroughputOrAverageStub(MethodInfo methodInfo, Mode mode, List<String> stateParamNames, List<AnnotationInstance> tearDownAnnotations, ClassCreator function)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
         final String stubMethodName = mode.shortLabel() + "_fibStub";
@@ -545,6 +570,12 @@ class BenchmarkProcessor
 
         // JmhRawResults.setMeasureOps(operations, raw);
         stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
+
+        // todo move to a wrapping method
+        // todo check that it's the last iteration for trial (vs iteration level)
+        tearDownAnnotations
+            .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
+            .forEach(ann -> stub.invokeVirtualMethod(ann.target().asMethod(), benchmark));
 
         stub.returnVoid();
         stub.close();
