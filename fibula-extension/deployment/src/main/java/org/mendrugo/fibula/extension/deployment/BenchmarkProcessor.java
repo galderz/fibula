@@ -267,10 +267,10 @@ class BenchmarkProcessor
         final List<AnnotationInstance> tearDownAnnotations = getAroundAnnotation(dotClassName, TEAR_DOWN, index);
 
         // Benchmark field and initialization
-        final MethodDescriptor tryInitMethod = generateStateInitMethod(getStateAnnotation(methodInfo.declaringClass().name(), index), setupAnnotations, methodInfo.declaringClass().name(), function);
+        final Optional<AnnotationInstance> stateAnnotation = getStateAnnotation(dotClassName, index);
+        final MethodDescriptor tryInitMethod = generateStateInitMethod(stateAnnotation, setupAnnotations, dotClassName, function);
 
         // State field and initialization
-        // todo avoid paramInfo.type().name() and extract from annotation? Simplifies potential refactoring
         final List<MethodDescriptor> paramInitMethods = methodInfo.parameters().stream()
             .map(paramInfo -> generateStateInitMethod(getStateAnnotation(paramInfo.type().name(), index), setupAnnotations, paramInfo.type().name(), function))
             .toList();
