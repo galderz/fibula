@@ -34,24 +34,21 @@ final class BenchmarkHandler
 
     void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)
     {
-        final IterationParams warmup = params.getWarmup();
-        for (int i = 1; i <= warmup.getCount(); i++)
-        {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(warmup), i));
-            IterationResult iterationResult = runIteration(params, callable, warmup, callable.infrastructure);
-            iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
-        }
+        runBenchmarkCount(params.getWarmup(), params, callable);
+        runBenchmarkCount(params.getMeasurement(), params, callable);
+    }
 
-        final IterationParams measurement = params.getMeasurement();
-        for (int i = 1; i <= measurement.getCount(); i++)
+    private void runBenchmarkCount(IterationParams iterationParams, BenchmarkParams params, BenchmarkCallable callable)
+    {
+        for (int i = 1; i <= iterationParams.getCount(); i++)
         {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
-            final boolean lastIteration = i == measurement.getCount();
+            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(iterationParams), i));
+            final boolean lastIteration = i == iterationParams.getCount();
             if (lastIteration)
             {
                 callable.infrastructure.markLastIteration();
             }
-            IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
+            IterationResult iterationResult = runIteration(params, callable, iterationParams, callable.infrastructure);
             if (lastIteration)
             {
                 callable.infrastructure.resetLastIteration();
