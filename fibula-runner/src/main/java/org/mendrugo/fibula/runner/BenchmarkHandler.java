@@ -46,7 +46,16 @@ final class BenchmarkHandler
         for (int i = 1; i <= measurement.getCount(); i++)
         {
             iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
+            final boolean lastIteration = i == measurement.getCount();
+            if (lastIteration)
+            {
+                callable.infrastructure.markLastIteration();
+            }
             IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
+            if (lastIteration)
+            {
+                callable.infrastructure.resetLastIteration();
+            }
             iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
         }
     }

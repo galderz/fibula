@@ -283,7 +283,7 @@ class BenchmarkProcessor
         final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, function);
 
         // Function implementation bringing it all together
-        generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, tearDownAnnotations, function);
+        generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, setupAnnotations, tearDownAnnotations, function);
 
         function.close();
         return className;
@@ -400,10 +400,12 @@ class BenchmarkProcessor
                 // val = new F(); or new Blackhole();
                 final ResultHandle newVal = instantiateBlackholeOrOther(tryBlock, name);
                 tryBlock.assign(val, newVal);
+
                 // val.setup(); for each trial setup methods
                 setupAnnotations
                     .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
                     .forEach(ann -> tryBlock.invokeVirtualMethod(ann.target().asMethod(), val));
+
                 // f_state = val;
                 tryBlock.writeStaticField(stateField, val);
 
@@ -463,6 +465,7 @@ class BenchmarkProcessor
         , MethodDescriptor tryInitMethod
         , MethodInfo methodInfo
         , List<MethodDescriptor> paramInitMethods
+        , List<AnnotationInstance> setupAnnotations
         , List<AnnotationInstance> tearDownAnnotations
         , ClassCreator function
     )
@@ -496,6 +499,11 @@ class BenchmarkProcessor
             apply.assign(benchmark, apply.invokeVirtualMethod(tryInitMethod, apply.getThis()));
             stubParameters.add(benchmark);
 
+            // benchmark.setup(); for each iteration setup methods
+            setupAnnotations
+                .stream().filter(ann -> Level.Iteration == Level.valueOf(ann.value().asEnum()))
+                .forEach(ann -> apply.invokeVirtualMethod(ann.target().asMethod(), benchmark));
+
             paramInitMethods.stream()
                 .map(initMethod -> apply.invokeVirtualMethod(initMethod, apply.getThis()))
                 .forEach(stubParameters::add);
@@ -503,11 +511,20 @@ class BenchmarkProcessor
             // stub(infrastructure, raw, benchmark...);
             apply.invokeVirtualMethod(stubMethod, apply.getThis(), stubParameters.toArray(new ResultHandle[0]));
 
-            // todo move to a wrapping method
-            // todo check that it's the last iteration for trial (vs iteration level)
+            // benchmark.tearDown(); for each iteration tear down methods
             tearDownAnnotations
-                .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
+                .stream().filter(ann -> Level.Iteration == Level.valueOf(ann.value().asEnum()))
                 .forEach(ann -> apply.invokeVirtualMethod(ann.target().asMethod(), benchmark));
+
+            try (final BytecodeCreator trueBranch = apply
+                .ifTrue(apply.readInstanceField(FieldDescriptor.of(Infrastructure.class, "lastIteration", boolean.class), infrastructure))
+                .trueBranch()
+            ) {
+                // benchmark.tearDown(); for each trial tear down methods
+                tearDownAnnotations
+                    .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
+                    .forEach(ann -> trueBranch.invokeVirtualMethod(ann.target().asMethod(), benchmark));
+            }
 
             // return raw;
             apply.returnValue(raw);

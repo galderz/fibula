@@ -16,12 +16,12 @@ public class SetupTearDownTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void aroundTrial() throws RunnerException
+    public void around() throws RunnerException
     {
         final Options opt = new OptionsBuilder()
             .include(SetupTearDown.class.getCanonicalName())
             .forks(1)
-            .measurementIterations(1)
+            .measurementIterations(2)
             .measurementTime(TimeValue.milliseconds(100))
             .warmupIterations(0)
             .shouldFailOnError(true)

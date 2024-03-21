@@ -15,18 +15,34 @@ import static org.hamcrest.Matchers.is;
 @State(Scope.Thread)
 public class SetupTearDown
 {
-    final AtomicInteger aroundTrialCounter = new AtomicInteger();
+    final AtomicInteger trialCounter = new AtomicInteger();
+    final AtomicInteger beforeIterationCounter = new AtomicInteger();
+    final AtomicInteger afterIterationCounter = new AtomicInteger();
 
     @Setup(Level.Trial)
     public void beforeTrial()
     {
-        aroundTrialCounter.incrementAndGet();
+        trialCounter.incrementAndGet();
+    }
+
+    @Setup(Level.Iteration)
+    public void beforeIteration()
+    {
+        beforeIterationCounter.incrementAndGet();
     }
 
     @TearDown(Level.Trial)
     public void afterTrial()
     {
-        assertThat(aroundTrialCounter.get(), is(1));
+        assertThat(trialCounter.get(), is(1));
+        assertThat(beforeIterationCounter.get(), is(2));
+        assertThat(afterIterationCounter.get(), is(2));
+    }
+
+    @TearDown(Level.Iteration)
+    public void afterIteration()
+    {
+        afterIterationCounter.incrementAndGet();
     }
 
     @Benchmark

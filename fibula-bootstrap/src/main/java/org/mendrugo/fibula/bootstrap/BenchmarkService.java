@@ -55,7 +55,7 @@ public class BenchmarkService
                 formatService.output().startBenchmark(benchmark);
                 formatService.output().println("");
 
-                final int forkCount = benchmark.getMeasurement().getCount();
+                final int forkCount = benchmark.getForks();
                 for (int i = 0; i < forkCount; i++)
                 {
                     final Process process = runFork(i + 1, benchmark);
@@ -88,7 +88,7 @@ public class BenchmarkService
 
     Process runFork(int forkIndex, BenchmarkParams params)
     {
-        final int forkCount = params.getMeasurement().getCount();
+        final int forkCount = params.getForks();
         final List<String> forkArguments = forkArguments(params);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         formatService.output().println("# Fork: " + forkIndex + " of " + forkCount);
@@ -249,6 +249,7 @@ public class BenchmarkService
             , measurementTime
             , Defaults.MEASUREMENT_BATCHSIZE
         );
+
         final WorkloadParams params = new WorkloadParams();
 
         // Null values fixed at runtime based on vm running fork
