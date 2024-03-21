@@ -280,10 +280,10 @@ class BenchmarkProcessor
             .toList();
 
         // Calculating stub
-        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, tearDownAnnotations, function);
+        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, function);
 
         // Function implementation bringing it all together
-        generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, function);
+        generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, tearDownAnnotations, function);
 
         function.close();
         return className;
@@ -463,6 +463,7 @@ class BenchmarkProcessor
         , MethodDescriptor tryInitMethod
         , MethodInfo methodInfo
         , List<MethodDescriptor> paramInitMethods
+        , List<AnnotationInstance> tearDownAnnotations
         , ClassCreator function
     )
     {
@@ -502,12 +503,18 @@ class BenchmarkProcessor
             // stub(infrastructure, raw, benchmark...);
             apply.invokeVirtualMethod(stubMethod, apply.getThis(), stubParameters.toArray(new ResultHandle[0]));
 
+            // todo move to a wrapping method
+            // todo check that it's the last iteration for trial (vs iteration level)
+            tearDownAnnotations
+                .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
+                .forEach(ann -> apply.invokeVirtualMethod(ann.target().asMethod(), benchmark));
+
             // return raw;
             apply.returnValue(raw);
         }
     }
 
-    private static MethodDescriptor generateThroughputOrAverageStub(MethodInfo methodInfo, Mode mode, List<String> stateParamNames, List<AnnotationInstance> tearDownAnnotations, ClassCreator function)
+    private static MethodDescriptor generateThroughputOrAverageStub(MethodInfo methodInfo, Mode mode, List<String> stateParamNames, ClassCreator function)
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
         final String stubMethodName = mode.shortLabel() + "_fibStub";
@@ -570,12 +577,6 @@ class BenchmarkProcessor
 
         // JmhRawResults.setMeasureOps(operations, raw);
         stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
-
-        // todo move to a wrapping method
-        // todo check that it's the last iteration for trial (vs iteration level)
-        tearDownAnnotations
-            .stream().filter(ann -> Level.Trial == Level.valueOf(ann.value().asEnum()))
-            .forEach(ann -> stub.invokeVirtualMethod(ann.target().asMethod(), benchmark));
 
         stub.returnVoid();
         stub.close();
