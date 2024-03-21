@@ -22,7 +22,7 @@ public class SetupTearDownTest
             .include(SetupTearDown.class.getCanonicalName())
             .forks(1)
             .measurementIterations(2)
-            .measurementTime(TimeValue.milliseconds(100))
+            .measurementTime(TimeValue.milliseconds(200))
             .warmupIterations(0)
             .shouldFailOnError(true)
             .build();

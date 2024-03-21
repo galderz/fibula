@@ -280,7 +280,7 @@ class BenchmarkProcessor
             .toList();
 
         // Calculating stub
-        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, function);
+        final MethodDescriptor stubMethod = generateThroughputOrAverageStub(methodInfo, mode, paramNames, setupAnnotations, tearDownAnnotations, function);
 
         // Function implementation bringing it all together
         generateApply(stubMethod, tryInitMethod, methodInfo, paramInitMethods, setupAnnotations, tearDownAnnotations, function);
@@ -531,7 +531,14 @@ class BenchmarkProcessor
         }
     }
 
-    private static MethodDescriptor generateThroughputOrAverageStub(MethodInfo methodInfo, Mode mode, List<String> stateParamNames, ClassCreator function)
+    private static MethodDescriptor generateThroughputOrAverageStub(
+        MethodInfo methodInfo
+        , Mode mode
+        , List<String> stateParamNames
+        , List<AnnotationInstance> setupAnnotations
+        , List<AnnotationInstance> tearDownAnnotations
+        , ClassCreator function
+    )
     {
         final ClassInfo classInfo = methodInfo.declaringClass();
         final String stubMethodName = mode.shortLabel() + "_fibStub";
@@ -548,56 +555,64 @@ class BenchmarkProcessor
         paramNames.add(classInfo.name().toString());
         paramNames.addAll(stateParamNames);
 
-        final MethodCreator stub = function.getMethodCreator(
-            stubMethodName
-            , "void"
-            , paramNames.toArray(new String[0])
-        );
-
-        int paramIndex = 0;
-        final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
-        final ResultHandle raw = stub.getMethodParam(paramIndex++);
-        final ResultHandle blackhole = VoidType.VOID != methodInfo.returnType()
-            ? stub.getMethodParam(paramIndex++)
-            : null;
-        final ResultHandle benchmark = stub.getMethodParam(paramIndex++);
-        final int paramCount = paramIndex;
-        final List<ResultHandle> params = IntStream.range(0, stateParamNames.size())
-            .mapToObj(i -> stub.getMethodParam(i + paramCount))
-            .toList();
-
-        // raw.startTime = System.nanoTime();
-        final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-        stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
-
-        // long operations = 0;
-        final AssignableResultHandle operations = stub.createVariable(long.class);
-        stub.assign(operations, stub.load(0L));
-
-        // Loop
-        final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
-            bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
-        ));
-        try (final BytecodeCreator whileLoopBlock = whileLoop.block())
+        try (final MethodCreator stub = function.getMethodCreator(stubMethodName, "void", paramNames.toArray(new String[0])))
         {
-            final ResultHandle result = whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark, params.toArray(new ResultHandle[0]));
-            if (blackhole != null)
+            int paramIndex = 0;
+            final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
+            final ResultHandle raw = stub.getMethodParam(paramIndex++);
+            final ResultHandle blackhole = VoidType.VOID != methodInfo.returnType()
+                ? stub.getMethodParam(paramIndex++)
+                : null;
+            final ResultHandle benchmark = stub.getMethodParam(paramIndex++);
+            final int paramCount = paramIndex;
+            final List<ResultHandle> params = IntStream.range(0, stateParamNames.size())
+                .mapToObj(i -> stub.getMethodParam(i + paramCount))
+                .toList();
+
+            // raw.startTime = System.nanoTime();
+            final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+            stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
+
+            // long operations = 0;
+            final AssignableResultHandle operations = stub.createVariable(long.class);
+            stub.assign(operations, stub.load(0L));
+
+            // Loop
+            final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
+                bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
+            ));
+            try (final BytecodeCreator whileLoopBlock = whileLoop.block())
             {
-                whileLoopBlock.invokeVirtualMethod(selectBlackholeMethod(methodInfo), blackhole, result);
+                // benchmark.setup(); for each invocation setup methods
+                setupAnnotations
+                    .stream().filter(ann -> Level.Invocation == Level.valueOf(ann.value().asEnum()))
+                    .forEach(ann -> whileLoopBlock.invokeVirtualMethod(ann.target().asMethod(), benchmark));
+
+                // benchmark.bench();
+                final ResultHandle result = whileLoopBlock.invokeVirtualMethod(MethodDescriptor.of(methodInfo), benchmark, params.toArray(new ResultHandle[0]));
+
+                // benchmark.tearDown(); for each invocation tear down methods
+                tearDownAnnotations
+                    .stream().filter(ann -> Level.Invocation == Level.valueOf(ann.value().asEnum()))
+                    .forEach(ann -> whileLoopBlock.invokeVirtualMethod(ann.target().asMethod(), benchmark));
+
+                if (blackhole != null)
+                {
+                    whileLoopBlock.invokeVirtualMethod(selectBlackholeMethod(methodInfo), blackhole, result);
+                }
+                whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
             }
-            whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
+
+            // raw.stopTime = System.nanoTime();
+            final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+            stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
+
+            // JmhRawResults.setMeasureOps(operations, raw);
+            stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
+
+            stub.returnVoid();
+            return stub.getMethodDescriptor();
         }
-
-        // raw.stopTime = System.nanoTime();
-        final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-        stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
-
-        // JmhRawResults.setMeasureOps(operations, raw);
-        stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
-
-        stub.returnVoid();
-        stub.close();
-        return stub.getMethodDescriptor();
     }
 
     private static MethodDescriptor selectBlackholeMethod(MethodInfo methodInfo)
