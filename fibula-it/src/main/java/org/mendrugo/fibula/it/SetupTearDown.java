@@ -46,8 +46,14 @@ public class SetupTearDown
         assertThat(trialCounter.get(), is(1));
         assertThat(beforeIterationCounter.get(), is(2));
         assertThat(afterIterationCounter.get(), is(2));
-        assertThat(beforeInvocationCounter.get(), greaterThan(2));
-        assertThat(afterInvocationCounter.get(), greaterThan(2));
+
+        final int minInvalidInvocationCount = 2;
+        String greatThanErrorMessage = """
+            Expected: a value greater than %1$d
+                 but: %2$d was less than %1$d
+            """.formatted(minInvalidInvocationCount, beforeInvocationCounter.get());
+        assertThat(greatThanErrorMessage, beforeInvocationCounter.get() > minInvalidInvocationCount);
+        assertThat(greatThanErrorMessage, afterInvocationCounter.get() > minInvalidInvocationCount);
     }
 
     @TearDown(Level.Iteration)
