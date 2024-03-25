@@ -10,7 +10,6 @@ import org.openjdk.jmh.annotations.TearDown;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
 @State(Scope.Thread)
@@ -48,12 +47,8 @@ public class SetupTearDown
         assertThat(afterIterationCounter.get(), is(2));
 
         final int minInvalidInvocationCount = 2;
-        String greatThanErrorMessage = """
-            Expected: a value greater than %1$d
-                 but: %2$d was less than %1$d
-            """.formatted(minInvalidInvocationCount, beforeInvocationCounter.get());
-        assertThat(greatThanErrorMessage, beforeInvocationCounter.get() > minInvalidInvocationCount);
-        assertThat(greatThanErrorMessage, afterInvocationCounter.get() > minInvalidInvocationCount);
+        MonoAssert.assertThatGreaterThan(beforeInvocationCounter.get(), minInvalidInvocationCount);
+        MonoAssert.assertThatGreaterThan(afterInvocationCounter.get(), minInvalidInvocationCount);
     }
 
     @TearDown(Level.Iteration)
