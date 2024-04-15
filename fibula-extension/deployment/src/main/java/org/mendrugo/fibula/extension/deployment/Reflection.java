@@ -1,7 +1,6 @@
 package org.mendrugo.fibula.extension.deployment;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class Reflection
