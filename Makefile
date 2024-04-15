@@ -52,9 +52,11 @@ ifdef RESULT_FORMAT
   benchmark_params += $(RESULT_FORMAT)
 endif
 
+MAVEN_DEBUG ?=
+
 mvnw += JAVA_HOME=$(JAVA_HOME)
 mvnw_runner += JAVA_HOME=$(JAVA_HOME)
-ifdef DEBUG_IDE
+ifeq ($(MAVEN_DEBUG),process)
   mvnw_runner += $(HOME)/opt/maven/bin/mvnDebug
 else
   mvnw_runner += $(HOME)/opt/maven/bin/mvn
@@ -62,7 +64,7 @@ endif
 
 mvnw += $(HOME)/opt/maven/bin/mvn
 
-ifdef VERBOSE
+ifdef MAVEN_VERBOSE
   mvnw_runner += -X
 endif
 

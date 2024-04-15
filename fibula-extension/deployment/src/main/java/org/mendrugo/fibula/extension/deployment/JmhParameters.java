@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+// todo reconsider keeping this when reusing JMH benchmark generator classes
 final class JmhParameters
 {
     private static final DotName OUTPUT_TIME_UNIT = DotName.createSimple(OutputTimeUnit.class.getName());

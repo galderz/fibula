@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+// todo split trial count into scope thread/benchmark to test both scenarios
 @State(Scope.Thread)
 public class SetupTearDown
 {

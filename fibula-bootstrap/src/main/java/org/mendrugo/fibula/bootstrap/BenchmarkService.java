@@ -109,7 +109,7 @@ public class BenchmarkService
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.FORK.toString());
         arguments.add("--" + RunnerArguments.SUPPLIER_NAME);
-        arguments.add(params.generatedBenchmark().replace(".", "_") + "_Supplier");
+        arguments.add(RunnerArguments.toSupplierName(params));
         arguments.add("--" + RunnerArguments.PARAMS);
         arguments.add(Serializables.toBase64(params));
         return arguments;

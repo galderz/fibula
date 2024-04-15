@@ -45,6 +45,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.openjdk.jmh.generators.core.JmhBenchmarkGenerator;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.runner.BenchmarkList;
@@ -93,19 +94,24 @@ class BenchmarkProcessor
         final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
         final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
 
+        final JandexGeneratorSource source = new JandexGeneratorSource(index.getIndex());
+        final JmhBenchmarkGenerator generator = new JmhBenchmarkGenerator(beanOutput, classOutput);
+        generator.generate(source);
+        generator.complete(buildSystemTarget);
+
         Log.info("Generating blackhole substitution");
         generateBlackholeSubstitution(classOutput);
 
-        final Collection<AnnotationInstance> benchmarkAnnotatedMethods = index.getIndex().getAnnotations(BENCHMARK);
-        Log.infof("Generating benchmark bytecode, %d benchmark methods found", benchmarkAnnotatedMethods.size());
-
-        final List<MethodInfo> methods = benchmarkAnnotatedMethods.stream()
-            .map(annotation -> annotation.target().asMethod())
-            .filter(BenchmarkProcessor::isSupportedBenchmark)
-            .toList();
-
-        generateBenchmarkList(methods, buildSystemTarget);
-        generateBenchmarkClasses(methods, beanOutput, classOutput, index.getIndex());
+//        final Collection<AnnotationInstance> benchmarkAnnotatedMethods = index.getIndex().getAnnotations(BENCHMARK);
+//        Log.infof("Generating benchmark bytecode, %d benchmark methods found", benchmarkAnnotatedMethods.size());
+//
+//        final List<MethodInfo> methods = benchmarkAnnotatedMethods.stream()
+//            .map(annotation -> annotation.target().asMethod())
+//            .filter(BenchmarkProcessor::isSupportedBenchmark)
+//            .toList();
+//
+//        generateBenchmarkList(methods, buildSystemTarget);
+//        generateBenchmarkClasses(methods, beanOutput, classOutput, index.getIndex());
     }
 
     private void generateBlackholeSubstitution(ClassOutput classOutput)

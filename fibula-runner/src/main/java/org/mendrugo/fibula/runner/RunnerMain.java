@@ -15,6 +15,7 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.BenchmarkException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @QuarkusMain(name = "runner")
@@ -50,8 +51,28 @@ public class RunnerMain implements QuarkusApplication
         final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
 
         final Infrastructure infrastructure = new Infrastructure();
-        suppliers.stream()
-            .filter(supplier -> supplier.getClass().getSimpleName().startsWith(supplierName))
+        final List<BenchmarkSupplier> matchingSuppliers = suppliers.stream()
+            .filter(supplier -> RunnerArguments.isSupplier(supplierName, supplier.getClass()))
+            .toList();
+
+        if (matchingSuppliers.isEmpty())
+        {
+            final List<String> allSupplierNames = suppliers.stream()
+                .map(supplier -> RunnerArguments.toSupplierName(supplier.getClass()))
+                .toList();
+
+            final String errorMsg = String.format(
+                "No benchmarks found with supplier starting with %s in %s"
+                , supplierName
+                , allSupplierNames
+            );
+
+            final BenchmarkException e = new BenchmarkException(errorMsg, Collections.emptyList());
+            iterationClient.notifyError(createIterationError(params, e));
+            return;
+        }
+
+        matchingSuppliers.stream()
             .map(supplier -> new BenchmarkCallable(supplier.get(), infrastructure))
             .forEach(callable -> runSingle(params, callable));
     }
