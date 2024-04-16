@@ -16,10 +16,25 @@ public class SetupTearDownTest
     BenchmarkService benchmarkService;
 
     @Test
-    public void around() throws RunnerException
+    public void global() throws RunnerException
     {
         final Options opt = new OptionsBuilder()
-            .include(SetupTearDown.class.getCanonicalName())
+            .include(SetupTearDownGlobal.class.getCanonicalName())
+            .forks(1)
+            .measurementIterations(2)
+            .measurementTime(TimeValue.milliseconds(200))
+            .warmupIterations(0)
+            .shouldFailOnError(true)
+            .build();
+
+        benchmarkService.run(opt);
+    }
+
+    @Test
+    public void thread() throws RunnerException
+    {
+        final Options opt = new OptionsBuilder()
+            .include(SetupTearDownThread.class.getCanonicalName())
             .forks(1)
             .measurementIterations(2)
             .measurementTime(TimeValue.milliseconds(200))

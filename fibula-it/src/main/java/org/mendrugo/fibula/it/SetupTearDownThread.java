@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-// todo split trial count into scope thread/benchmark to test both scenarios
+// todo consider not only invocations but also order, see state order tests
 @State(Scope.Thread)
-public class SetupTearDown
+public class SetupTearDownThread
 {
     final AtomicInteger trialCounter = new AtomicInteger();
     final AtomicInteger beforeIterationCounter = new AtomicInteger();

@@ -437,10 +437,7 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
 
     private static void trialEpilog(ResultHandle benchmark, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
     {
-        if (states.hasInvocationStubs(method))
-        {
-            states.addHelperBlock(method, Level.Trial, HelperType.TEARDOWN, benchmark, new ResultHandle[]{}, block);
-        }
+        states.addHelperBlock(method, Level.Trial, HelperType.TEARDOWN, benchmark, new ResultHandle[]{}, block);
     }
 
     private static void emitCall(ResultHandle benchmark, JandexMethodInfo method, List<ResultHandle> benchmarkArgs, ResultHandle blackhole, BytecodeCreator block)

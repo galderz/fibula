@@ -29,7 +29,6 @@ public class JandexGeneratorSource implements GeneratorSource
     private static final DotName BLACKHOLE = DotName.createSimple(Blackhole.class.getName());
     private static final DotName SETUP = DotName.createSimple(Setup.class.getName());
     private static final DotName TEAR_DOWN = DotName.createSimple(TearDown.class.getName());
-    private static final DotName STATE = DotName.createSimple(State.class.getName());
 
     private final IndexView index;
     private Collection<ClassInfo> classInfos;
