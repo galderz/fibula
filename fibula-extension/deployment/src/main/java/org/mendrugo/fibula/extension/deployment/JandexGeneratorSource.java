@@ -1,14 +1,14 @@
 package org.mendrugo.fibula.extension.deployment;
 
-import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.logging.Log;
 import org.jboss.jandex.AnnotationInstance;
+import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
+import org.jboss.jandex.MethodInfo;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.generators.core.ClassInfo;
 import org.openjdk.jmh.generators.core.GeneratorSource;
@@ -66,8 +66,12 @@ public class JandexGeneratorSource implements GeneratorSource
         Log.infof("%d methods found with %s", benchmarkMethods.size(), annotation);
         for (AnnotationInstance benchmarkMethod : benchmarkMethods)
         {
-            classes.computeIfAbsent(benchmarkMethod.target().asMethod().declaringClass(), x -> new ArrayList<>())
-                .add(benchmarkMethod);
+            final AnnotationTarget target = benchmarkMethod.target();
+            if (target instanceof MethodInfo)
+            {
+                classes.computeIfAbsent(target.asMethod().declaringClass(), x -> new ArrayList<>())
+                    .add(benchmarkMethod);
+            }
         }
     }
 
