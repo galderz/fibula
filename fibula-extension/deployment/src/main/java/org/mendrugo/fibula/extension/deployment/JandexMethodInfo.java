@@ -2,6 +2,7 @@ package org.mendrugo.fibula.extension.deployment;
 
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.IndexView;
 import org.openjdk.jmh.generators.core.ClassInfo;
 import org.openjdk.jmh.generators.core.MethodInfo;
 import org.openjdk.jmh.generators.core.ParameterInfo;
@@ -10,11 +11,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 public record JandexMethodInfo(
     org.jboss.jandex.MethodInfo jandex
     , Collection<AnnotationInstance> annotations
     , ClassInfo classInfo
+    , IndexView index
 ) implements MethodInfo
 {
     @Override
@@ -38,8 +41,9 @@ public record JandexMethodInfo(
     @Override
     public Collection<ParameterInfo> getParameters()
     {
-        // todo support @Param annotation
-        return Collections.emptyList();
+        return jandex.parameters().stream()
+            .map(m -> new JandexParameterInfo(m, index))
+            .collect(Collectors.toList());
     }
 
     @Override

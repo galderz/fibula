@@ -2,6 +2,7 @@ package org.mendrugo.fibula.extension.deployment;
 
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.IndexView;
 import org.openjdk.jmh.generators.core.ClassInfo;
 import org.openjdk.jmh.generators.core.FieldInfo;
 import org.openjdk.jmh.generators.core.MethodInfo;
@@ -16,9 +17,11 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
+// todo find a common impl that works for field class info, param class info and standard class info
 public record JandexClassInfo(
     org.jboss.jandex.ClassInfo jandexClass
     , List<AnnotationInstance> annotatedMethods
+    , IndexView index
 ) implements ClassInfo
 {
     @Override
@@ -55,8 +58,9 @@ public record JandexClassInfo(
     @Override
     public Collection<FieldInfo> getFields()
     {
-        // todo support @Param annotation
-        return Collections.emptyList();
+        return jandexClass.fields().stream()
+            .map(f -> new JandexFieldInfo(f, index))
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -67,7 +71,7 @@ public record JandexClassInfo(
                 .collect(groupingBy(ann -> ann.target().asMethod()));
 
         return annotationsPerMethod.entrySet().stream()
-            .map(e -> new JandexMethodInfo(e.getKey(), e.getValue(), this))
+            .map(e -> new JandexMethodInfo(e.getKey(), e.getValue(), this, index))
             .collect(Collectors.toList());
     }
 
@@ -75,7 +79,7 @@ public record JandexClassInfo(
     public Collection<MethodInfo> getConstructors()
     {
         return jandexClass.constructors().stream()
-            .map(ctor -> new JandexMethodInfo(ctor, Collections.emptyList(), this))
+            .map(ctor -> new JandexMethodInfo(ctor, Collections.emptyList(), this, index))
             .collect(Collectors.toList());
     }
 

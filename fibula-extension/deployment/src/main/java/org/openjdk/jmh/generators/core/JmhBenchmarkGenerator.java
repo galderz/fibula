@@ -70,12 +70,13 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         // Generate code for all found Classes and Methods
         for (ClassInfo clazz : clazzes.keys())
         {
-            // todo implement validation
-            // validateBenchmark(clazz, clazzes.get(clazz));
-            Collection<BenchmarkInfo> infos = makeBenchmarkInfo_(clazz, clazzes.get(clazz));
-            for (BenchmarkInfo info : infos)
+            // todo move isSupportedBenchmarkInfo here so that filtering can be done before creating benchmark info
+            if (isSupportedBenchmark(clazz))
             {
-                if (isSupportedBenchmark(info))
+                // todo implement validation
+                // validateBenchmark(clazz, clazzes.get(clazz));
+                Collection<BenchmarkInfo> infos = makeBenchmarkInfo_(clazz, clazzes.get(clazz));
+                for (BenchmarkInfo info : infos)
                 {
                     generateClass(clazz, info);
                     // todo move to addAll(infos) when isSupportedBenchmark is removed
@@ -164,15 +165,17 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
     }
 
     // todo temporary until all samples are covered
-    private static boolean isSupportedBenchmark(BenchmarkInfo info)
+    private static boolean isSupportedBenchmark(ClassInfo info)
     {
-        final boolean supported = info.userClassQName.startsWith("org.mendrugo.fibula.it")
-            || info.userClassQName.contains("JMHSample_01")
-            || info.userClassQName.contains("JMHSample_03")
-            || info.userClassQName.contains("JMHSample_04")
-            || info.userClassQName.contains("JMHSample_09")
-            || info.userClassQName.contains("FibulaSample");
-        Log.debugf("Benchmark class %s is%s supported", info.userClassQName, supported ? "" : " not");
+        final String fqn = info.getQualifiedName();
+        final boolean supported = fqn.startsWith("org.mendrugo.fibula.it")
+            || fqn.startsWith("org.openjdk.jmh.it.interorder.BenchmarkStateOrderTest")
+            || fqn.contains("JMHSample_01")
+            || fqn.contains("JMHSample_03")
+            || fqn.contains("JMHSample_04")
+            || fqn.contains("JMHSample_09")
+            || fqn.contains("FibulaSample");
+        Log.debugf("Benchmark class %s is%s supported", fqn, supported ? "" : " not");
         return supported;
     }
 
@@ -362,14 +365,16 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
             final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
             final ResultHandle raw = stub.getMethodParam(paramIndex++);
             final ResultHandle blackhole = stub.getMethodParam(paramIndex++);
-            final ResultHandle benchmark = stub.getMethodParam(paramIndex);
+            // final ResultHandle benchmark = stub.getMethodParam(paramIndex);
             final int paramCount = paramIndex;
-            final List<ResultHandle> params = IntStream.range(0, stateParams.size())
+            final List<ResultHandle> benchmarkArgs = IntStream.range(0, stateParams.size())
                 .mapToObj(i -> stub.getMethodParam(i + paramCount))
                 .toList();
+            final ResultHandle benchmark = benchmarkArgs.getFirst();
+            final List<ResultHandle> additionalArgs = tail(benchmarkArgs);
 
-            // todo compute the rest of benchmark args
-            final List<ResultHandle> benchmarkArgs = new ArrayList<>();
+//            // todo compute the rest of benchmark args
+//            final List<ResultHandle> benchmarkArgs = new ArrayList<>();
 
             // raw.startTime = System.nanoTime();
             final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
@@ -386,7 +391,7 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
             try (final BytecodeCreator whileLoopBlock = whileLoop.block())
             {
                 invocationProlog(benchmark, methodInfo, states, whileLoopBlock);
-                emitCall(benchmark, methodInfo, benchmarkArgs, blackhole, whileLoopBlock);
+                emitCall(benchmark, methodInfo, additionalArgs, blackhole, whileLoopBlock);
                 invocationEpilog(benchmark, methodInfo, states, whileLoopBlock);
                 whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
             }
@@ -440,18 +445,23 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         states.addHelperBlock(method, Level.Trial, HelperType.TEARDOWN, benchmark, new ResultHandle[]{}, block);
     }
 
-    private static void emitCall(ResultHandle benchmark, JandexMethodInfo method, List<ResultHandle> benchmarkArgs, ResultHandle blackhole, BytecodeCreator block)
+    private static void emitCall(ResultHandle benchmark, JandexMethodInfo method, List<ResultHandle> additionalArgs, ResultHandle blackhole, BytecodeCreator block)
     {
         // benchmark.bench();
         final ResultHandle result = block.invokeVirtualMethod(
             MethodDescriptor.of(method.jandex())
             , benchmark
-            , benchmarkArgs.toArray(new ResultHandle[0])
+            , additionalArgs.toArray(new ResultHandle[0])
         );
         if (!"void".equalsIgnoreCase(method.getReturnType()))
         {
             block.invokeVirtualMethod(selectBlackholeMethod(method.jandex()), blackhole, result);
         }
+    }
+
+    private static <T> List<T> tail(List<T> list)
+    {
+        return list.subList(1, list.size());
     }
 
     private static MethodDescriptor selectBlackholeMethod(org.jboss.jandex.MethodInfo methodInfo)

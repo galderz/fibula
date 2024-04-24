@@ -82,6 +82,9 @@ ifdef GRAALVM_VERSION
     runner_build_args += -Dfibula.graal.compiler.package.prefix=jdk.graal
   endif
 endif
+ifdef GEN
+  runner_build_args += -Dfibula.generate=$(GEN)
+endif
 
 test_args = test
 ifdef TEST
