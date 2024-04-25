@@ -1,7 +1,9 @@
 package org.mendrugo.fibula.extension.deployment;
 
-import org.jboss.jandex.AnnotationInstance;
+import io.quarkus.gizmo.MethodDescriptor;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.IndexView;
+import org.jboss.jandex.Type;
 import org.openjdk.jmh.generators.core.ClassInfo;
 import org.openjdk.jmh.generators.core.MethodInfo;
 import org.openjdk.jmh.generators.core.ParameterInfo;
@@ -9,50 +11,63 @@ import org.openjdk.jmh.generators.core.ParameterInfo;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.stream.Collectors;
 
 public record JandexMethodInfo(
-    org.jboss.jandex.MethodInfo jandex
-    , Collection<AnnotationInstance> annotations
-    , ClassInfo classInfo
+    org.jboss.jandex.MethodInfo jandexMethod
+    , IndexView index
 ) implements MethodInfo
 {
+    public MethodDescriptor getMethodDescriptor()
+    {
+        return MethodDescriptor.of(jandexMethod);
+    }
+
+    public Type getJandexReturnType()
+    {
+        return jandexMethod.returnType();
+    }
+
     @Override
     public String getName()
     {
-        return jandex.name();
+        return jandexMethod.name();
     }
 
     @Override
     public String getQualifiedName()
     {
-        return classInfo.getQualifiedName() + "." + jandex.toString();
+        return String.format("%s.%s"
+            , jandexMethod.declaringClass().name().toString()
+            , jandexMethod
+        );
     }
 
     @Override
     public String getReturnType()
     {
-        return jandex.returnType().name().toString();
+        return jandexMethod.returnType().name().toString();
     }
 
     @Override
     public Collection<ParameterInfo> getParameters()
     {
-        // todo support @Param annotation
-        return Collections.emptyList();
+        return jandexMethod.parameters().stream()
+            .map(m -> new JandexParameterInfo(m, index))
+            .collect(Collectors.toList());
     }
 
     @Override
     public ClassInfo getDeclaringClass()
     {
-        return classInfo;
+        return new JandexClassInfo(jandexMethod.declaringClass().name(), index);
     }
 
     @Override
     public <T extends Annotation> T getAnnotation(Class<T> annClass)
     {
         final DotName name = DotName.createSimple(annClass);
-        return annotations.stream()
+        return jandexMethod.annotations().stream()
             .filter(annotation -> annotation.name().equals(name))
             .findFirst()
             .map(ann -> JandexAnnotations.instantiate(ann, annClass))
@@ -62,13 +77,13 @@ public record JandexMethodInfo(
     @Override
     public boolean isPublic()
     {
-        return Modifier.isPublic(jandex.flags());
+        return Modifier.isPublic(jandexMethod.flags());
     }
 
     @Override
     public boolean isAbstract()
     {
-        return Modifier.isAbstract(jandex.flags());
+        return Modifier.isAbstract(jandexMethod.flags());
     }
 
     @Override

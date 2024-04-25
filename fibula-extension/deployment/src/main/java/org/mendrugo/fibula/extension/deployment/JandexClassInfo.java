@@ -1,7 +1,7 @@
 package org.mendrugo.fibula.extension.deployment;
 
-import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.IndexView;
 import org.openjdk.jmh.generators.core.ClassInfo;
 import org.openjdk.jmh.generators.core.FieldInfo;
 import org.openjdk.jmh.generators.core.MethodInfo;
@@ -9,34 +9,29 @@ import org.openjdk.jmh.generators.core.MethodInfo;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.groupingBy;
-
 public record JandexClassInfo(
-    org.jboss.jandex.ClassInfo jandexClass
-    , List<AnnotationInstance> annotatedMethods
+    DotName name
+    , IndexView index
 ) implements ClassInfo
 {
     @Override
     public String getPackageName()
     {
-        return jandexClass.name().packagePrefix();
+        return name.packagePrefix();
     }
 
     @Override
     public String getQualifiedName()
     {
-        return jandexClass.name().toString();
+        return name.toString();
     }
 
     @Override
     public String getName()
     {
-        return jandexClass.simpleName();
+        return name.withoutPackagePrefix();
     }
 
     @Override
@@ -55,36 +50,33 @@ public record JandexClassInfo(
     @Override
     public Collection<FieldInfo> getFields()
     {
-        // todo support @Param annotation
-        return Collections.emptyList();
+        return index.getClassByName(name).fields().stream()
+            .map(f -> new JandexFieldInfo(f, index))
+            .collect(Collectors.toList());
     }
 
     @Override
     public Collection<MethodInfo> getMethods()
     {
-        final Map<org.jboss.jandex.MethodInfo, List<AnnotationInstance>> annotationsPerMethod =
-            annotatedMethods.stream()
-                .collect(groupingBy(ann -> ann.target().asMethod()));
-
-        return annotationsPerMethod.entrySet().stream()
-            .map(e -> new JandexMethodInfo(e.getKey(), e.getValue(), this))
+        return index.getClassByName(name).methods().stream()
+            .map(m -> new JandexMethodInfo(m, index))
             .collect(Collectors.toList());
     }
 
     @Override
     public Collection<MethodInfo> getConstructors()
     {
-        return jandexClass.constructors().stream()
-            .map(ctor -> new JandexMethodInfo(ctor, Collections.emptyList(), this))
+        return index.getClassByName(name).constructors().stream()
+            .map(ctor -> new JandexMethodInfo(ctor, index))
             .collect(Collectors.toList());
     }
 
     @Override
     public <T extends Annotation> T getAnnotation(Class<T> annClass)
     {
-        final DotName name = DotName.createSimple(annClass);
-        return jandexClass.declaredAnnotations().stream()
-            .filter(annotation -> annotation.name().equals(name))
+        final DotName annDotName = DotName.createSimple(annClass);
+        return index.getClassByName(name).declaredAnnotations().stream()
+            .filter(annotation -> annotation.name().equals(annDotName))
             .findFirst()
             .map(ann -> JandexAnnotations.instantiate(ann, annClass))
             .orElse(null);
@@ -93,13 +85,13 @@ public record JandexClassInfo(
     @Override
     public boolean isAbstract()
     {
-        return Modifier.isAbstract(jandexClass.flags());
+        return Modifier.isAbstract(index.getClassByName(name).flags());
     }
 
     @Override
     public boolean isPublic()
     {
-        return Modifier.isPublic(jandexClass.flags());
+        return Modifier.isPublic(index.getClassByName(name).flags());
     }
 
     @Override

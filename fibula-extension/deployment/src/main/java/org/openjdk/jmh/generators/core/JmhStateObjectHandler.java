@@ -18,8 +18,10 @@ import org.openjdk.jmh.annotations.Scope;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -43,7 +45,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
         return reflection.field("stateObjects", this);
     }
 
-    void addHelperBlock(MethodInfo method, Level helperLevel, HelperType type, ResultHandle handle, ResultHandle[] params, BytecodeCreator block)
+    void addHelperBlock(MethodInfo method, Level helperLevel, HelperType type, SequencedMap<StateObject, ResultHandle> stateHandles, ResultHandle[] params, BytecodeCreator block)
     {
         List<StateObject> statesForward = new ArrayList<>();
         for (StateObject so : stateOrder_(method, true))
@@ -85,7 +87,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
                 {
                     if (mi.helperLevel == helperLevel && mi.type == HelperType.SETUP)
                     {
-                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).jandex(), handle, params);
+                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).getMethodDescriptor(), stateHandles.get(so), params);
                     }
                 }
             }
@@ -97,7 +99,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
                 {
                     if (mi.helperLevel == helperLevel && mi.type == HelperType.SETUP)
                     {
-                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).jandex(), handle, params);
+                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).getMethodDescriptor(), stateHandles.get(so), params);
                     }
                 }
                 // todo add mutex
@@ -114,7 +116,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
                 {
                     if (mi.helperLevel == helperLevel && mi.type == HelperType.TEARDOWN)
                     {
-                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).jandex(), handle, params);
+                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).getMethodDescriptor(), stateHandles.get(so), params);
                     }
                 }
             }
@@ -126,7 +128,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
                 {
                     if (mi.helperLevel == helperLevel && mi.type == HelperType.TEARDOWN)
                     {
-                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).jandex(), handle, params);
+                        block.invokeVirtualMethod(((JandexMethodInfo) mi.method).getMethodDescriptor(), stateHandles.get(so), params);
                     }
                 }
                 // todo add mutex
@@ -179,7 +181,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
                     for (HelperMethodInvocation hmi : so.getHelpers()) {
                         if (hmi.helperLevel != Level.Trial) continue;
                         if (hmi.type != HelperType.SETUP) continue;
-                        tryBlock.invokeVirtualMethod(((JandexMethodInfo) hmi.method).jandex(), val);
+                        tryBlock.invokeVirtualMethod(((JandexMethodInfo) hmi.method).getMethodDescriptor(), val);
                     }
 
                     // f_state = val;
@@ -227,7 +229,7 @@ final class JmhStateObjectHandler extends StateObjectHandler
                     for (HelperMethodInvocation hmi : so.getHelpers()) {
                         if (hmi.helperLevel != Level.Trial) continue;
                         if (hmi.type != HelperType.SETUP) continue;
-                        trueBranch.invokeVirtualMethod(((JandexMethodInfo) hmi.method).jandex(), val);
+                        trueBranch.invokeVirtualMethod(((JandexMethodInfo) hmi.method).getMethodDescriptor(), val);
                     }
                     // this.f_unshared = val;
                     trueBranch.writeInstanceField(field, trueBranch.getThis(), val);
@@ -244,18 +246,17 @@ final class JmhStateObjectHandler extends StateObjectHandler
         // todo add group state objects
     }
 
-    ResultHandle addStateGetters(MethodInfo method, List<ResultHandle> stubParameters, MethodCreator methodCreator, ClassCreator classCreator)
+    SequencedMap<StateObject, ResultHandle> addStateGetters(MethodInfo method, MethodCreator methodCreator, ClassCreator classCreator)
     {
-        // todo deal with multiple @State objects
-        AssignableResultHandle benchmark = null;
+        SequencedMap<StateObject, ResultHandle> stateHandlers = new LinkedHashMap<>();
         for (StateObject so : stateOrder_(method, true))
         {
-            benchmark = methodCreator.createVariable(DescriptorUtils.extToInt(so.userType));
+            AssignableResultHandle var = methodCreator.createVariable(DescriptorUtils.extToInt(so.userType));
             final String methodName = "_jmh_tryInit_" + so.fieldIdentifier;
-            methodCreator.assign(benchmark, methodCreator.invokeVirtualMethod(MethodDescriptor.ofMethod(classCreator.getClassName(), methodName, so.userType), methodCreator.getThis()));
-            stubParameters.add(benchmark);
+            methodCreator.assign(var, methodCreator.invokeVirtualMethod(MethodDescriptor.ofMethod(classCreator.getClassName(), methodName, so.userType), methodCreator.getThis()));
+            stateHandlers.put(so, var);
         }
-        return benchmark;
+        return stateHandlers;
     }
 
     private FieldDescriptor initStateLock(ClassCreator classCreator)

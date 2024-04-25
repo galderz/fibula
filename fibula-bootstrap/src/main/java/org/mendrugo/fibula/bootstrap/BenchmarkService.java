@@ -162,7 +162,16 @@ public class BenchmarkService
         final TreeSet<BenchmarkParams> params = new TreeSet<>();
         for (BenchmarkListEntry entry : entries)
         {
-            params.add(getBenchmarkParams(entry, options));
+            if (entry.getMode() == Mode.All)
+            {
+                Modes.nonAll().forEach(mode ->
+                    params.add(getBenchmarkParams(entry.cloneWith(mode), options))
+                );
+            }
+            else
+            {
+                params.add(getBenchmarkParams(entry, options));
+            }
         }
         return params;
     }

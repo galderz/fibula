@@ -72,6 +72,11 @@ ifdef DEBUG
   java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
 endif
 
+test_args = test
+ifdef TEST
+  test_args += -Dtest=$(TEST)
+endif
+
 runner_build_args =
 ifdef DECOMPILE
   runner_build_args += -Dquarkus.package.vineflower.enabled=true
@@ -82,10 +87,9 @@ ifdef GRAALVM_VERSION
     runner_build_args += -Dfibula.graal.compiler.package.prefix=jdk.graal
   endif
 endif
-
-test_args = test
-ifdef TEST
-  test_args += -Dtest=$(TEST)
+ifdef GEN
+  runner_build_args += -Dfibula.generate=$(GEN)
+  test_args += -Dtest=$(GEN)
 endif
 
 common_maven_args =

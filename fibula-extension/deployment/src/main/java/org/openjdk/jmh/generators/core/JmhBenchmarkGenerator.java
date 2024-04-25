@@ -12,7 +12,6 @@ import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.gizmo.WhileLoop;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.PrimitiveType;
 import org.jboss.jandex.Type;
@@ -21,6 +20,7 @@ import org.mendrugo.fibula.extension.deployment.JandexMethodInfo;
 import org.mendrugo.fibula.extension.deployment.Reflection;
 import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.JmhRawResults;
+import org.mendrugo.fibula.results.Modes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -38,12 +38,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.SequencedCollection;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 
 import static org.jboss.jandex.Type.Kind.PRIMITIVE;
 
@@ -70,12 +72,13 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         // Generate code for all found Classes and Methods
         for (ClassInfo clazz : clazzes.keys())
         {
-            // todo implement validation
-            // validateBenchmark(clazz, clazzes.get(clazz));
-            Collection<BenchmarkInfo> infos = makeBenchmarkInfo_(clazz, clazzes.get(clazz));
-            for (BenchmarkInfo info : infos)
+            // todo move isSupportedBenchmarkInfo here so that filtering can be done before creating benchmark info
+            if (isSupportedBenchmark(clazz))
             {
-                if (isSupportedBenchmark(info))
+                // todo implement validation
+                // validateBenchmark(clazz, clazzes.get(clazz));
+                Collection<BenchmarkInfo> infos = makeBenchmarkInfo_(clazz, clazzes.get(clazz));
+                for (BenchmarkInfo info : infos)
                 {
                     generateClass(clazz, info);
                     // todo move to addAll(infos) when isSupportedBenchmark is removed
@@ -152,27 +155,29 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
 
     private static Optional<TimeUnit> timeUnit(JandexMethodInfo method)
     {
-        AnnotationInstance annotation;
-        if ((annotation = method.jandex().annotation(OUTPUT_TIME_UNIT)) != null
-            || (annotation = method.jandex().declaringClass().annotation(OUTPUT_TIME_UNIT)) != null
+        OutputTimeUnit timeUnit;
+        if ((timeUnit = method.getAnnotation(OutputTimeUnit.class)) != null
+            || (timeUnit = method.getDeclaringClass().getAnnotation(OutputTimeUnit.class)) != null
         )
         {
-            return Optional.of(TimeUnit.valueOf(annotation.value().asEnum()));
+            return Optional.of(timeUnit.value());
         }
 
         return Optional.none();
     }
 
     // todo temporary until all samples are covered
-    private static boolean isSupportedBenchmark(BenchmarkInfo info)
+    private static boolean isSupportedBenchmark(ClassInfo info)
     {
-        final boolean supported = info.userClassQName.startsWith("org.mendrugo.fibula.it")
-            || info.userClassQName.contains("JMHSample_01")
-            || info.userClassQName.contains("JMHSample_03")
-            || info.userClassQName.contains("JMHSample_04")
-            || info.userClassQName.contains("JMHSample_09")
-            || info.userClassQName.contains("FibulaSample");
-        Log.debugf("Benchmark class %s is%s supported", info.userClassQName, supported ? "" : " not");
+        final String fqn = info.getQualifiedName();
+        final boolean supported = fqn.startsWith("org.mendrugo.fibula.it")
+            || fqn.startsWith("org.openjdk.jmh.it.interorder.BenchmarkStateOrderTest")
+            || fqn.contains("JMHSample_01")
+            || fqn.contains("JMHSample_03")
+            || fqn.contains("JMHSample_04")
+            || fqn.contains("JMHSample_09")
+            || fqn.contains("FibulaSample");
+        Log.debugf("Benchmark class %s is%s supported", fqn, supported ? "" : " not");
         return supported;
     }
 
@@ -185,9 +190,8 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         states.bindMethods(classInfo, info.methodGroup);
 
         // write all methods
-        for (Mode benchmarkKind : Mode.values()) {
-            if (benchmarkKind == Mode.All) continue;
-
+        Modes.nonAll().forEach(benchmarkKind ->
+        {
             final String prefix = String.format(
                 "%s.%s_%s_%s"
                 , info.generatedPackageName
@@ -213,7 +217,7 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
 
             final String supplierFqn = String.format("%s_Supplier", prefix);
             generateBenchmarkSupplier(functionFqn, supplierFqn);
-        }
+        });
     }
 
     private void generateBenchmarkSupplier(String functionFqn, String supplierFqn)
@@ -236,6 +240,7 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
 
     private void addMethods(Mode benchmarkKind, MethodGroup methodGroup, JmhStateObjectHandler states, ClassCreator classCreator)
     {
+        // todo support remaining modes
         switch (benchmarkKind)
         {
             case Throughput:
@@ -306,23 +311,25 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
             // B benchmark = tryInit();
             // S state = tryInit();
             // ...
-            final ResultHandle benchmark = states.addStateGetters(methodInfo, stubParameters, apply, classCreator);
+            final SequencedMap<StateObject, ResultHandle> stateHandles = states.addStateGetters(methodInfo, apply, classCreator);
+            final ResultHandle benchmark = stateHandles.firstEntry().getValue();
+            stubParameters.addAll(stateHandles.sequencedValues().reversed());
 
             // benchmark.setup(); for each iteration setup methods
-            iterationProlog(benchmark, methodInfo, states, apply);
+            iterationProlog(stateHandles, methodInfo, states, apply);
 
             // stub(infrastructure, raw, benchmark...);
             apply.invokeVirtualMethod(methodDesc, apply.getThis(), stubParameters.toArray(new ResultHandle[0]));
 
             // benchmark.tearDown(); for each iteration tear down methods
-            iterationEpilog(benchmark, methodInfo, states, apply);
+            iterationEpilog(stateHandles, methodInfo, states, apply);
 
             try (final BytecodeCreator trueBranch = apply
                 .ifTrue(apply.readInstanceField(FieldDescriptor.of(Infrastructure.class, "lastIteration", boolean.class), infrastructure))
                 .trueBranch()
             ) {
                 // benchmark.tearDown(); for each trial tear down methods
-                trialEpilog(benchmark, methodInfo, states, trueBranch);
+                trialEpilog(stateHandles, methodInfo, states, trueBranch);
             }
 
             // return raw;
@@ -362,14 +369,12 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
             final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
             final ResultHandle raw = stub.getMethodParam(paramIndex++);
             final ResultHandle blackhole = stub.getMethodParam(paramIndex++);
-            final ResultHandle benchmark = stub.getMethodParam(paramIndex);
-            final int paramCount = paramIndex;
-            final List<ResultHandle> params = IntStream.range(0, stateParams.size())
-                .mapToObj(i -> stub.getMethodParam(i + paramCount))
-                .toList();
 
-            // todo compute the rest of benchmark args
-            final List<ResultHandle> benchmarkArgs = new ArrayList<>();
+            final SequencedMap<StateObject, ResultHandle> stateHandles = new LinkedHashMap<>();
+            for (StateObject so : states.stateOrder_(methodInfo, false))
+            {
+                stateHandles.put(so, stub.getMethodParam(paramIndex++));
+            }
 
             // raw.startTime = System.nanoTime();
             final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
@@ -385,9 +390,9 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
             ));
             try (final BytecodeCreator whileLoopBlock = whileLoop.block())
             {
-                invocationProlog(benchmark, methodInfo, states, whileLoopBlock);
-                emitCall(benchmark, methodInfo, benchmarkArgs, blackhole, whileLoopBlock);
-                invocationEpilog(benchmark, methodInfo, states, whileLoopBlock);
+                invocationProlog(stateHandles, methodInfo, states, whileLoopBlock);
+                emitCall(stateHandles, methodInfo, blackhole, whileLoopBlock);
+                invocationEpilog(stateHandles, methodInfo, states, whileLoopBlock);
                 whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
             }
 
@@ -403,60 +408,70 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         }
     }
 
-    private static void invocationProlog(ResultHandle benchmark, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
+    private static void invocationProlog(SequencedMap<StateObject, ResultHandle> stateHandles, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
     {
         if (states.hasInvocationStubs(method))
         {
-            states.addHelperBlock(method, Level.Invocation, HelperType.SETUP, benchmark, new ResultHandle[]{}, block);
+            states.addHelperBlock(method, Level.Invocation, HelperType.SETUP, stateHandles, new ResultHandle[]{}, block);
         }
     }
 
-    private static void invocationEpilog(ResultHandle benchmark, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
+    private static void invocationEpilog(SequencedMap<StateObject, ResultHandle> stateHandles, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
     {
         if (states.hasInvocationStubs(method))
         {
-            states.addHelperBlock(method, Level.Invocation, HelperType.TEARDOWN, benchmark, new ResultHandle[]{}, block);
+            states.addHelperBlock(method, Level.Invocation, HelperType.TEARDOWN, stateHandles, new ResultHandle[]{}, block);
         }
     }
 
-    private static void iterationProlog(ResultHandle benchmark, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
+    private static void iterationProlog(SequencedMap<StateObject, ResultHandle> stateHandles, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
     {
         if (states.hasInvocationStubs(method))
         {
-            states.addHelperBlock(method, Level.Iteration, HelperType.SETUP, benchmark, new ResultHandle[]{}, block);
+            states.addHelperBlock(method, Level.Iteration, HelperType.SETUP, stateHandles, new ResultHandle[]{}, block);
         }
     }
 
-    private static void iterationEpilog(ResultHandle benchmark, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
+    private static void iterationEpilog(SequencedMap<StateObject, ResultHandle> stateHandles, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
     {
         if (states.hasInvocationStubs(method))
         {
-            states.addHelperBlock(method, Level.Iteration, HelperType.TEARDOWN, benchmark, new ResultHandle[]{}, block);
+            states.addHelperBlock(method, Level.Iteration, HelperType.TEARDOWN, stateHandles, new ResultHandle[]{}, block);
         }
     }
 
-    private static void trialEpilog(ResultHandle benchmark, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
+    private static void trialEpilog(SequencedMap<StateObject, ResultHandle> stateHandles, JandexMethodInfo method, JmhStateObjectHandler states, BytecodeCreator block)
     {
-        states.addHelperBlock(method, Level.Trial, HelperType.TEARDOWN, benchmark, new ResultHandle[]{}, block);
+        states.addHelperBlock(method, Level.Trial, HelperType.TEARDOWN, stateHandles, new ResultHandle[]{}, block);
     }
 
-    private static void emitCall(ResultHandle benchmark, JandexMethodInfo method, List<ResultHandle> benchmarkArgs, ResultHandle blackhole, BytecodeCreator block)
+    private static void emitCall(SequencedMap<StateObject, ResultHandle> stateHandles, JandexMethodInfo method, ResultHandle blackhole, BytecodeCreator block)
     {
+        // Create a copy to remove the benchmark parameter and keep the rest of arguments,
+        // but do not the removal affect the original collection
+        final SequencedCollection<ResultHandle> callParams = new ArrayList<>(stateHandles.sequencedValues());
+        final ResultHandle benchmark = callParams.removeLast();
+
         // benchmark.bench();
         final ResultHandle result = block.invokeVirtualMethod(
-            MethodDescriptor.of(method.jandex())
+            method.getMethodDescriptor()
             , benchmark
-            , benchmarkArgs.toArray(new ResultHandle[0])
+            , callParams.toArray(new ResultHandle[0])
         );
         if (!"void".equalsIgnoreCase(method.getReturnType()))
         {
-            block.invokeVirtualMethod(selectBlackholeMethod(method.jandex()), blackhole, result);
+            block.invokeVirtualMethod(selectBlackholeMethod(method), blackhole, result);
         }
     }
 
-    private static MethodDescriptor selectBlackholeMethod(org.jboss.jandex.MethodInfo methodInfo)
+    private static <T> List<T> tail(List<T> list)
     {
-        final Type returnType = methodInfo.returnType();
+        return list.subList(1, list.size());
+    }
+
+    private static MethodDescriptor selectBlackholeMethod(JandexMethodInfo methodInfo)
+    {
+        final Type returnType = methodInfo.getJandexReturnType();
         Class<?> consumeParamClass;
         if (PRIMITIVE == returnType.kind())
         {
