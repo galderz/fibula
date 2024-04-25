@@ -41,7 +41,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: jmh-artifacts
-          path: /home/runner/.m2/repository/org/openjdk
+          path: /home/runner/.m2/repository/org/openjdk/jmh
       - name: Checkout Fibula
         uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
