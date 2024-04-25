@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.extension.deployment;
 
+import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.openjdk.jmh.generators.core.ClassInfo;
@@ -9,6 +10,7 @@ import org.openjdk.jmh.generators.core.MethodInfo;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 public record JandexClassInfo(
@@ -50,7 +52,13 @@ public record JandexClassInfo(
     @Override
     public Collection<FieldInfo> getFields()
     {
-        return index.getClassByName(name).fields().stream()
+        final org.jboss.jandex.ClassInfo jandexClass = index.getClassByName(name);
+        if (jandexClass == null)
+        {
+            return Collections.emptyList();
+        }
+
+        return jandexClass.fields().stream()
             .map(f -> new JandexFieldInfo(f, index))
             .collect(Collectors.toList());
     }
@@ -58,7 +66,13 @@ public record JandexClassInfo(
     @Override
     public Collection<MethodInfo> getMethods()
     {
-        return index.getClassByName(name).methods().stream()
+        final org.jboss.jandex.ClassInfo jandexClass = index.getClassByName(name);
+        if (jandexClass == null)
+        {
+            return Collections.emptyList();
+        }
+
+        return jandexClass.methods().stream()
             .map(m -> new JandexMethodInfo(m, index))
             .collect(Collectors.toList());
     }
@@ -75,7 +89,13 @@ public record JandexClassInfo(
     public <T extends Annotation> T getAnnotation(Class<T> annClass)
     {
         final DotName annDotName = DotName.createSimple(annClass);
-        return index.getClassByName(name).declaredAnnotations().stream()
+        final AnnotationTarget jandexClass = index.getClassByName(name);
+        if (jandexClass == null)
+        {
+            return null;
+        }
+
+        return jandexClass.declaredAnnotations().stream()
             .filter(annotation -> annotation.name().equals(annDotName))
             .findFirst()
             .map(ann -> JandexAnnotations.instantiate(ann, annClass))

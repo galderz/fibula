@@ -449,14 +449,30 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
     {
         // Create a copy to remove the benchmark parameter and keep the rest of arguments,
         // but do not the removal affect the original collection
-        final SequencedCollection<ResultHandle> callParams = new ArrayList<>(stateHandles.sequencedValues());
-        final ResultHandle benchmark = callParams.removeLast();
+        // final SequencedCollection<ResultHandle> callParams = new ArrayList<>(stateHandles.sequencedValues());
+        // final ResultHandle benchmark = callParams.removeLast();
+
+        final SequencedCollection<ResultHandle> candidates = new ArrayList<>(stateHandles.sequencedValues());
+        final SequencedCollection<ResultHandle> args = new ArrayList<>();
+        for (ParameterInfo paramInfo : method.getParameters())
+        {
+            final String name = paramInfo.getType().getQualifiedName();
+            if (Blackhole.class.getCanonicalName().equals(name))
+            {
+                args.add(blackhole);
+            }
+            else
+            {
+                args.add(candidates.removeFirst());
+            }
+        }
+        final ResultHandle benchmark = candidates.removeLast();
 
         // benchmark.bench();
         final ResultHandle result = block.invokeVirtualMethod(
             method.getMethodDescriptor()
             , benchmark
-            , callParams.toArray(new ResultHandle[0])
+            , args.toArray(new ResultHandle[0])
         );
         if (!"void".equalsIgnoreCase(method.getReturnType()))
         {
