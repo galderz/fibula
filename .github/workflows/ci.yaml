@@ -28,7 +28,7 @@ jobs:
         with:
           name: jmh-artifacts
           path: |
-            ~/.m2/repository/**/jmh*  # adjust path for your specific artifact
+            /home/runner/.m2/repository/org/openjdk/jmh/
 
   test-native:
     needs: build-jmh
@@ -38,7 +38,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: jmh-artifacts
-          path: .
+          path: /home/runner/.m2/repository/org/openjdk
       - name: Checkout Fibula
         uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
