@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  jmh:
+  build-jmh:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout JMH
@@ -31,6 +31,7 @@ jobs:
             ~/.m2/repository/**/jmh*  # adjust path for your specific artifact
 
   test-native:
+    needs: build-jmh
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -59,6 +60,7 @@ jobs:
         run: mvn test -pl fibula-it
 
   test-jvm:
+    needs: build-jmh
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
