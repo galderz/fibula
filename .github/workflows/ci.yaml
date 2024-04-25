@@ -7,9 +7,37 @@ on:
     branches: [ main ]
 
 jobs:
+  jmh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout JMH
+        uses: actions/checkout@v4
+        with:
+          repository: galderz/jmh
+          ref: 1.37-jmh-core-it-test-jar
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build JMH
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
+        run: mvn install -DskipTests
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmh-artifacts
+          path: |
+            ~/.m2/repository/**/jmh*  # adjust path for your specific artifact
+
   test-native:
     runs-on: ubuntu-latest
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: jmh-artifacts
+          path: .
       - name: Checkout Fibula
         uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
@@ -33,6 +61,11 @@ jobs:
   test-jvm:
     runs-on: ubuntu-latest
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: jmh-artifacts
+          path: .
       - name: Checkout Fibula
         uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
