@@ -12,6 +12,8 @@ import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @ApplicationScoped
@@ -54,7 +56,7 @@ public class VmService
 
     private int runInfo(Vm vm)
     {
-        final List<String> baseArguments = vm.vmArguments(Utils.getCurrentJvm());
+        final List<String> baseArguments = vm.vmArguments(Utils.getCurrentJvm(), Collections.emptyList());
         final List<String> arguments = new ArrayList<>(baseArguments);
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.VM_INFO.toString());

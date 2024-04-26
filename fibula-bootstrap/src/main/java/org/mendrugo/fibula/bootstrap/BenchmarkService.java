@@ -8,6 +8,8 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.profile.ExternalProfiler;
+import org.openjdk.jmh.profile.ProfilerFactory;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
 import org.openjdk.jmh.runner.options.Options;
@@ -60,6 +62,8 @@ public class BenchmarkService
                 .map(params -> applyVmInfo(params, vmInfo))
                 .collect(Collectors.toCollection(TreeSet::new));
 
+            List<ExternalProfiler> profilers = ProfilerFactory.getSupportedExternal(options.getProfilers());
+
             for (BenchmarkParams benchmark : benchmarks)
             {
                 formatService.output().startBenchmark(benchmark);
@@ -68,7 +72,7 @@ public class BenchmarkService
                 final int forkCount = benchmark.getForks();
                 for (int i = 0; i < forkCount; i++)
                 {
-                    final Process process = runFork(i + 1, benchmark);
+                    final Process process = runFork(i + 1, benchmark, profilers);
                     final int exitCode = process.waitFor();
                     if (exitCode != 0)
                     {
@@ -96,10 +100,10 @@ public class BenchmarkService
         }
     }
 
-    Process runFork(int forkIndex, BenchmarkParams params)
+    Process runFork(int forkIndex, BenchmarkParams params, List<ExternalProfiler> profilers)
     {
         final int forkCount = params.getForks();
-        final List<String> forkArguments = forkArguments(params);
+        final List<String> forkArguments = forkArguments(params, profilers);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
         formatService.output().println("# Fork: " + forkIndex + " of " + forkCount);
         try
@@ -112,17 +116,26 @@ public class BenchmarkService
         }
     }
 
-    private List<String> forkArguments(BenchmarkParams params)
+    private List<String> forkArguments(BenchmarkParams params, List<ExternalProfiler> profilers)
     {
-        final List<String> baseArguments = vmService.vm().vmArguments(params.getJvm());
-        final List<String> arguments = new ArrayList<>(baseArguments);
-        arguments.add("--" + RunnerArguments.COMMAND);
-        arguments.add(Command.FORK.toString());
-        arguments.add("--" + RunnerArguments.SUPPLIER_NAME);
-        arguments.add(RunnerArguments.toSupplierName(params));
-        arguments.add("--" + RunnerArguments.PARAMS);
-        arguments.add(Serializables.toBase64(params));
-        return arguments;
+        final List<String> javaInvokeOptions = new ArrayList<>();
+        final List<String> javaOptions = new ArrayList<>();
+        for (ExternalProfiler prof : profilers) {
+            javaInvokeOptions.addAll(prof.addJVMInvokeOptions(params));
+            javaOptions.addAll(prof.addJVMOptions(params));
+        }
+
+        final List<String> command = new ArrayList<>(javaInvokeOptions);
+        final List<String> baseArguments = vmService.vm().vmArguments(params.getJvm(), javaOptions);
+        command.addAll(baseArguments);
+
+        command.add("--" + RunnerArguments.COMMAND);
+        command.add(Command.FORK.toString());
+        command.add("--" + RunnerArguments.SUPPLIER_NAME);
+        command.add(RunnerArguments.toSupplierName(params));
+        command.add("--" + RunnerArguments.PARAMS);
+        command.add(Serializables.toBase64(params));
+        return command;
     }
 
     private BenchmarkParams applyVmInfo(BenchmarkParams params, VmInfo vmInfo)

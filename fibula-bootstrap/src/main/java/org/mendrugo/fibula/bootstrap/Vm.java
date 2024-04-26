@@ -49,12 +49,12 @@ public enum Vm
         };
     }
 
-    List<String> vmArguments(String jvm)
+    List<String> vmArguments(String jvm, List<String> javaOptions)
     {
         return switch (this)
         {
-            case HOTSPOT -> getHotSpotArguments(jvm);
-            case SUBSTRATE -> List.of(RUN_BINARY.getPath());
+            case HOTSPOT -> getHotSpotArguments(jvm, javaOptions);
+            case SUBSTRATE -> getNativeArguments(javaOptions);
         };
     }
 
@@ -83,7 +83,7 @@ public enum Vm
         throw new IllegalStateException("Could not resolve which VM invoker to use");
     }
 
-    private static List<String> getHotSpotArguments(String jvm)
+    private static List<String> getHotSpotArguments(String jvm, List<String> javaOptions)
     {
         final List<String> args = new ArrayList<>();
         args.add(jvm);
@@ -98,9 +98,19 @@ public enum Vm
         // todo add an option for the native image agent and fix location of java
         // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
 
+        args.addAll(javaOptions);
+
         args.add("-jar");
         args.add(Vm.RUN_JAR.getPath());
 
+        return args;
+    }
+
+    private static List<String> getNativeArguments(List<String> javaOptions)
+    {
+        final List<String> args = new ArrayList<>();
+        args.add(RUN_BINARY.getPath());
+        args.addAll(javaOptions);
         return args;
     }
 }
