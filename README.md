@@ -1,5 +1,18 @@
 # fibula
 
+Run individual benchmarks in JVM mode:
+```shell script
+make run BENCHMARK=JMHSample_01
+```
+Run individual benchmarks in Native mode:
+```shell script
+make run-native BENCHMARK=JMHSample_01
+```
+Running a benchmark with Linux perf stat profiler:
+```shell script
+make run-native BENCHMARK=JMHSample_01 PROFILER=perf
+```
+
 ## TODO
 
 - [ ] Print executing/results as TRACE and make results/params presented not in base64 format

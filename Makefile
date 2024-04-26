@@ -29,11 +29,16 @@ ifdef LOG_LEVEL
   endif
 endif
 
+FORKS ?= 2
+ifeq ($(PROFILER),perf)
+  FORKS = 1
+endif
+
 # Benchmark name
 benchmark_params += $(BENCHMARK)
 # Measurement forks
 benchmark_params += -f
-benchmark_params += 2
+benchmark_params += $(FORKS)
 # Measurement iterations
 benchmark_params += -i
 benchmark_params += 2
@@ -50,6 +55,11 @@ benchmark_params += 2
 ifdef RESULT_FORMAT
   benchmark_params += -rf
   benchmark_params += $(RESULT_FORMAT)
+endif
+
+ifdef PROFILER
+  benchmark_params += -prof
+  benchmark_params += $(PROFILER)
 endif
 
 MAVEN_DEBUG ?=
