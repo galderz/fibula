@@ -21,18 +21,16 @@ public final class ProcessExecutor
         this.out = out;
     }
 
-    public int runSync(List<String> arguments)
+    public ProcessResult runSync(List<String> arguments, boolean printOut, boolean printErr)
     {
-        boolean printOut = true;
-        boolean printErr = true;
         // todo add profiler and option overrides for print*
 
-        TempFile stdErr;
         TempFile stdOut;
+        TempFile stdErr;
         try
         {
-            stdErr = FileUtils.weakTempFile("stderr");
             stdOut = FileUtils.weakTempFile("stdout");
+            stdErr = FileUtils.weakTempFile("stderr");
         }
         catch (IOException e)
         {
@@ -68,7 +66,7 @@ public final class ProcessExecutor
             errDrainer.join();
             outDrainer.join();
 
-            return exitValue;
+            return new ProcessResult(exitValue, stdOut, stdErr);
         }
         catch (IOException e)
         {
@@ -105,4 +103,6 @@ public final class ProcessExecutor
             out.write(b);
         }
     }
+
+    public record ProcessResult(int exitCode, TempFile stdOut, TempFile stdErr) {}
 }

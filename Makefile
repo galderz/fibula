@@ -30,6 +30,8 @@ ifdef LOG_LEVEL
 endif
 
 FORKS ?= 2
+PROFILER ?=
+
 ifeq ($(PROFILER),perf)
   FORKS = 1
 endif

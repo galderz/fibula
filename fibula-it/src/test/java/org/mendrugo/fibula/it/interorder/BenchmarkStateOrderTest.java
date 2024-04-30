@@ -22,12 +22,10 @@ public class BenchmarkStateOrderTest extends org.openjdk.jmh.it.interorder.Bench
         for (int c = 0; c < Fixtures.repetitionCount(); c++)
         {
             Options opt = new OptionsBuilder()
-                // .include(Fixtures.getTestMask(this.getClass())
                 .include(Fixtures.getTestMask(this.getClass().getSuperclass()))
                 .shouldFailOnError(true)
                 .syncIterations(false)
                 .build();
-            // new Runner(opt).run();
             benchmarkService.run(opt);
         }
     }

@@ -4,10 +4,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.JmhFormats;
+import org.mendrugo.fibula.results.ProcessExecutor;
+import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
+import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
@@ -16,6 +20,8 @@ import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
+import org.openjdk.jmh.util.Multimap;
+import org.openjdk.jmh.util.TempFile;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.IOException;
@@ -135,24 +141,19 @@ public class ResultService
         }
     }
 
-    void endBenchmark(BenchmarkParams params, Options options)
+    BenchmarkResult endFork(BenchmarkParams params, Options options)
     {
         final Either<BenchmarkException, List<IterationResult>> either = iterationResults.get(params);
-        switch (either)
+        if (either instanceof Either.Left<BenchmarkException, List<IterationResult>> left)
         {
-            case Either.Right<BenchmarkException, List<IterationResult>> right ->
+            if (options.shouldFailOnError().orElse(Defaults.FAIL_ON_ERROR))
             {
-                final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(params, right.right()));
-                benchmarkResults.forEach(formatService.output()::endBenchmark);
+                throw left.left();
             }
-            case Either.Left<BenchmarkException, List<IterationResult>> left ->
-            {
-                if (options.shouldFailOnError().orElse(Defaults.FAIL_ON_ERROR))
-                {
-                    throw left.left();
-                }
-            }
+            return null;
         }
+
+        return new BenchmarkResult(params, either.right());
     }
 
     Collection<RunResult> endRun()

@@ -4,17 +4,24 @@ import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.*;
+import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.profile.ProfilerFactory;
+import org.openjdk.jmh.results.BenchmarkResult;
+import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.TimeValue;
+import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.FileUtils;
+import org.openjdk.jmh.util.HashMultimap;
+import org.openjdk.jmh.util.Multimap;
+import org.openjdk.jmh.util.TempFile;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.File;
@@ -22,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -64,26 +70,66 @@ public class BenchmarkService
 
             List<ExternalProfiler> profilers = ProfilerFactory.getSupportedExternal(options.getProfilers());
 
+            boolean printOut = true;
+            boolean printErr = true;
+            for (ExternalProfiler prof : profilers)
+            {
+                printOut &= prof.allowPrintOut();
+                printErr &= prof.allowPrintErr();
+            }
+
+            List<ExternalProfiler> profilersRev = new ArrayList<>(profilers);
+            Collections.reverse(profilersRev);
+
+            boolean forcePrint = options.verbosity().orElse(Defaults.VERBOSITY).equalsOrHigherThan(VerboseMode.EXTRA);
+            printOut = forcePrint || printOut;
+            printErr = forcePrint || printErr;
+
             for (BenchmarkParams benchmark : benchmarks)
             {
+                Multimap<BenchmarkParams, BenchmarkResult> results = new HashMultimap<>();
+
                 formatService.output().startBenchmark(benchmark);
                 formatService.output().println("");
 
                 final int forkCount = benchmark.getForks();
                 for (int i = 0; i < forkCount; i++)
                 {
-                    final Process process = runFork(i + 1, benchmark, profilers);
-                    final int exitCode = process.waitFor();
-                    if (exitCode != 0)
+                    final ProcessResult processResult = runFork(i + 1, benchmark, profilers, printOut, printErr);
+                    if (processResult.exitCode() != 0)
                     {
                         throw new RuntimeException(String.format(
                             "Error in forked runner (exit code %d)"
-                            , exitCode
+                            , processResult.exitCode()
                         ));
                     }
+
+                    final BenchmarkResult benchmarkResult = resultService.endFork(benchmark, options);
+
+                    if (!profilersRev.isEmpty())
+                    {
+                        formatService.output().print("# Processing profiler results: ");
+                        for (ExternalProfiler profiler : profilersRev)
+                        {
+                            formatService.output().print(profiler.getClass().getSimpleName() + " ");
+                            final File stdOut = processResult.stdOut().file();
+                            final File stdErr = processResult.stdErr().file();
+                            final int pid = -1;
+                            for (Result profR : profiler.afterTrial(benchmarkResult, pid, stdOut, stdErr))
+                            {
+                                benchmarkResult.addBenchmarkResult(profR);
+                            }
+                        }
+                        formatService.output().println("");
+                    }
+
+                    processResult.stdOut().delete();
+                    processResult.stdErr().delete();
                 }
 
-                resultService.endBenchmark(benchmark, options);
+                formatService.output().endBenchmark(
+                    new RunResult(benchmark, results.get(benchmark)).getAggregatedResult()
+                );
             }
 
             return resultService.endRun();
@@ -100,20 +146,45 @@ public class BenchmarkService
         }
     }
 
-    Process runFork(int forkIndex, BenchmarkParams params, List<ExternalProfiler> profilers)
+    ProcessResult runFork(int forkIndex, BenchmarkParams params, List<ExternalProfiler> profilers, boolean printOut, boolean printErr)
     {
         final int forkCount = params.getForks();
         final List<String> forkArguments = forkArguments(params, profilers);
         Log.debugf("Executing: %s", String.join(" ", forkArguments));
+        formatService.output().verbosePrintln("Forking using command: " + forkArguments);
         formatService.output().println("# Fork: " + forkIndex + " of " + forkCount);
-        try
+        if (!profilers.isEmpty())
         {
-            return new ProcessBuilder(forkArguments).inheritIO().start();
+            formatService.output().print("# Preparing profilers: ");
+            for (ExternalProfiler profiler : profilers)
+            {
+                formatService.output().print(profiler.getClass().getSimpleName() + " ");
+                profiler.beforeTrial(params);
+            }
+            formatService.output().println("");
+
+            List<String> consumed = new ArrayList<>();
+            if (!printOut)
+            {
+                consumed.add("stdout");
+            }
+            if (!printErr)
+            {
+                consumed.add("stderr");
+            }
+
+            if (!consumed.isEmpty())
+            {
+                formatService.output().println(String.format(
+                    "# Profilers consume %s from target VM, use -v %s to copy to console"
+                    , Utils.join(consumed, " and ")
+                    , VerboseMode.EXTRA
+                ));
+            }
         }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
+
+        final ProcessExecutor processExec = new ProcessExecutor(formatService.output());
+        return processExec.runSync(forkArguments, false, false);
     }
 
     private List<String> forkArguments(BenchmarkParams params, List<ExternalProfiler> profilers)

@@ -12,7 +12,6 @@ import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.util.Utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,17 +62,6 @@ public class VmService
         Log.debugf("Executing: %s", String.join(" ", arguments));
 
         final ProcessExecutor processExec = new ProcessExecutor(formatService.output());
-        return processExec.runSync(arguments);
-//        try
-//        {
-//            final ProcessBuilder processBuilder = new ProcessBuilder(arguments);
-//            final Process process = processBuilder.start();
-//
-//            return process;
-//        }
-//        catch (IOException e)
-//        {
-//            throw new UncheckedIOException(e);
-//        }
+        return processExec.runSync(arguments, false, false).exitCode();
     }
 }
