@@ -111,6 +111,10 @@ ifdef QUARKUS_SNAPSHOT
   common_maven_args += -Dquarkus-plugin.version=999-SNAPSHOT
 endif
 
+ifeq ($(MAVEN_DEBUG),test)
+  mvnw += -Dmaven.surefire.debug
+endif
+
 run: $(samples_runner_jvm) do-run
 .PHONY: run
 
