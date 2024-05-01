@@ -27,7 +27,8 @@ public class LinuxPerfProfilerTest extends org.openjdk.jmh.it.profilers.LinuxPer
     @Test
     public void test() throws RunnerException
     {
-        try {
+        try
+        {
             new LinuxPerfProfiler("");
         } catch (ProfilerException e) {
             System.out.println("Profiler is not supported or cannot be enabled, skipping test");
@@ -44,7 +45,8 @@ public class LinuxPerfProfilerTest extends org.openjdk.jmh.it.profilers.LinuxPer
         Map<String, Result> sr = rr.getSecondaryResults();
         String msg = ProfilerTestUtils.checkedGet(sr, "perf").extendedInfo();
 
-        if (sr.containsKey("ipc")) {
+        if (sr.containsKey("ipc"))
+        {
             double ipc = ProfilerTestUtils.checkedGet(sr, "ipc").getScore();
             double cpi = ProfilerTestUtils.checkedGet(sr, "cpi").getScore();
             Assert.assertNotEquals(0D, ipc, 0D);
