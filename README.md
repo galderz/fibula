@@ -12,6 +12,10 @@ Running a benchmark with Linux perf stat profiler:
 ```shell script
 make run-native BENCHMARK=JMHSample_01 PROFILER=perf
 ```
+Debugging benchmark generation for one of the tests:
+```shell script
+make test MAVEN_DEBUG=process DECOMPILE=true GEN=BenchmarkStateOrderTest
+```
 
 ## TODO
 
