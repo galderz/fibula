@@ -4,14 +4,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.JmhFormats;
-import org.mendrugo.fibula.results.ProcessExecutor;
-import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
-import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
-import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
 import org.openjdk.jmh.results.format.ResultFormatFactory;
@@ -21,7 +17,6 @@ import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.util.FileUtils;
 import org.openjdk.jmh.util.Multimap;
-import org.openjdk.jmh.util.TempFile;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.IOException;
@@ -30,10 +25,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 @ApplicationScoped
 public class ResultService
@@ -141,24 +137,20 @@ public class ResultService
         }
     }
 
-    BenchmarkResult endFork(BenchmarkParams params, Options options)
+    BenchmarkResult endFork(BenchmarkParams params)
     {
         final Either<BenchmarkException, List<IterationResult>> either = iterationResults.get(params);
         if (either instanceof Either.Left<BenchmarkException, List<IterationResult>> left)
         {
-            if (options.shouldFailOnError().orElse(Defaults.FAIL_ON_ERROR))
-            {
-                throw left.left();
-            }
-            return null;
+            throw left.left();
         }
 
         return new BenchmarkResult(params, either.right());
     }
 
-    Collection<RunResult> endRun()
+    Collection<RunResult> endRun(Multimap<BenchmarkParams, BenchmarkResult> results)
     {
-        final Collection<RunResult> runResults = getRunResults();
+        final SortedSet<RunResult> runResults = mergeRunResults(results);
         final ResultFormat textResultFormat = JmhFormats.textResultFormat();
         textResultFormat.writeOut(runResults);
 
@@ -174,24 +166,12 @@ public class ResultService
         return runResults;
     }
 
-    private Collection<RunResult> getRunResults()
-    {
-        final List<RunResult> runResults = new ArrayList<>();
-        for (Map.Entry<BenchmarkParams, Either<BenchmarkException, List<IterationResult>>> entry : iterationResults.entrySet())
-        {
-            final Either<BenchmarkException, List<IterationResult>> value = entry.getValue();
-            switch (value)
-            {
-                case Either.Right<BenchmarkException, List<IterationResult>> right ->
-                {
-                    final Collection<BenchmarkResult> benchmarkResults = List.of(new BenchmarkResult(entry.getKey(), right.right()));
-                    final RunResult runResult = new RunResult(entry.getKey(), benchmarkResults);
-                    runResults.add(runResult);
-                }
-                default -> {}
-            }
+    private static SortedSet<RunResult> mergeRunResults(Multimap<BenchmarkParams, BenchmarkResult> results) {
+        SortedSet<RunResult> result = new TreeSet<>(RunResult.DEFAULT_SORT_COMPARATOR);
+        for (BenchmarkParams key : results.keys()) {
+            result.add(new RunResult(key, results.get(key)));
         }
-        iterationResults.clear();
-        return runResults;
+        return result;
     }
+
 }

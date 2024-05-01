@@ -21,7 +21,6 @@ import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.FileUtils;
 import org.openjdk.jmh.util.HashMultimap;
 import org.openjdk.jmh.util.Multimap;
-import org.openjdk.jmh.util.TempFile;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.File;
@@ -56,6 +55,20 @@ public class BenchmarkService
     {
         try
         {
+            final Multimap<BenchmarkParams, BenchmarkResult> results = runSeparate(options);
+            return resultService.endRun(results);
+        }
+        catch (BenchmarkException e)
+        {
+            throw new RunnerException("Benchmark caught the exception", e);
+        }
+    }
+
+    public Multimap<BenchmarkParams, BenchmarkResult> runSeparate(Options options) throws RunnerException
+    {
+        final Multimap<BenchmarkParams, BenchmarkResult> results = new HashMultimap<>();
+        try
+        {
             Log.debugf("Virtual machine is: %s", vmService.vm());
 
             final VmInfo vmInfo = vmService.queryInfo();
@@ -87,8 +100,6 @@ public class BenchmarkService
 
             for (BenchmarkParams benchmark : benchmarks)
             {
-                Multimap<BenchmarkParams, BenchmarkResult> results = new HashMultimap<>();
-
                 formatService.output().startBenchmark(benchmark);
                 formatService.output().println("");
 
@@ -104,7 +115,7 @@ public class BenchmarkService
                         ));
                     }
 
-                    final BenchmarkResult benchmarkResult = resultService.endFork(benchmark, options);
+                    final BenchmarkResult benchmarkResult = resultService.endFork(benchmark);
 
                     if (!profilersRev.isEmpty())
                     {
@@ -133,8 +144,6 @@ public class BenchmarkService
                     new RunResult(benchmark, results.get(benchmark)).getAggregatedResult()
                 );
             }
-
-            return resultService.endRun();
         }
         catch (InterruptedException e)
         {
@@ -144,8 +153,19 @@ public class BenchmarkService
         }
         catch (BenchmarkException e)
         {
-            throw new RunnerException("Benchmark caught the exception", e);
+            results.clear();
+            if (options.shouldFailOnError().orElse(Defaults.FAIL_ON_ERROR))
+            {
+                formatService.output().println("Benchmark had encountered error, and fail on error was requested");
+                throw e;
+            }
         }
+        finally
+        {
+            FileUtils.purgeTemps();
+        }
+
+        return results;
     }
 
     ProcessResult runFork(int forkIndex, BenchmarkParams params, List<ExternalProfiler> profilers, boolean printOut, boolean printErr)
