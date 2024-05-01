@@ -123,6 +123,8 @@ public class BenchmarkService
                         formatService.output().println("");
                     }
 
+                    results.put(benchmark, benchmarkResult);
+
                     processResult.stdOut().delete();
                     processResult.stdErr().delete();
                 }
