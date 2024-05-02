@@ -3,7 +3,7 @@ package org.mendrugo.fibula.it.profilers;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.it.Fixtures;
 import org.openjdk.jmh.it.profilers.ProfilerTestUtils;
@@ -11,7 +11,6 @@ import org.openjdk.jmh.profile.LinuxPerfNormProfiler;
 import org.openjdk.jmh.profile.ProfilerException;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
-import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -24,6 +23,7 @@ public class LinuxPerfNormProfilerTest extends org.openjdk.jmh.it.profilers.Linu
     @Inject
     BenchmarkService benchmarkService;
 
+    @Override
     @Test
     public void test() throws RunnerException
     {
