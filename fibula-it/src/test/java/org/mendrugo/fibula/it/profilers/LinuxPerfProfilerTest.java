@@ -40,7 +40,7 @@ public class LinuxPerfProfilerTest extends org.openjdk.jmh.it.profilers.LinuxPer
             .addProfiler(LinuxPerfProfiler.class)
             .build();
 
-        final RunResult rr = benchmarkService.run(opts).iterator().next();
+        final RunResult rr = benchmarkService.runSingle(opts);
 
         Map<String, Result> sr = rr.getSecondaryResults();
         String msg = ProfilerTestUtils.checkedGet(sr, "perf").extendedInfo();

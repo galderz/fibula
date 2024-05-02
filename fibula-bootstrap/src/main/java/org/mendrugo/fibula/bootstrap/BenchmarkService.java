@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -60,6 +61,33 @@ public class BenchmarkService
         final String benchmarks = readBenchmarks();
         Log.debugf("Read from benchmark list file: %n%s", benchmarks);
         this.benchmarkList = BenchmarkList.fromString(benchmarks);
+    }
+
+    public RunResult runSingle(Options options) throws RunnerException
+    {
+        Set<BenchmarkListEntry> benchmarks = benchmarkList
+            .find(formatService.output(), options.getIncludes(), options.getExcludes());
+
+        if (benchmarks.size() == 1)
+        {
+            Collection<RunResult> values = run(options);
+            if (values.size() == 1)
+            {
+                return values.iterator().next();
+            }
+            else
+            {
+                throw new RunnerException("No results returned");
+            }
+        }
+        else if (benchmarks.size() > 1)
+        {
+            throw new RunnerException("More than single benchmark are matching the options: " + benchmarks);
+        }
+        else
+        {
+            throw new NoBenchmarksException();
+        }
     }
 
     public Collection<RunResult> run(Options options) throws RunnerException
