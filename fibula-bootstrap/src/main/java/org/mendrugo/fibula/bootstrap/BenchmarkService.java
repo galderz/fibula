@@ -1,6 +1,7 @@
 package org.mendrugo.fibula.bootstrap;
 
 import io.quarkus.logging.Log;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.*;
@@ -51,6 +52,16 @@ public class BenchmarkService
     @Inject
     VmService vmService;
 
+    BenchmarkList benchmarkList;
+
+    @PostConstruct
+    void init()
+    {
+        final String benchmarks = readBenchmarks();
+        Log.debugf("Read from benchmark list file: %n%s", benchmarks);
+        this.benchmarkList = BenchmarkList.fromString(benchmarks);
+    }
+
     public Collection<RunResult> run(Options options) throws RunnerException
     {
         try
@@ -64,7 +75,7 @@ public class BenchmarkService
         }
     }
 
-    public Multimap<BenchmarkParams, BenchmarkResult> runSeparate(Options options) throws RunnerException
+    private Multimap<BenchmarkParams, BenchmarkResult> runSeparate(Options options) throws RunnerException
     {
         final Multimap<BenchmarkParams, BenchmarkResult> results = new HashMultimap<>();
         try
@@ -260,10 +271,6 @@ public class BenchmarkService
 
     private SortedSet<BenchmarkParams> findBenchmarkParams(Options options)
     {
-        final String benchmarks = readBenchmarks();
-        Log.debugf("Read from benchmark list file: %n%s", benchmarks);
-
-        final BenchmarkList benchmarkList = BenchmarkList.fromString(benchmarks);
         final List<String> includes = options.getIncludes();
         final List<String> excludes = options.getExcludes();
         Log.debugf("Find benchmarks with includes=%s and excludes=%s", includes, excludes);
