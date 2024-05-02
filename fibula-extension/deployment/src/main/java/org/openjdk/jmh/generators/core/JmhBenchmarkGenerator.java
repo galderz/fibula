@@ -173,6 +173,7 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         final boolean supported = fqn.startsWith("org.mendrugo.fibula.it")
             || fqn.startsWith("org.openjdk.jmh.it.interorder.BenchmarkStateOrderTest")
             || fqn.startsWith("org.openjdk.jmh.it.profilers.LinuxPerfProfiler")
+            || fqn.startsWith("org.openjdk.jmh.it.profilers.LinuxPerfNormProfilerTest")
             || fqn.contains("JMHSample_01")
             || fqn.contains("JMHSample_03")
             || fqn.contains("JMHSample_04")
