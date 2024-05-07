@@ -4,6 +4,7 @@ import org.mendrugo.fibula.results.*;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.AverageTimeResult;
+import org.openjdk.jmh.results.BenchmarkResultMetaData;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.IterationResultMetaData;
@@ -34,27 +35,55 @@ final class BenchmarkHandler
 
     void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)
     {
-        runBenchmarkCount(params.getWarmup(), params, callable);
-        runBenchmarkCount(params.getMeasurement(), params, callable);
-    }
+        long allWarmup = 0;
+        long allMeasurement = 0;
 
-    private void runBenchmarkCount(IterationParams iterationParams, BenchmarkParams params, BenchmarkCallable callable)
-    {
-        for (int i = 1; i <= iterationParams.getCount(); i++)
+        final IterationParams warmup = params.getWarmup();
+        final long warmupTime = System.currentTimeMillis();
+        for (int i = 1; i <= warmup.getCount(); i++)
         {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(iterationParams), i));
-            final boolean lastIteration = i == iterationParams.getCount();
+            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(warmup), i));
+            final boolean lastIteration = i == warmup.getCount();
             if (lastIteration)
             {
                 callable.infrastructure.markLastIteration();
             }
-            IterationResult iterationResult = runIteration(params, callable, iterationParams, callable.infrastructure);
+            IterationResult iterationResult = runIteration(params, callable, warmup, callable.infrastructure);
             if (lastIteration)
             {
                 callable.infrastructure.resetLastIteration();
             }
             iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
+            allWarmup += iterationResult.getMetadata().getAllOps();
         }
+
+        IterationParams measurement = params.getMeasurement();
+        final long measurementTime = System.currentTimeMillis();
+        for (int i = 1; i <= measurement.getCount(); i++)
+        {
+            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
+            final boolean lastIteration = i == measurement.getCount();
+            if (lastIteration)
+            {
+                callable.infrastructure.markLastIteration();
+            }
+            IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
+            if (lastIteration)
+            {
+                callable.infrastructure.resetLastIteration();
+            }
+            iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
+            allMeasurement += iterationResult.getMetadata().getAllOps();
+        }
+        final long stopTime = System.currentTimeMillis();
+
+        BenchmarkResultMetaData md = new BenchmarkResultMetaData(
+            warmupTime
+            , measurementTime
+            , stopTime
+            , allWarmup
+            , allMeasurement
+        );
     }
 
     private IterationResult runIteration(BenchmarkParams params, BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)

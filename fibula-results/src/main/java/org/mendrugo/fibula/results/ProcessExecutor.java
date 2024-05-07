@@ -42,6 +42,7 @@ public final class ProcessExecutor
         )
         {
             final ProcessBuilder processBuilder = new ProcessBuilder(arguments);
+            long startTime = System.currentTimeMillis();
             final Process process = processBuilder.start();
 
             // drain streams, else we might lock up
@@ -66,7 +67,7 @@ public final class ProcessExecutor
             errDrainer.join();
             outDrainer.join();
 
-            return new ProcessResult(exitValue, stdOut, stdErr);
+            return new ProcessResult(exitValue, stdOut, stdErr, startTime);
         }
         catch (IOException e)
         {
@@ -104,5 +105,10 @@ public final class ProcessExecutor
         }
     }
 
-    public record ProcessResult(int exitCode, TempFile stdOut, TempFile stdErr) {}
+    public record ProcessResult(
+        int exitCode
+        , TempFile stdOut
+        , TempFile stdErr
+        , long startTime
+    ) {}
 }

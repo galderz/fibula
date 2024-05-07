@@ -7,6 +7,7 @@ import org.mendrugo.fibula.results.JmhFormats;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkResult;
+import org.openjdk.jmh.results.BenchmarkResultMetaData;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.results.format.ResultFormat;
@@ -30,6 +31,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApplicationScoped
 public class ResultService
@@ -37,7 +39,9 @@ public class ResultService
     @Inject
     FormatService formatService;
 
+    // todo simplify with atomic references for exception, results and metadata for a single iteration
     private final SortedMap<BenchmarkParams, Either<BenchmarkException, List<IterationResult>>> iterationResults = new TreeMap<>();
+    private final AtomicReference<BenchmarkResultMetaData> resultMetadataRef = new AtomicReference<>();
 
     // todo consider moving these two to bean of their own
     private Optional<String> resultFile;
@@ -106,6 +110,11 @@ public class ResultService
         iterationResults.put(params, Either.left(benchmarkException));
     }
 
+    void setResultMetadata(BenchmarkResultMetaData resultMetaData)
+    {
+        resultMetadataRef.set(resultMetaData);
+    }
+
     private static BenchmarkException toBenchmarkException(String errorMessage, List<IterationError.Detail> errorDetails)
     {
         final List<Throwable> suppressedExceptions = errorDetails.stream()
@@ -137,7 +146,7 @@ public class ResultService
         }
     }
 
-    BenchmarkResult endFork(BenchmarkParams params)
+    BenchmarkResult endFork(BenchmarkParams params, long startTime)
     {
         final Either<BenchmarkException, List<IterationResult>> either = iterationResults.get(params);
         if (either instanceof Either.Left<BenchmarkException, List<IterationResult>> left)
@@ -145,7 +154,13 @@ public class ResultService
             throw left.left();
         }
 
-        return new BenchmarkResult(params, either.right());
+        final BenchmarkResultMetaData resultMetadata = resultMetadataRef.getAndSet(null);
+        if (resultMetadata != null)
+        {
+            resultMetadata.adjustStart(startTime);
+        }
+
+        return new BenchmarkResult(params, either.right(), resultMetadata);
     }
 
     Collection<RunResult> endRun(Multimap<BenchmarkParams, BenchmarkResult> results)
@@ -173,5 +188,4 @@ public class ResultService
         }
         return result;
     }
-
 }

@@ -9,6 +9,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mendrugo.fibula.results.IterationEnd;
 import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.IterationStart;
+import org.mendrugo.fibula.results.IterationTelemetry;
 
 @Path("/iteration")
 @Produces(MediaType.TEXT_PLAIN)
@@ -27,4 +28,8 @@ public interface IterationClient
     @Path("/error")
     @POST
     String notifyError(IterationError error);
+
+    @Path("/telemetry")
+    @POST
+    String notifyTelemetry(IterationTelemetry telemetry);
 }

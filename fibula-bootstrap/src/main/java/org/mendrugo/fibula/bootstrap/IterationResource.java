@@ -7,9 +7,11 @@ import jakarta.ws.rs.Path;
 import org.mendrugo.fibula.results.IterationEnd;
 import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.IterationStart;
+import org.mendrugo.fibula.results.IterationTelemetry;
 import org.mendrugo.fibula.results.Serializables;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
+import org.openjdk.jmh.results.BenchmarkResultMetaData;
 import org.openjdk.jmh.results.IterationResult;
 
 @Path("/iteration")
@@ -46,6 +48,16 @@ public class IterationResource
         Log.debugf("Received: %s", iterationError);
         final BenchmarkParams params = Serializables.fromBase64(iterationError.benchmarkParams());
         resultService.errorIteration(params, iterationError.errorMessage(), iterationError.details());
+        return "Ok";
+    }
+
+    @Path("/telemetry")
+    @POST
+    public String telemetry(IterationTelemetry telemetry)
+    {
+        Log.debugf("Received: %s", telemetry);
+        final BenchmarkResultMetaData resultMetaData = Serializables.fromBase64(telemetry.telemetry());
+        resultService.setResultMetadata(resultMetaData);
         return "Ok";
     }
 }

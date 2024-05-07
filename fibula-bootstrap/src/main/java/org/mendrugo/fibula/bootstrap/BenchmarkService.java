@@ -13,6 +13,7 @@ import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.profile.ProfilerFactory;
 import org.openjdk.jmh.results.BenchmarkResult;
+import org.openjdk.jmh.results.BenchmarkResultMetaData;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
@@ -154,7 +155,7 @@ public class BenchmarkService
                         ));
                     }
 
-                    final BenchmarkResult benchmarkResult = resultService.endFork(benchmark);
+                    final BenchmarkResult benchmarkResult = resultService.endFork(benchmark, processResult.startTime());
 
                     if (!profilersRev.isEmpty())
                     {
