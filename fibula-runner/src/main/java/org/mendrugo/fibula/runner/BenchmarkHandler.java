@@ -77,13 +77,14 @@ final class BenchmarkHandler
         }
         final long stopTime = System.currentTimeMillis();
 
-        BenchmarkResultMetaData md = new BenchmarkResultMetaData(
+        BenchmarkResultMetaData resultMetaData = new BenchmarkResultMetaData(
             warmupTime
             , measurementTime
             , stopTime
             , allWarmup
             , allMeasurement
         );
+        iterationClient.notifyTelemetry(new IterationTelemetry(Serializables.toBase64(resultMetaData)));
     }
 
     private IterationResult runIteration(BenchmarkParams params, BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
