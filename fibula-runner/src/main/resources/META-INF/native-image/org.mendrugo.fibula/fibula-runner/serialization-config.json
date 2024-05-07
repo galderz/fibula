@@ -64,6 +64,9 @@
       "name":"org.openjdk.jmh.results.AverageTimeResult"
     },
     {
+      "name":"org.openjdk.jmh.results.BenchmarkResultMetaData"
+    },
+    {
       "name":"org.openjdk.jmh.results.IterationResult"
     },
     {
