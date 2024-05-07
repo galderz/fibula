@@ -112,7 +112,7 @@ ifdef QUARKUS_SNAPSHOT
 endif
 
 ifeq ($(MAVEN_DEBUG),test)
-  mvnw += -Dmaven.surefire.debug
+  mvnw += -Dmaven.surefire.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000"
 endif
 
 run: $(samples_runner_jvm) do-run
