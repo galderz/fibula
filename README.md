@@ -24,9 +24,13 @@ Debugging benchmark test execution for one of the tests:
 ```shell script
 make test MAVEN_DEBUG=test TEST=FailureModesTest
 ```
-Running a sample with perf stat profiler:
+Running a benchmark sample in Native mode with perf stat profiler:
 ```shell script
 make run-native BENCHMARK=JMHSample_01 PROFILER=perf
+```
+Running a benchmark sample in JVM mode with perf stat profiler:
+```shell script
+make run BENCHMARK=JMHSample_01 PROFILER=perf
 ```
 
 ## TODO
