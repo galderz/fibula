@@ -29,30 +29,33 @@ ifdef LOG_LEVEL
   endif
 endif
 
-FORKS ?= 2
+MEASURE_FORKS ?= 2
+MEASURE_IT ?= 2
+MEASURE_TIME ?= 2
+WARMUP_IT ?= 2
+WARMUP_TIME ?= 2
 PROFILER ?=
 
-ifeq ($(PROFILER),perf)
-  FORKS = 1
+ifdef PROFILER
+  MEASURE_FORKS ?= 1
+  MEASURE_IT ?= 1
+  MEASURE_TIME ?= 10
+  WARMUP_IT ?= 1
+  WARMUP_TIME ?= 10
 endif
 
 # Benchmark name
 benchmark_params += $(BENCHMARK)
-# Measurement forks
 benchmark_params += -f
-benchmark_params += $(FORKS)
-# Measurement iterations
+benchmark_params += $(MEASURE_FORKS)
 benchmark_params += -i
-benchmark_params += 2
-# Warmup iterations
-benchmark_params += -wi
-benchmark_params += 2
-# Measurement time
+benchmark_params += $(MEASURE_IT)
 benchmark_params += -r
-benchmark_params += 2
-# Warmup time
+benchmark_params += $(MEASURE_TIME)
+benchmark_params += -wi
+benchmark_params += $(WARMUP_IT)
 benchmark_params += -w
-benchmark_params += 2
+benchmark_params += $(WARMUP_TIME)
 
 ifdef RESULT_FORMAT
   benchmark_params += -rf
