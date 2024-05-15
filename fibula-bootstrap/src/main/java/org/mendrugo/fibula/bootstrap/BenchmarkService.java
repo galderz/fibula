@@ -11,6 +11,7 @@ import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
+import org.openjdk.jmh.profile.ProfilerException;
 import org.openjdk.jmh.profile.ProfilerFactory;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.BenchmarkResultMetaData;
@@ -18,6 +19,7 @@ import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
 import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.ProfilerConfig;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.FileUtils;
@@ -35,6 +37,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -93,6 +96,8 @@ public class BenchmarkService
 
     public Collection<RunResult> run(Options options) throws RunnerException
     {
+        validateProfilers(options);
+
         try
         {
             final Multimap<BenchmarkParams, BenchmarkResult> results = runSeparate(options);
@@ -101,6 +106,38 @@ public class BenchmarkService
         catch (BenchmarkException e)
         {
             throw new RunnerException("Benchmark caught the exception", e);
+        }
+    }
+
+    private void validateProfilers(Options options) throws RunnerException
+    {
+        final Set<String> profilerClasses = new HashSet<>();
+        ProfilersFailedException failedException = null;
+        for (ProfilerConfig p : options.getProfilers())
+        {
+            if (!profilerClasses.add(p.getKlass()))
+            {
+                throw new RunnerException("Cannot instantiate the same profiler more than once: " + p.getKlass());
+            }
+            try
+            {
+                ProfilerFactory.getProfilerOrException(p);
+            }
+            catch (ProfilerException e)
+            {
+                if (failedException == null)
+                {
+                    failedException = new ProfilersFailedException(e);
+                }
+                else
+                {
+                    failedException.addSuppressed(e);
+                }
+            }
+        }
+        if (failedException != null)
+        {
+            throw failedException;
         }
     }
 
