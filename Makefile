@@ -109,6 +109,9 @@ endif
 ifdef DEBUG_INFO
   runner_build_args += -Dquarkus.native.debug.enabled
 endif
+ifdef NATIVE_ARGS
+  runner_build_args += -Dquarkus.native.additional-build-args=$(NATIVE_ARGS)
+endif
 
 common_maven_args =
 ifdef QUARKUS_SNAPSHOT
