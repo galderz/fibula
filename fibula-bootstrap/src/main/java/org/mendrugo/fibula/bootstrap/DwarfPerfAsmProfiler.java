@@ -15,6 +15,12 @@ public class DwarfPerfAsmProfiler extends LinuxPerfAsmProfiler
         super(initLine);
     }
 
+    // Empty constructor for service loader
+    public DwarfPerfAsmProfiler() throws ProfilerException
+    {
+        super("");
+    }
+
     @Override
     public Collection<String> addJVMInvokeOptions(BenchmarkParams params)
     {
