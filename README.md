@@ -38,7 +38,7 @@ make run-native BENCHMARK=JMHSample_01 PROFILER=perfasm:skipAsm=true\\\;savePerf
 ```
 Running a benchmark sample in Native mode with perfasm that uses DWARF call graph and saving the perf bin data:
 ```shell script
-make run-native BENCHMARK=JMHSample_01 PROFILER=org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:skipAsm=true\\\;savePerfBin=true
+make run-native BENCHMARK=JMHSample_01 PROFILER=org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:skipAsm=true\\\;savePerfBin=true DEBUG_INFO=true
 ```
 
 ## TODO
