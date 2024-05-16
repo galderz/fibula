@@ -32,6 +32,10 @@ Running a benchmark sample in JVM mode with perf stat profiler:
 ```shell script
 make run BENCHMARK=JMHSample_01 PROFILER=perf
 ```
+Running a benchmark sample in Native mode with perfasm and saving the perf bin data:
+```shell script
+make run-native BENCHMARK=JMHSample_01 PROFILER=perfasm:skipAsm=true\\\;savePerfBin=true
+```
 
 ## TODO
 
