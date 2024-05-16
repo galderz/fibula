@@ -106,6 +106,9 @@ ifdef GEN
   runner_build_args += -Dfibula.generate=$(GEN)
   test_args += -Dtest=$(GEN)
 endif
+ifdef DEBUG_INFO
+  runner_build_args += -Dquarkus.native.debug.enabled
+endif
 
 common_maven_args =
 ifdef QUARKUS_SNAPSHOT
