@@ -109,6 +109,8 @@ ifdef GEN
 endif
 ifdef DEBUG_INFO
   runner_build_args += -Dquarkus.native.debug.enabled
+  runner_build_args += -H:+SourceLevelDebug
+  runner_build_args += -H:-DeleteLocalSymbols
 endif
 ifdef NATIVE_ARGS
   runner_build_args += -Dquarkus.native.additional-build-args=$(NATIVE_ARGS)
