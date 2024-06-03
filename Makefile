@@ -29,9 +29,9 @@ ifdef LOG_LEVEL
   endif
 endif
 
-PROFILER ?=
+PROF ?=
 
-ifdef PROFILER
+ifdef PROF
   MEASURE_FORKS ?= 1
   MEASURE_IT ?= 1
   MEASURE_TIME ?= 10
@@ -63,9 +63,9 @@ ifdef RESULT_FORMAT
   benchmark_params += $(RESULT_FORMAT)
 endif
 
-ifdef PROFILER
+ifdef PROF
   benchmark_params += -prof
-  benchmark_params += $(PROFILER)
+  benchmark_params += $(PROF)
 endif
 
 MAVEN_DEBUG ?=
@@ -109,7 +109,7 @@ ifdef GEN
 endif
 ifdef DEBUG_INFO
   runner_build_args += -Dquarkus.native.debug.enabled
-  runner_build_args += -Dquarkus.native.additional-build-args=-H:+SourceLevelDebug,-H:-DeleteLocalSymbols
+  runner_build_args += -Dquarkus.native.additional-build-args=-H:+SourceLevelDebug,-H:-DeleteLocalSymbols,-J--add-exports=jdk.internal.vm.compiler/org.graalvm.compiler.api.directives=ALL-UNNAMED
 endif
 ifdef NATIVE_ARGS
   runner_build_args += -Dquarkus.native.additional-build-args=$(NATIVE_ARGS)

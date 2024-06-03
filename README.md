@@ -26,19 +26,25 @@ make test MAVEN_DEBUG=test TEST=FailureModesTest
 ```
 Running a benchmark sample in Native mode with perf stat profiler:
 ```shell script
-make run-native BENCHMARK=JMHSample_01 PROFILER=perf
+make run-native BENCHMARK=JMHSample_01 PROF=perf
+```
+Running a benchmark sample in Native mode with perf stat or perf norm profiler with only branches and instructions
+(needs https://github.com/galderz/jmh/commit/4000d778664e5a138fef8b8b79d3a823fa843527 to avoid multiplexing):
+```shell script
+make run-native BENCHMARK=JMHSample_01 PROF=perf:events=branches,instructions
+make run-native BENCHMARK=JMHSample_01 PROF=perfnorm:events=branches,instructions
 ```
 Running a benchmark sample in JVM mode with perf stat profiler:
 ```shell script
-make run BENCHMARK=JMHSample_01 PROFILER=perf
+make run BENCHMARK=JMHSample_01 PROF=perf
 ```
 Running a benchmark sample in Native mode with perfasm and saving the perf bin data:
 ```shell script
-make run-native BENCHMARK=JMHSample_01 PROFILER=perfasm:skipAsm=true\\\;savePerfBin=true
+make run-native BENCHMARK=JMHSample_01 PROF=perfasm:skipAsm=true\\\;savePerfBin=true
 ```
 Running a benchmark sample in Native mode with perfasm that uses DWARF call graph and saving the perf bin data:
 ```shell script
-make run-native BENCHMARK=JMHSample_01 PROFILER=org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:skipAsm=true\\\;savePerfBin=true DEBUG_INFO=true
+make run-native BENCHMARK=JMHSample_01 PROF=org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:skipAsm=true\\\;savePerfBin=true DEBUG_INFO=true
 ```
 
 ## TODO
