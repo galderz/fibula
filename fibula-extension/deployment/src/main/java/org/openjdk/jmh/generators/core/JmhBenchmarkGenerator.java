@@ -170,17 +170,34 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
     private static boolean isSupportedBenchmark(ClassInfo info)
     {
         final String fqn = info.getQualifiedName();
-        final boolean supported = fqn.startsWith("org.mendrugo.fibula.it")
-            || fqn.startsWith("org.openjdk.jmh.it.interorder.BenchmarkStateOrderTest")
-            || fqn.startsWith("org.openjdk.jmh.it.profilers.LinuxPerfProfiler")
-            || fqn.startsWith("org.openjdk.jmh.it.profilers.LinuxPerfNormProfilerTest")
-            || fqn.contains("JMHSample_01")
-            || fqn.contains("JMHSample_03")
-            || fqn.contains("JMHSample_04")
-            || fqn.contains("JMHSample_09")
-            || fqn.contains("FibulaSample");
+        final boolean supported = isSupported(fqn);
         Log.debugf("Benchmark class %s is%s supported", fqn, supported ? "" : " not");
         return supported;
+    }
+
+    private static boolean isSupported(String fqn)
+    {
+        if (fqn.startsWith("org.mendrugo.fibula"))
+        {
+            return true;
+        }
+
+        if (fqn.startsWith("org.openjdk.jmh.it"))
+        {
+            return fqn.endsWith("interorder.BenchmarkStateOrderTest")
+                || fqn.startsWith("profilers.LinuxPerfProfiler")
+                || fqn.startsWith("profilers.LinuxPerfNormProfilerTest");
+        }
+
+        if (fqn.startsWith("org.openjdk.jmh.samples"))
+        {
+            return fqn.contains("JMHSample_01")
+            || fqn.contains("JMHSample_03")
+            || fqn.contains("JMHSample_04")
+            || fqn.contains("JMHSample_09");
+        }
+
+        return true;
     }
 
     private void generateClass(ClassInfo classInfo, BenchmarkInfo info)
