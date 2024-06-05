@@ -1,5 +1,14 @@
 # fibula
 
+`fibula-benchmarks` module enables end-user experience akin to JMH,
+whereby users expect a single `benchmarks.jar` to execute.
+It achieves that by depending solely on the `fibula-bootstrap` module,
+which is the module where benchmark coordination begins,
+and then making the module an `uber-jar`.
+This effectively transforms the `fibula-bootstrap` module,
+and all of its dependencies,
+into a `benchmarks.jar` uber-jar.
+
 Run individual benchmarks in JVM mode:
 ```shell script
 make run BENCHMARK=JMHSample_01
