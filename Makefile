@@ -13,14 +13,15 @@ endif
 BENCHMARK ?= JMHSample_01
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
 JAVA_HOME ?= $(GRAALVM_HOME)
+VERSION ?= 999-SNAPSHOT
 
 benchmarks_jar = target/benchmarks.jar
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
 java = $(JAVA_HOME)/bin/java
 samples_runner_jvm = fibula-samples/target/quarkus-app/quarkus-run.jar
-samples_runner_native = fibula-samples/target/fibula-samples-1.0.0-SNAPSHOT-runner
+samples_runner_native = fibula-samples/target/fibula-samples-$(VERSION)-runner
 test_runner_jvm = fibula-it/target/quarkus-app/quarkus-run.jar
-test_runner_native = fibula-it/target/fibula-it-1.0.0-SNAPSHOT-runner
+test_runner_native = fibula-it/target/fibula-it-$(VERSION)-runner
 
 system_props =
 ifdef LOG_LEVEL

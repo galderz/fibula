@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.mendrugo.fibula</groupId>
         <artifactId>fibula-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>999-SNAPSHOT</version>
     </parent>
     <artifactId>fibula-results</artifactId>
     <dependencies>
