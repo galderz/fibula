@@ -14,7 +14,6 @@ import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.profile.ProfilerException;
 import org.openjdk.jmh.profile.ProfilerFactory;
 import org.openjdk.jmh.results.BenchmarkResult;
-import org.openjdk.jmh.results.BenchmarkResultMetaData;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
@@ -471,7 +470,7 @@ public class BenchmarkService
             , null
             , null
             , null
-            , "fibula-999"
+            , "fibula:" + Version.getVersion()
             , TimeValue.minutes(10)
         );
     }
