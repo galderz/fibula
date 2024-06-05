@@ -10,6 +10,9 @@
         <version>999-SNAPSHOT</version>
     </parent>
     <artifactId>fibula-samples</artifactId>
+    <properties>
+        <hamcrest.version>2.2</hamcrest.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.mendrugo.fibula</groupId>
@@ -22,20 +25,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-samples</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -43,15 +34,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.squareup.moshi</groupId>
             <artifactId>moshi</artifactId>
             <version>1.15.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
         </dependency>
     </dependencies>
     <build>
