@@ -29,7 +29,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
 
         <jmh.version>1.37</jmh.version>
-        <quarkus.platform.version>3.11.0</quarkus.platform.version>
+        <quarkus.platform.version>3.11.1</quarkus.platform.version>
     </properties>
     <dependencyManagement>
         <dependencies>
