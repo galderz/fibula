@@ -1,4 +1,31 @@
-# fibula
+# Fibula
+
+Fibula is the combination of two Quarkus microservices
+, that allows you to JMH benchmarks as GraalVM native executables
+, reusing as much as of JMH as possible.
+
+## Getting Started
+
+There are no Fibula releases...
+
+## JMH Features Checklist
+
+- [ ] Blackhole.
+Implemented via ... TODO
+- ...
+
+## JMH Wishlist
+
+aka "The shopping list for Shipilev".
+
+* Make some generator package/class/method visibility public
+, instead of default or private.
+TODO add specific examples.
+
+## Architecture
+
+Two Quarkus microservices...etc.
+TODO
 
 `fibula-benchmarks` module enables end-user experience akin to JMH,
 whereby users expect a single `benchmarks.jar` to execute.
@@ -8,6 +35,8 @@ and then making the module an `uber-jar`.
 This effectively transforms the `fibula-bootstrap` module,
 and all of its dependencies,
 into a `benchmarks.jar` uber-jar.
+
+## Makefile Guide
 
 Run individual benchmarks in JVM mode:
 ```shell script
