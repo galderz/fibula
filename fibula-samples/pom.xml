@@ -12,6 +12,7 @@
     <artifactId>fibula-samples</artifactId>
     <properties>
         <hamcrest.version>2.2</hamcrest.version>
+        <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
     </properties>
     <dependencies>
         <dependency>
@@ -72,14 +73,23 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${failsafe-plugin.version}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
+                        <maven.repo>${settings.localRepository}</maven.repo>
                     </systemPropertyVariables>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

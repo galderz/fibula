@@ -2,7 +2,7 @@ package org.mendrugo.fibula.samples.it;
 
 import org.junit.jupiter.api.Test;
 
-public class ScoresTest
+public class ScoresIT
 {
     @Test
     public void jmhSample03_States()
