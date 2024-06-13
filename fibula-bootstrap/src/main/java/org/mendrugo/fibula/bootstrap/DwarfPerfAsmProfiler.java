@@ -30,4 +30,10 @@ public class DwarfPerfAsmProfiler extends LinuxPerfAsmProfiler
         result.add("dwarf");
         return result;
     }
+
+    @Override
+    protected void parseEvents()
+    {
+        // Skip parsing events because post-processing will be done with CLI tools.
+    }
 }
