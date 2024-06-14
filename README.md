@@ -1,18 +1,96 @@
 # Fibula
 
-Fibula is the combination of two Quarkus microservices
-, that allows you to JMH benchmarks as GraalVM native executables
-, reusing as much as of JMH as possible.
+Fibula allows you to run JMH benchmarks as GraalVM native executables.
+
+# Pre-requisites
+
+Build JMH [`1.37-patches` branch](https://github.com/galderz/jmh/tree/1.37-patches) locally to include the following patches:
+
+* Install `jmh-core-it` tests jar locally.
+This enables JMH integration tests to be run with Fibula.
+* Fix for [`perf stat` command not constructed right for event selection](https://bugs.openjdk.org/browse/CODETOOLS-7903739) bug.
+* Fix for [Perf event validation not working with skid options](https://bugs.openjdk.org/browse/CODETOOLS-7903740) bug.
+
+```shell
+git clone https://github.com/galderz/jmh && cd jmh
+git checkout 1.37-patches
+mvn install -DskipTests
+```
+
+Building Fibula with JDK 21 or newer:
+
+```shell
+mvn install -DskipTests
+```
 
 ## Getting Started
 
-There are no Fibula releases...
+To run the first JMH benchmark using Fibula,
+checkout the
+[fibula-show](https://github.com/galderz/fibula-show) repository,
+and navigate to the Fibula sample project:
+
+```shell
+git clone https://github.com/galderz/fibula-show
+cd fibula-show/2406-team/fibula
+```
+
+Set the `JAVA_HOME` to GraalVM or Mandrel for JDK 21 or higher,
+and build the benchmark:
+
+```shell
+mvn package -Pnative
+```
+
+Run the benchmark:
+```shell
+java -jar target/benchmarks.jar MyFirst
+```
+
+## Decompiling
+
+TODO...
+
+## Logging
+
+TODO...
+
+## Profiling
+
+`perf` and `perfnorm` can be used just like with JMH.
+
+JMH `perfasm` profiler is not yet fully supported,
+but equivalent functionality can be obtained with the `DwarfPerfAsmProfiler`.
+This custom profiler extends the `perf record` arguments to configure `dwarf` callgraph. 
+
+To use this profiler,
+the benchmark needs to be built with DWARF debug info.
+TODO ...
+
+## Blackholes
+
+TODO ...
+
+Explain if needed to adjust packages/modules for it work with GraalVM 24+
 
 ## JMH Features Checklist
 
-- [ ] Blackhole.
-Implemented via ... TODO
-- ...
+These are the JMH features that Fibula currently supports:
+
+- [x] Throughput and average benchmark modes.
+- [x] State objects with `Benchmark` and `Thread` scopes.
+- [x] Implicit blackhole support for returned values.
+- [x] Explicit `Blackhole` benchmark parameters.
+- [x] Output time unit definitions via `@OutputTimeUnit` annotation.
+- [x] `@Setup` and `@TearDown` annotations.
+- [x] `perf` and `perfnorm` profilers.
+
+Some JMH features are partially supported:
+
+* Functionality similar to `perfasm` can be obtained for GraalVM native images
+  by running with the ``,
+  skipping ASM generation and saving `perf record` binary file.
+  Then `perf annotate` can present information  
 
 ## JMH Wishlist
 
