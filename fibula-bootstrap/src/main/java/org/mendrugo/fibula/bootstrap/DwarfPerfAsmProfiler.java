@@ -12,7 +12,9 @@ public class DwarfPerfAsmProfiler extends LinuxPerfAsmProfiler
 {
     public DwarfPerfAsmProfiler(String initLine) throws ProfilerException
     {
-        super(initLine);
+        // Skip asm because functionality is not yet implemented.
+        // Instead, safe the perf bin file and analyze it with perf annotate.
+        super(initLine + ";skipAsm=true;savePerfBin=true");
     }
 
     // Empty constructor for service loader
