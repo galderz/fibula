@@ -17,7 +17,7 @@ git checkout 1.37-patches
 mvn install -DskipTests
 ```
 
-Building Fibula with JDK 21 or newer:
+Build Fibula with JDK 21 or newer:
 
 ```shell
 mvn install -DskipTests
@@ -49,7 +49,16 @@ java -jar target/benchmarks.jar MyFirst
 
 ## Decompiling
 
-TODO...
+Fibula generates bytecode to wrap benchmarks around infrastructure required to measure performance.
+This bytecode can optionally be decompiled for closer inspection.
+To do that, build the Fibula benchmark with `quarkus.package.jar.decompiler.enabled`.
+For example:
+
+```shell
+mvn package -Pnative -Dquarkus.package.jar.decompiler.enabled
+```
+
+The decompiled output can be located at the `target/decompiled` folder.
 
 ## Logging
 

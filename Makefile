@@ -96,7 +96,7 @@ endif
 
 runner_build_args =
 ifdef DECOMPILE
-  runner_build_args += -Dquarkus.package.vineflower.enabled=true
+  runner_build_args += -Dquarkus.package.jar.decompiler.enabled
 endif
 ifdef GRAALVM_VERSION
   ifeq ($(GRAALVM_VERSION),24)
