@@ -111,7 +111,7 @@ endif
 ifdef DEBUG_INFO
   runner_build_args += -Dquarkus.native.debug.enabled
   # todo add option to add -H:+SourceLevelDebug
-  runner_build_args += -Dquarkus.native.additional-build-args=-H:-DeleteLocalSymbols,-J--add-exports=jdk.internal.vm.compiler/org.graalvm.compiler.api.directives=ALL-UNNAMED
+  runner_build_args += -Dfibula.native.additional-build-args=-H:-DeleteLocalSymbols
 endif
 ifdef NATIVE_ARGS
   runner_build_args += -Dquarkus.native.additional-build-args=$(NATIVE_ARGS)
