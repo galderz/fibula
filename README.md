@@ -82,10 +82,11 @@ the benchmark needs to be built with DWARF debug info,
 and instruct native image to keep local symbols:
 
 ```shell
-mvn package -Dnative -Dquarkus.native.debug.enabled -Dfibula.native.additional-build-args=-H:-DeleteLocalSymbols
+mvn package -Dnative -Dquarkus.native.debug.enabled \
+    -Dfibula.native.additional-build-args=-H:-DeleteLocalSymbols
 ```
 
-> **_NOTE:_** For those familiar with Quarkus,
+> **NOTE**: For those familiar with Quarkus,
 > note that deleting local symbols is passed via `fibula.native.additional-build-args` instead of `quarkus.native.additional-build-args`.
 > This is needed because Fibula already defines configuration for `quarkus.native.additional-build-args` internally,
 > and so the contents of `fibula.native.additional-build-args` get appended to it.
@@ -106,7 +107,7 @@ Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
        │b0:└─→mov        %rax,0x20(%rsp)
 ```
 
-> **_TIP:_** Pass in `:P` event modifier to avoid performance events skid.
+> **TIP**: Pass in `:P` event modifier to avoid performance events skid.
 > For example: `-prof org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:events=cycles:P`
 
 ## Blackholes
@@ -122,6 +123,10 @@ By default, Fibula configures the package and module locations as they were up t
 If using GraalVM for JDK 22 or higher, pass in
 `-Dfibula.graal.compiler.module=jdk.graal.compiler -Dfibula.graal.compiler.package.prefix=jdk.graal`
 properties to adjust the module and package names.
+
+## JVM Mode
+
+TODO explain jvm mode...
 
 ## JMH Features Checklist
 
@@ -150,6 +155,8 @@ Therefore, inspect the source code before trying to run a specific JMH sample to
 
 aka "The shopping list for Shipilev".
 
+The patches in the JMH [`1.37-patches` branch](https://github.com/galderz/jmh/tree/1.37-patches).
+
 Switch the following types from package private to public:
 - [ ] `org.openjdk.jmh.generators.core.BenchmarkInfo`
 - [ ] `org.openjdk.jmh.generators.core.CompilerControlPlugin`
@@ -176,13 +183,8 @@ For example: `JmhBenchmarkGenerator` or `JmhStateObjectHandler`.
 
 ## Architecture
 
-TODO: review and complete
-
 `fibula-bootstrap` module is a Quarkus JVM application that coordinates benchmarks.
-It starts an HTTP REST endpoint and waits for data from forked runners.
-
-`fibula-runner` module is the Quarkus application that actually runs the benchmark code.
-It is a command line application that uses a HTTP REST client to communicate with the bootstrap process.
+It starts an HTTP REST endpoint to receive data from forked runners that it launches.
 
 `fibula-benchmarks` module enables end-user experience akin to JMH,
 whereby users expect a single `benchmarks.jar` to execute.
@@ -193,7 +195,75 @@ This effectively transforms the `fibula-bootstrap` module,
 and all of its dependencies,
 into a `benchmarks.jar` uber-jar.
 
+`fibula-runner` module is the Quarkus application that actually runs the benchmark code.
+It is a command line application that uses an HTTP REST client to communicate with the bootstrap process.
+
+`fibula-results` is a module that contains classes that are common to the bootstrap and runner modules.
+The module name does not clearly represent what it contains and the name is legacy from early prototypes.
+A lot of classes in there should also go away,
+but they remain until more functionality has been implemented,
+and a clearer idea on what is really common.
+There is no desire to simply refactor this module to `fibula-common`,
+because such modules can often become kitchen sinks.
+Once a clearer idea emerges on what is common,
+the module will be renamed accordingly.
+
+The bootstrap module interacts with the runner module via its command line API.
+The runner module interacts with the boostrap module via the HTTP REST endpoint.
+JMH serializable types are used in these interactions as much as possible,
+e.g. `BenchmarkParams`, `ThroughputResult`...etc.
+Their binary payloads are exchanged as base 64 encoded text.
+
+`fibula-it` is the integration testsuite containing tests homegrown tests,
+and tests that run against JMH benchmarks defined in JMH's `jmh-core-it` module.
+
+`fibula-samples` is a module containing JMH benchmark samples created to demonstrate some of the JMH features Fibula currently supports.
+On top of that,
+this module depends on JMH's `jmh-samples` module,
+so it can be used to run any of JMH's own samples with Fibula.
+The module contains an integration testsuite that tried to verify JMH and Fibula performance was within certain %,
+but testing has showed that this is not easy to quantify,
+and it would be expensive to try to do it in a clean environment.
+This module will be refactored very soon to leave it only with the ability to run benchmarks in JMH's module `jmh-samples`.
+The integration testsuite part has been superseded by the `fibula-it` module.
+
+### Entrypoint Duality
+
+Building and running a JMH benchmark with Fibula is powered by two Quarkus applications,
+which means there are 2 different application entry points:
+the entry point for the JVM-mode `fibula-bootstrap` (aka bootstrap) process,
+and the entry point for the `fibula-runner` (aka runner), which can be run in either native or JVM mode.
+Benchmarks written by end users of Fibula users need to rely on both Quarkus applications simultaneously:
+
+* On one hand, they need to depend on the runner process because bytecode needs to generated based on the JMH benchmarks(s) in the end-user project.
+This bytecode then needs to be fed to the Quarkus build that creates the package that contains the runner plus the bytecode,
+and builds it as either a native or JVM application.
+* On the other hand, they need the bootstrap process (indirectly via the `fibula-benchmarks` process),
+to be able to kickstart the benchmark coordination process,
+and this will fire of either the native or JVM pre-built runner application.
+
+To signal the 2 application entrypoints,
+and allow selection of entrypoint depending on the use case,
+Fibula relies on Quarkus' `@QuarkusMain` annotation and customizes its name based on the use case
+(`bootstrap` or `runner`).
+Selecting the use case to run happens this way:
+
+* End user applications have a compile time dependency on `fibula-runner`,
+which defines the main class as the `runner`. 
+* End use applications enable the `maven-dependency-plugin` to depend on the bootstrap, indirectly via the `fibula-benchmarks` process.
+This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder.
+The bootstrap module defines the main class as `bootstrap`.
+Although the bootstrap process is executed as is, without any additional bytecode in it,
+it reads the metadata generated when the Quarkus build run on the end-user JMH benchmark project.
+  * There are no flags in Fibula to decide whether ro run a native or JVM runner application.
+    Instead, the bootstrap makes the decision based on whether the native or JVM runner applications have been previously built.
+    If it finds both the native and JVM runner applications,
+    it will run the JVM application.
+
 ## Makefile Guide
+
+The project contains a Makefile designed to speed up typical development tasks.
+Here's a short guide on how to use it:
 
 Run individual benchmarks in JVM mode:
 ```shell script
