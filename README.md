@@ -126,7 +126,34 @@ properties to adjust the module and package names.
 
 ## JVM Mode
 
-TODO explain jvm mode...
+Benchmarks can also run in JVM mode with Fibula.
+There are several reasons why this might be useful:
+
+1. Faster development cycle loop.
+Native images are slow to build,
+so it is more productive to develop Fibula running JMH benchmarks in JVM mode.
+When things are working switch to native to make sure it works there too.
+2. At times performance of JMH benchmarks in native might be different to JMH with HotSpot.
+Running Fibula in JVM mode can help detect issues specific to the Fibula integration,
+e.g. bytecode generation issues. 
+
+To do, just remove the `-Dnative` argument to build the benchmarks as a standard JVM application:
+
+```shell
+mvn package
+```
+
+The benchmark(s) run the same way,
+no matter if built for native or JVM:
+
+```shell
+java -jar target/benchmarks.jar MyFirst
+```
+
+> **IMPORTANT**: There are no flags in Fibula to decide whether ro run a native or JVM runner application.
+> Instead, the bootstrap makes the decision based on whether the native or JVM runner applications have been previously built.
+> If it finds both the native and JVM runner applications,
+> it will run the JVM application.
 
 ## JMH Features Checklist
 
@@ -255,10 +282,6 @@ This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder
 The bootstrap module defines the main class as `bootstrap`.
 Although the bootstrap process is executed as is, without any additional bytecode in it,
 it reads the metadata generated when the Quarkus build run on the end-user JMH benchmark project.
-  * There are no flags in Fibula to decide whether ro run a native or JVM runner application.
-    Instead, the bootstrap makes the decision based on whether the native or JVM runner applications have been previously built.
-    If it finds both the native and JVM runner applications,
-    it will run the JVM application.
 
 ## Makefile Guide
 
