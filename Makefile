@@ -14,6 +14,7 @@ BENCHMARK ?= JMHSample_01
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
 JAVA_HOME ?= $(GRAALVM_HOME)
 VERSION ?= 999-SNAPSHOT
+MAVEN_HOME ?= $(HOME)/opt/maven
 
 benchmarks_jar = target/benchmarks.jar
 bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
@@ -74,12 +75,12 @@ MAVEN_DEBUG ?=
 mvnw += JAVA_HOME=$(JAVA_HOME)
 mvnw_runner += JAVA_HOME=$(JAVA_HOME)
 ifeq ($(MAVEN_DEBUG),process)
-  mvnw_runner += $(HOME)/opt/maven/bin/mvnDebug
+  mvnw_runner += $(MAVEN_HOME)/bin/mvnDebug
 else
-  mvnw_runner += $(HOME)/opt/maven/bin/mvn
+  mvnw_runner += $(MAVEN_HOME)/bin/mvn
 endif
 
-mvnw += $(HOME)/opt/maven/bin/mvn
+mvnw += $(MAVEN_HOME)/bin/mvn
 
 ifdef MAVEN_VERBOSE
   mvnw_runner += -X
