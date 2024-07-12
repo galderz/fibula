@@ -63,10 +63,6 @@ final class BenchmarkHandler
             iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(warmup), i));
             final boolean isFirstIteration = (i == 1);
             final boolean isLastIteration = i == warmup.getCount();
-//            if (lastIteration)
-//            {
-//                callable.control.markLastIteration();
-//            }
             IterationResult iterationResult = runIteration(
                 benchmark
                 , warmup
@@ -74,10 +70,6 @@ final class BenchmarkHandler
                 , isFirstIteration
                 , isLastIteration
             );
-//            if (lastIteration)
-//            {
-//                callable.control.resetLastIteration();
-//            }
             iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
             allWarmup += iterationResult.getMetadata().getAllOps();
         }
@@ -89,10 +81,6 @@ final class BenchmarkHandler
             iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(measurement), i));
             final boolean isFirstIteration = (i == 1);
             final boolean isLastIteration = i == measurement.getCount();
-//            if (isLastIteration)
-//            {
-//                callable.control.markLastIteration();
-//            }
             IterationResult iterationResult = runIteration(
                 benchmark
                 , measurement
@@ -100,10 +88,6 @@ final class BenchmarkHandler
                 , isFirstIteration
                 , isLastIteration
             );
-//            if (isLastIteration)
-//            {
-//                callable.control.resetLastIteration();
-//            }
             iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
             allMeasurement += iterationResult.getMetadata().getAllOps();
         }
@@ -224,15 +208,6 @@ final class BenchmarkHandler
         try
         {
             results = completed.get();
-
-//            final Result result = switch (benchmarkParams.getMode())
-//            {
-//                case Throughput -> new ThroughputResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
-//                case AverageTime -> new AverageTimeResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
-//                default -> throw new RuntimeException("NYI");
-//            };
-//
-//            results.add(result);
         }
         catch (ExecutionException ex)
         {
