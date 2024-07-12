@@ -78,38 +78,6 @@ class BenchmarkProcessor
         generator.complete(buildSystemTarget);
     }
 
-//    private void generateBenchmarkInjections()
-//    {
-//        Modes.nonAll().forEach(benchmarkKind ->
-//        {
-//            final String prefix = String.format(
-//                "%s.%s_%s_%s"
-//                , info.generatedPackageName
-//                , info.generatedClassName
-//                , info.methodGroup.getName()
-//                , benchmarkKind.name()
-//            );
-//
-//            final String functionFqn = String.format("%s_Function", prefix);
-//
-//            try (final ClassCreator function = ClassCreator.builder()
-//                .classOutput(classOutput)
-//                .className(functionFqn)
-//                .interfaces(Function.class)
-//                .build()
-//            )
-//            {
-//                addMethods(benchmarkKind, info.methodGroup, states, function);
-//
-//                // Write out state initializers
-//                states.addStateInitializers(function);
-//            }
-//
-//            final String supplierFqn = String.format("%s_Supplier", prefix);
-//            generateBenchmarkSupplier(functionFqn, supplierFqn);
-//        });
-//    }
-
     private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir)
     {
         final Path sourceDirectory = buildDir.resolve("generated-sources").resolve("bc");
@@ -251,12 +219,6 @@ class BenchmarkProcessor
     {
         try
         {
-//            final String name = String.format(
-//                "%s.%s"
-//                , packagePath.toString().replace(File.separatorChar, '.')
-//                , file.getFileName().toString().replaceAll("(?<!^)[.].*", "")
-//            );
-
             final String name = String.format(
                 "%s/%s"
                 , packagePath.toString()
@@ -271,26 +233,6 @@ class BenchmarkProcessor
             throw new UncheckedIOException(e);
         }
     }
-
-//    @BuildStep
-//    void generateCommand(
-//        BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
-//        , BuildProducer<GeneratedClassBuildItem> generatedClasses
-//        , CombinedIndexBuildItem index
-//        , BuildSystemTargetBuildItem buildSystemTarget
-//    )
-//    {
-//        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
-//        final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
-//
-//        final JandexGeneratorSource source = new JandexGeneratorSource(index.getIndex());
-//        final JmhBenchmarkGenerator generator = new JmhBenchmarkGenerator(beanOutput, classOutput);
-//        generator.generate(source);
-//        generator.complete(buildSystemTarget);
-//
-//        Log.info("Generating blackhole substitution");
-//        generateBlackholeSubstitution(classOutput);
-//    }
 
     private void generateBlackholeSubstitution(ClassOutput classOutput)
     {
