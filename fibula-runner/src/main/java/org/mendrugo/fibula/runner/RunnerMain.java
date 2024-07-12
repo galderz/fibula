@@ -12,11 +12,15 @@ import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.Serializables;
 import org.mendrugo.fibula.results.VmInfo;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.ThreadParams;
+import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.runner.BenchmarkException;
+import org.openjdk.jmh.runner.InfraControl;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 
 @QuarkusMain(name = "runner")
 public class RunnerMain implements QuarkusApplication
@@ -48,9 +52,8 @@ public class RunnerMain implements QuarkusApplication
     private void runFork(Cli cli)
     {
         final String supplierName = cli.text(RunnerArguments.SUPPLIER_NAME);
-        final BenchmarkParams params = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
+        final BenchmarkParams benchmarkParams = Serializables.fromBase64(cli.text(RunnerArguments.PARAMS));
 
-        final Infrastructure infrastructure = new Infrastructure();
         final List<BenchmarkSupplier> matchingSuppliers = suppliers.stream()
             .filter(supplier -> RunnerArguments.isSupplier(supplierName, supplier.getClass()))
             .toList();
@@ -68,24 +71,22 @@ public class RunnerMain implements QuarkusApplication
             );
 
             final BenchmarkException e = new BenchmarkException(errorMsg, Collections.emptyList());
-            iterationClient.notifyError(createIterationError(params, e));
+            iterationClient.notifyError(createIterationError(benchmarkParams, e));
             return;
         }
 
-        matchingSuppliers.stream()
-            .map(supplier -> new BenchmarkCallable(supplier.get(), infrastructure))
-            .forEach(callable -> runSingle(params, callable));
+        matchingSuppliers.forEach(benchmark -> runSingle(benchmark, benchmarkParams));
     }
 
-    private void runSingle(BenchmarkParams params, BenchmarkCallable callable)
+    private void runSingle(BenchmarkSupplier benchmark, BenchmarkParams benchmarkParams)
     {
         try
         {
-            runBenchmark(params, callable);
+            runBenchmark(benchmark, benchmarkParams);
         }
         catch (BenchmarkException be)
         {
-            iterationClient.notifyError(createIterationError(params, be));
+            iterationClient.notifyError(createIterationError(benchmarkParams, be));
         }
     }
 
@@ -107,12 +108,11 @@ public class RunnerMain implements QuarkusApplication
         return new IterationError.Detail(t.getClass().getName(), t.getMessage(), t.getStackTrace(), null);
     }
 
-    private void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)
-    {
-        final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(iterationClient);
+    private void runBenchmark(BenchmarkSupplier benchmark, BenchmarkParams benchmarkParams) {
+        final BenchmarkHandler benchmarkHandler = new BenchmarkHandler(iterationClient, benchmarkParams);
         try
         {
-            benchmarkHandler.runBenchmark(params, callable);
+            benchmarkHandler.runBenchmark(benchmark);
         }
         catch (BenchmarkException be)
         {
@@ -121,6 +121,10 @@ public class RunnerMain implements QuarkusApplication
         catch (Throwable t)
         {
             throw new BenchmarkException(t);
+        }
+        finally
+        {
+            benchmarkHandler.shutdown();
         }
         // todo add finally to shutdown handler (e.g. executor...etc)
     }

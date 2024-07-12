@@ -2,21 +2,27 @@ package org.mendrugo.fibula.runner;
 
 import org.mendrugo.fibula.results.*;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.Control;
 import org.openjdk.jmh.infra.IterationParams;
-import org.openjdk.jmh.results.AverageTimeResult;
+import org.openjdk.jmh.infra.ThreadParams;
 import org.openjdk.jmh.results.BenchmarkResultMetaData;
 import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.IterationResultMetaData;
-import org.openjdk.jmh.results.RawResults;
 import org.openjdk.jmh.results.Result;
-import org.openjdk.jmh.results.ResultRole;
-import org.openjdk.jmh.results.ThroughputResult;
 import org.openjdk.jmh.runner.BenchmarkException;
+import org.openjdk.jmh.runner.InfraControl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -27,51 +33,77 @@ import java.util.concurrent.TimeUnit;
 final class BenchmarkHandler
 {
     private final IterationClient iterationClient;
+    private final BenchmarkParams benchmarkParams;
 
-    public BenchmarkHandler(IterationClient iterationClient)
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private final ConcurrentMap<Thread, WorkerData> workerMap = new ConcurrentHashMap<>();
+    private final CyclicBarrier workerDataBarrier;
+    private final BlockingQueue<WorkerData> unusedWorkerData;
+
+    public BenchmarkHandler(IterationClient iterationClient, BenchmarkParams benchmarkParams)
     {
         this.iterationClient = iterationClient;
+        this.benchmarkParams = benchmarkParams;
+
+        int threads = benchmarkParams.getThreads();
+        this.workerDataBarrier = new CyclicBarrier(threads, this::captureUnusedWorkerData);
+        this.unusedWorkerData = new ArrayBlockingQueue<>(threads);
     }
 
-    void runBenchmark(BenchmarkParams params, BenchmarkCallable callable)
+    void runBenchmark(BenchmarkSupplier benchmark)
     {
         long allWarmup = 0;
         long allMeasurement = 0;
 
-        final IterationParams warmup = params.getWarmup();
+        final IterationParams warmup = benchmarkParams.getWarmup();
         final long warmupTime = System.currentTimeMillis();
         for (int i = 1; i <= warmup.getCount(); i++)
         {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(warmup), i));
-            final boolean lastIteration = i == warmup.getCount();
-            if (lastIteration)
-            {
-                callable.infrastructure.markLastIteration();
-            }
-            IterationResult iterationResult = runIteration(params, callable, warmup, callable.infrastructure);
-            if (lastIteration)
-            {
-                callable.infrastructure.resetLastIteration();
-            }
+            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(warmup), i));
+            final boolean isFirstIteration = (i == 1);
+            final boolean isLastIteration = i == warmup.getCount();
+//            if (lastIteration)
+//            {
+//                callable.control.markLastIteration();
+//            }
+            IterationResult iterationResult = runIteration(
+                benchmark
+                , warmup
+                , benchmarkParams
+                , isFirstIteration
+                , isLastIteration
+            );
+//            if (lastIteration)
+//            {
+//                callable.control.resetLastIteration();
+//            }
             iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
             allWarmup += iterationResult.getMetadata().getAllOps();
         }
 
-        IterationParams measurement = params.getMeasurement();
+        IterationParams measurement = benchmarkParams.getMeasurement();
         final long measurementTime = System.currentTimeMillis();
         for (int i = 1; i <= measurement.getCount(); i++)
         {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(params), Serializables.toBase64(measurement), i));
-            final boolean lastIteration = i == measurement.getCount();
-            if (lastIteration)
-            {
-                callable.infrastructure.markLastIteration();
-            }
-            IterationResult iterationResult = runIteration(params, callable, measurement, callable.infrastructure);
-            if (lastIteration)
-            {
-                callable.infrastructure.resetLastIteration();
-            }
+            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(measurement), i));
+            final boolean isFirstIteration = (i == 1);
+            final boolean isLastIteration = i == measurement.getCount();
+//            if (isLastIteration)
+//            {
+//                callable.control.markLastIteration();
+//            }
+            IterationResult iterationResult = runIteration(
+                benchmark
+                , measurement
+                , benchmarkParams
+                , isFirstIteration
+                , isLastIteration
+            );
+//            if (isLastIteration)
+//            {
+//                callable.control.resetLastIteration();
+//            }
             iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
             allMeasurement += iterationResult.getMetadata().getAllOps();
         }
@@ -87,29 +119,89 @@ final class BenchmarkHandler
         iterationClient.notifyTelemetry(new IterationTelemetry(Serializables.toBase64(resultMetaData)));
     }
 
-    private IterationResult runIteration(BenchmarkParams params, BenchmarkCallable callable, IterationParams iterationParams, Infrastructure infrastructure)
+    private void captureUnusedWorkerData() {
+        unusedWorkerData.addAll(workerMap.values());
+        workerMap.clear();
+    }
+
+    public void shutdown()
+    {
+        workerMap.clear();
+        executor.shutdownNow();
+    }
+
+    private IterationResult runIteration(
+        BenchmarkSupplier benchmark
+        , IterationParams iterationParams
+        , BenchmarkParams benchmarkParams
+        , boolean isFirstIteration
+        , boolean isLastIteration
+    )
     {
         final List<Result> iterationResults = new ArrayList<>();
-        final BenchmarkTaskResult benchmarkTaskResult = runTask(callable, infrastructure, iterationParams, params);
+        final BenchmarkTaskResult benchmarkTaskResult = runTask(
+            benchmark
+            , iterationParams
+            , benchmarkParams
+            , isFirstIteration
+            , isLastIteration
+        );
         iterationResults.addAll(benchmarkTaskResult.getResults());
 
         long allOps = benchmarkTaskResult.getAllOps();
         long measuredOps = benchmarkTaskResult.getMeasuredOps();
 
-        IterationResult result = new IterationResult(params, iterationParams, new IterationResultMetaData(allOps, measuredOps));
+        IterationResult result = new IterationResult(
+            benchmarkParams
+            , iterationParams
+            , new IterationResultMetaData(allOps, measuredOps)
+        );
         result.addResults(iterationResults);
         return result;
     }
 
-    private BenchmarkTaskResult runTask(BenchmarkCallable callable, Infrastructure infrastructure, IterationParams iterationParams, BenchmarkParams benchmarkParams)
+    private BenchmarkTaskResult runTask(
+        BenchmarkSupplier benchmark
+        , IterationParams iterationParams
+        , BenchmarkParams benchmarkParams
+        , boolean isFirstIteration
+        , boolean isLastIteration
+    )
     {
+        final int numThreads = 1;
+        final CountDownLatch preSetupBarrier = new CountDownLatch(numThreads);
+        final CountDownLatch preTearDownBarrier = new CountDownLatch(numThreads);
+        final boolean shouldYield = false;
+        final InfraControl control = new InfraControl(
+            benchmarkParams
+            , iterationParams
+            , preSetupBarrier
+            , preTearDownBarrier
+            , isFirstIteration
+            , isLastIteration
+            , shouldYield
+            , new Control()
+        );
+        final ThreadParams threadParams = new ThreadParams(
+            0
+            , 1
+            , 0
+            , 1
+            , 0
+            , 1
+            , 0
+            , 1
+            , 0
+            , 1
+        );
+
         final long defaultTimeout = TimeUnit.MINUTES.toNanos(1);
         long waitDeadline = System.nanoTime() + defaultTimeout;
 
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        final CompletionService<RawResults> completionService = new ExecutorCompletionService<>(executor);
+        final CompletionService<BenchmarkTaskResult> completionService = new ExecutorCompletionService<>(executor);
 
-        final Future<RawResults> completed = completionService.submit(callable);
+        final BenchmarkCallable callable = new BenchmarkCallable(benchmark, control, threadParams);
+        final Future<BenchmarkTaskResult> completed = completionService.submit(callable);
 
         try
         {
@@ -121,31 +213,26 @@ final class BenchmarkHandler
             // Ignore
         }
 
-        infrastructure.markDone();
+        // now we communicate all worker threads should stop
+        control.announceDone();
+
+        // wait for all workers to transit to teardown
+        // control.awaitWarmdownReady();
 
         BenchmarkTaskResult results = null;
         final List<Throwable> errors = new ArrayList<>();
         try
         {
-            final RawResults res = completed.get();
-            infrastructure.resetDone(); // reset done for further iterations
+            results = completed.get();
 
-            res.allOps += res.measuredOps;
-            final int batchSize = iterationParams.getBatchSize();
-            final int opsPerInv = benchmarkParams.getOpsPerInvocation();
-            res.allOps *= opsPerInv;
-            res.allOps /= batchSize;
-            res.measuredOps *= opsPerInv;
-            res.measuredOps /= batchSize;
-            results = new BenchmarkTaskResult((long) res.allOps, (long) res.measuredOps);
-            final Result result = switch (benchmarkParams.getMode())
-            {
-                case Throughput -> new ThroughputResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
-                case AverageTime -> new AverageTimeResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
-                default -> throw new RuntimeException("NYI");
-            };
-
-            results.add(result);
+//            final Result result = switch (benchmarkParams.getMode())
+//            {
+//                case Throughput -> new ThroughputResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
+//                case AverageTime -> new AverageTimeResult(ResultRole.PRIMARY, "tbd", res.measuredOps, res.getTime(), benchmarkParams.getTimeUnit());
+//                default -> throw new RuntimeException("NYI");
+//            };
+//
+//            results.add(result);
         }
         catch (ExecutionException ex)
         {
@@ -164,5 +251,61 @@ final class BenchmarkHandler
         }
 
         return results;
+    }
+
+    final class BenchmarkCallable implements Callable<BenchmarkTaskResult>
+    {
+        final BenchmarkSupplier benchmark;
+        final InfraControl control;
+        final ThreadParams threadParams;
+
+        private volatile Thread runner;
+
+        public BenchmarkCallable(
+            BenchmarkSupplier benchmark
+            , InfraControl control
+            , ThreadParams threadParams
+        )
+        {
+            this.benchmark = benchmark;
+            this.control = control;
+            this.threadParams = threadParams;
+        }
+
+        @Override
+        public BenchmarkTaskResult call() throws Exception
+        {
+            runner = Thread.currentThread();
+            WorkerData workerData = control.firstIteration ? newWorkerData(runner) : getWorkerData(runner);
+            return benchmark.get().apply(control, workerData);
+        }
+
+        private WorkerData getWorkerData(Thread thread) throws Exception
+        {
+            WorkerData workerData = workerMap.remove(thread);
+            workerDataBarrier.await();
+            if (workerData == null)
+            {
+                workerData = unusedWorkerData.poll();
+                if (workerData == null)
+                {
+                    throw new IllegalStateException("Cannot get another thread working data");
+                }
+            }
+
+            final WorkerData exist = workerMap.put(thread, workerData);
+            if (exist != null)
+            {
+                throw new IllegalStateException("Duplicate thread data");
+            }
+            return workerData;
+        }
+
+        private WorkerData newWorkerData(Thread thread)
+        {
+            final WorkerData workerData = new WorkerData(benchmark.newInstance(), threadParams);
+            workerMap.put(thread, workerData);
+            return workerData;
+        }
     }
 }
