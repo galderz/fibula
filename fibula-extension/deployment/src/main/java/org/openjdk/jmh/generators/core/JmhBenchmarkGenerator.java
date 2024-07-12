@@ -1,7 +1,6 @@
 package org.openjdk.jmh.generators.core;
 
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
-import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
@@ -9,7 +8,6 @@ import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
-import io.quarkus.gizmo.WhileLoop;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.DotName;
@@ -18,16 +16,16 @@ import org.jboss.jandex.Type;
 import org.mendrugo.fibula.extension.deployment.JandexGeneratorSource;
 import org.mendrugo.fibula.extension.deployment.JandexMethodInfo;
 import org.mendrugo.fibula.extension.deployment.Reflection;
-import org.mendrugo.fibula.results.Infrastructure;
-import org.mendrugo.fibula.results.JmhRawResults;
 import org.mendrugo.fibula.results.Modes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.infra.Blackhole;
-import org.openjdk.jmh.results.RawResults;
+import org.openjdk.jmh.infra.ThreadParams;
+import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
+import org.openjdk.jmh.runner.InfraControl;
 import org.openjdk.jmh.util.Multimap;
 import org.openjdk.jmh.util.Optional;
 
@@ -38,14 +36,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.SequencedCollection;
 import java.util.SequencedMap;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import static org.jboss.jandex.Type.Kind.PRIMITIVE;
 
@@ -219,27 +215,27 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
                 , benchmarkKind.name()
             );
 
-            final String functionFqn = String.format("%s_Function", prefix);
+            final String functionFqn = String.format("%s_BiFunction", prefix);
 
             try (final ClassCreator function = ClassCreator.builder()
                 .classOutput(classOutput)
                 .className(functionFqn)
-                .interfaces(Function.class)
+                .interfaces(BiFunction.class)
                 .build()
             )
             {
-                addMethods(benchmarkKind, info.methodGroup, states, function);
+                addMethods(benchmarkKind, info, states, function);
 
                 // Write out state initializers
                 states.addStateInitializers(function);
             }
 
             final String supplierFqn = String.format("%s_Supplier", prefix);
-            generateBenchmarkSupplier(functionFqn, supplierFqn);
+            generateBenchmarkSupplier(functionFqn, supplierFqn, info);
         });
     }
 
-    private void generateBenchmarkSupplier(String functionFqn, String supplierFqn)
+    private void generateBenchmarkSupplier(String functionFqn, String supplierFqn, BenchmarkInfo benchmarkInfo)
     {
         try (final ClassCreator supplier = ClassCreator.builder()
             .classOutput(beanOutput)
@@ -249,22 +245,27 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         )
         {
             supplier.addAnnotation(ApplicationScoped.class);
-            try (final MethodCreator get = supplier.getMethodCreator("get", Function.class))
+            try (final MethodCreator getMethod = supplier.getMethodCreator("get", BiFunction.class))
             {
-                final ResultHandle newInstance = get.newInstance(MethodDescriptor.ofConstructor(functionFqn));
-                get.returnValue(newInstance);
+                final ResultHandle functionInstance = getMethod.newInstance(MethodDescriptor.ofConstructor(functionFqn));
+                getMethod.returnValue(functionInstance);
+            }
+            try(final MethodCreator newInstanceMethod = supplier.getMethodCreator("newInstance", Object.class))
+            {
+                final ResultHandle benchmarkInstance = newInstanceMethod.newInstance(MethodDescriptor.ofConstructor(benchmarkInfo.generatedClassQName));
+                newInstanceMethod.returnValue(benchmarkInstance);
             }
         }
     }
 
-    private void addMethods(Mode benchmarkKind, MethodGroup methodGroup, JmhStateObjectHandler states, ClassCreator classCreator)
+    private void addMethods(Mode benchmarkKind, BenchmarkInfo benchmarkInfo, JmhStateObjectHandler states, ClassCreator classCreator)
     {
         // todo support remaining modes
         switch (benchmarkKind)
         {
             case Throughput:
             case AverageTime:
-                addThroughputOrAverage(benchmarkKind, methodGroup, states, classCreator);
+                addThroughputOrAverage(benchmarkKind, benchmarkInfo, states, classCreator);
                 break;
             // todo SampleTime
             // case SampleTime:
@@ -280,12 +281,12 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         }
     }
 
-    private void addThroughputOrAverage(Mode benchmarkKind, MethodGroup methodGroup, JmhStateObjectHandler states, ClassCreator classCreator)
+    private void addThroughputOrAverage(Mode benchmarkKind, BenchmarkInfo benchmarkInfo, JmhStateObjectHandler states, ClassCreator classCreator)
     {
         // todo sub groups
         // final boolean isSingleMethod = (methodGroup.methods().size() == 1);
         // int subGroup = -1;
-        for (MethodInfo method : methodGroup.methods())
+        for (MethodInfo method : benchmarkInfo.methodGroup.methods())
         {
             // todo sub groups
             // subGroup++;
@@ -293,7 +294,7 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
             final JandexMethodInfo jandexMethod = (JandexMethodInfo) method;
 
             // Calculating stub
-            final MethodDescriptor stubMethod = addThroughputOrAverageStub(jandexMethod, benchmarkKind, states, classCreator);
+            final MethodDescriptor stubMethod = addThroughputOrAverageStub(jandexMethod, benchmarkKind, states, classCreator, benchmarkInfo);
 
             // Function implementation bringing it all together
             addApply(jandexMethod, states, stubMethod, classCreator);
@@ -307,52 +308,54 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         , ClassCreator classCreator
     )
     {
-        final List<ResultHandle> stubParameters = new ArrayList<>();
+        // final List<ResultHandle> stubParameters = new ArrayList<>();
 
-        try (final MethodCreator apply = classCreator.getMethodCreator("apply", Object.class, Object.class))
+        try (final MethodCreator apply = classCreator.getMethodCreator("apply", Object.class, Object.class, Object.class))
         {
-            final ResultHandle infrastructure = apply.getMethodParam(0);
-            stubParameters.add(infrastructure);
+            final ResultHandle control = apply.getMethodParam(0);
+            // stubParameters.add(control);
+            final ResultHandle workerData = apply.getMethodParam(1);
+            // stubParameters.add(threadParams);
 
-            // RawResults raw = new RawResults();
-            final AssignableResultHandle raw = apply.createVariable(RawResults.class);
-            apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
-            stubParameters.add(raw);
+//            // RawResults raw = new RawResults();
+//            final AssignableResultHandle raw = apply.createVariable(RawResults.class);
+//            apply.assign(raw, apply.newInstance(MethodDescriptor.ofConstructor(RawResults.class)));
+//            stubParameters.add(raw);
 
-            // Blackhole blackhole = new Blackhole(...);
-            final AssignableResultHandle blackhole = apply.createVariable(Blackhole.class);
-            apply.assign(blackhole, apply.newInstance(
-                MethodDescriptor.ofConstructor(Blackhole.class, String.class)
-                , apply.load("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.")
-            ));
-            stubParameters.add(blackhole);
+//            // Blackhole blackhole = new Blackhole(...);
+//            final AssignableResultHandle blackhole = apply.createVariable(Blackhole.class);
+//            apply.assign(blackhole, apply.newInstance(
+//                MethodDescriptor.ofConstructor(Blackhole.class, String.class)
+//                , apply.load("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.")
+//            ));
+//            stubParameters.add(blackhole);
 
-            // B benchmark = tryInit();
-            // S state = tryInit();
-            // ...
-            final SequencedMap<StateObject, ResultHandle> stateHandles = states.addStateGetters(methodInfo, apply, classCreator);
-            final ResultHandle benchmark = stateHandles.firstEntry().getValue();
-            stubParameters.addAll(stateHandles.sequencedValues().reversed());
+//            // B benchmark = tryInit();
+//            // S state = tryInit();
+//            // ...
+//            final SequencedMap<StateObject, ResultHandle> stateHandles = states.addStateGetters(methodInfo, apply, classCreator);
+//            final ResultHandle benchmark = stateHandles.firstEntry().getValue();
+//            stubParameters.addAll(stateHandles.sequencedValues().reversed());
 
-            // benchmark.setup(); for each iteration setup methods
-            iterationProlog(stateHandles, methodInfo, states, apply);
+//            // benchmark.setup(); for each iteration setup methods
+//            iterationProlog(stateHandles, methodInfo, states, apply);
 
             // stub(infrastructure, raw, benchmark...);
-            apply.invokeVirtualMethod(methodDesc, apply.getThis(), stubParameters.toArray(new ResultHandle[0]));
+            final ResultHandle taskResult = apply.invokeVirtualMethod(methodDesc, apply.getThis(), control, workerData);
 
-            // benchmark.tearDown(); for each iteration tear down methods
-            iterationEpilog(stateHandles, methodInfo, states, apply);
-
-            try (final BytecodeCreator trueBranch = apply
-                .ifTrue(apply.readInstanceField(FieldDescriptor.of(Infrastructure.class, "lastIteration", boolean.class), infrastructure))
-                .trueBranch()
-            ) {
-                // benchmark.tearDown(); for each trial tear down methods
-                trialEpilog(stateHandles, methodInfo, states, trueBranch);
-            }
+//            // benchmark.tearDown(); for each iteration tear down methods
+//            iterationEpilog(stateHandles, methodInfo, states, apply);
+//
+//            try (final BytecodeCreator trueBranch = apply
+//                .ifTrue(apply.readInstanceField(FieldDescriptor.of(Infrastructure.class, "lastIteration", boolean.class), control))
+//                .trueBranch()
+//            ) {
+//                // benchmark.tearDown(); for each trial tear down methods
+//                trialEpilog(stateHandles, methodInfo, states, trueBranch);
+//            }
 
             // return raw;
-            apply.returnValue(raw);
+            apply.returnValue(taskResult);
         }
     }
 
@@ -371,56 +374,78 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         , Mode benchmarkKind
         , JmhStateObjectHandler states
         , ClassCreator function
+        , BenchmarkInfo benchmarkInfo
     )
     {
         String methodName = methodInfo.getName() + "_" + benchmarkKind.shortLabel() + JMH_STUB_SUFFIX;
 
         final List<String> paramNames = new ArrayList<>();
-        paramNames.add(Infrastructure.class.getName());
-        paramNames.add(RawResults.class.getName());
-        paramNames.add(Blackhole.class.getName());
-        final LinkedHashSet<StateObject> stateParams = states.stateOrder_(methodInfo, false);
-        stateParams.forEach(so -> paramNames.add(so.userType));
+        paramNames.add(InfraControl.class.getName());
+        paramNames.add("org.mendrugo.fibula.runner.WorkerData");
+//        paramNames.add(Infrastructure.class.getName());
+//        paramNames.add(RawResults.class.getName());
+//        paramNames.add(Blackhole.class.getName());
+//        final LinkedHashSet<StateObject> stateParams = states.stateOrder_(methodInfo, false);
+//        stateParams.forEach(so -> paramNames.add(so.userType));
 
-        try (final MethodCreator stub = function.getMethodCreator(methodName, "void", paramNames.toArray(new String[0])))
+        try (final MethodCreator stub = function.getMethodCreator(methodName, BenchmarkTaskResult.class.getName(), paramNames.toArray(new String[0])))
         {
-            int paramIndex = 0;
-            final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
-            final ResultHandle raw = stub.getMethodParam(paramIndex++);
-            final ResultHandle blackhole = stub.getMethodParam(paramIndex++);
+            final ResultHandle control = stub.getMethodParam(0);
+            final ResultHandle workerData = stub.getMethodParam(1);
 
-            final SequencedMap<StateObject, ResultHandle> stateHandles = new LinkedHashMap<>();
-            for (StateObject so : states.stateOrder_(methodInfo, false))
-            {
-                stateHandles.put(so, stub.getMethodParam(paramIndex++));
-            }
+            // FibulaSample_01_MultiHelloWorld_helloWorld1_jmhTest x = new FibulaSample_01_MultiHelloWorld_helloWorld1_jmhTest();
+            // x.helloWorld1_Throughput(InfraControl control, ThreadParams threadParams);
 
-            // raw.startTime = System.nanoTime();
-            final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-            stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
+            final ResultHandle instance = stub.readInstanceField(FieldDescriptor.of("org.mendrugo.fibula.runner.WorkerData", "instance", Object.class.getName()), workerData);
+            final ResultHandle threadParams = stub.readInstanceField(FieldDescriptor.of("org.mendrugo.fibula.runner.WorkerData", "threadParams", ThreadParams.class.getName()), workerData);
 
-            // long operations = 0;
-            final AssignableResultHandle operations = stub.createVariable(long.class);
-            stub.assign(operations, stub.load(0L));
+            final MethodDescriptor method = MethodDescriptor.ofMethod(
+                benchmarkInfo.generatedClassQName
+                , methodInfo.getName() + "_" + benchmarkKind.name()
+                , BenchmarkTaskResult.class.getName()
+                , InfraControl.class.getName()
+                , ThreadParams.class.getName()
+            );
+            final ResultHandle taskResult = stub.invokeVirtualMethod(method, instance, control, threadParams);
+            stub.returnValue(taskResult);
 
-            // Loop
-            final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
-                bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
-            ));
-            try (final BytecodeCreator whileLoopBlock = whileLoop.block())
-            {
-                invocationProlog(stateHandles, methodInfo, states, whileLoopBlock);
-                emitCall(stateHandles, methodInfo, blackhole, whileLoopBlock);
-                invocationEpilog(stateHandles, methodInfo, states, whileLoopBlock);
-                whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
-            }
-
-            // raw.stopTime = System.nanoTime();
-            final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
-            stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
-
-            // JmhRawResults.setMeasureOps(operations, raw);
-            stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
+//            int paramIndex = 0;
+//            final ResultHandle infrastructure = stub.getMethodParam(paramIndex++);
+//            final ResultHandle raw = stub.getMethodParam(paramIndex++);
+//            final ResultHandle blackhole = stub.getMethodParam(paramIndex++);
+//
+//            final SequencedMap<StateObject, ResultHandle> stateHandles = new LinkedHashMap<>();
+//            for (StateObject so : states.stateOrder_(methodInfo, false))
+//            {
+//                stateHandles.put(so, stub.getMethodParam(paramIndex++));
+//            }
+//
+//            // raw.startTime = System.nanoTime();
+//            final ResultHandle startTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+//            stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "startTime", long.class), raw, startTime);
+//
+//            // long operations = 0;
+//            final AssignableResultHandle operations = stub.createVariable(long.class);
+//            stub.assign(operations, stub.load(0L));
+//
+//            // Loop
+//            final WhileLoop whileLoop = stub.whileLoop(bc -> bc.ifFalse(
+//                bc.readInstanceField(FieldDescriptor.of(Infrastructure.class, "isDone", boolean.class), infrastructure)
+//            ));
+//            try (final BytecodeCreator whileLoopBlock = whileLoop.block())
+//            {
+//                invocationProlog(stateHandles, methodInfo, states, whileLoopBlock);
+//                emitCall(stateHandles, methodInfo, blackhole, whileLoopBlock);
+//                invocationEpilog(stateHandles, methodInfo, states, whileLoopBlock);
+//                whileLoopBlock.assign(operations, whileLoopBlock.add(operations, whileLoopBlock.load(1L)));
+//            }
+//
+//            // raw.stopTime = System.nanoTime();
+//            final ResultHandle stopTime = stub.invokeStaticMethod(MethodDescriptor.ofMethod(System.class, "nanoTime", long.class));
+//            stub.writeInstanceField(FieldDescriptor.of(RawResults.class, "stopTime", long.class), raw, stopTime);
+//
+//            // JmhRawResults.setMeasureOps(operations, raw);
+//            stub.invokeStaticMethod(MethodDescriptor.ofMethod(JmhRawResults.class, "setMeasuredOps", void.class, long.class, RawResults.class), operations, raw);
 
             stub.returnVoid();
             return stub.getMethodDescriptor();

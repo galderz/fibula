@@ -47,6 +47,11 @@
             </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-generator-bytecode</artifactId>
+                <version>${jmh.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-samples</artifactId>
                 <version>${jmh.version}</version>
             </dependency>
