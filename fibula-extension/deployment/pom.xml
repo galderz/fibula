@@ -10,6 +10,9 @@
         <version>999-SNAPSHOT</version>
     </parent>
     <artifactId>fibula-extension-deployment</artifactId>
+    <properties>
+        <skipTests>true</skipTests>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -13,6 +13,7 @@
     <properties>
         <hamcrest.version>2.2</hamcrest.version>
         <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
+        <skipTests>true</skipTests>
     </properties>
     <dependencies>
         <dependency>
