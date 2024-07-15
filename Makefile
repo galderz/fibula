@@ -17,12 +17,10 @@ VERSION ?= 999-SNAPSHOT
 MAVEN_HOME ?= $(HOME)/opt/maven
 
 benchmarks_jar = target/benchmarks.jar
-bootstrap_jar = fibula-bootstrap/target/quarkus-app/quarkus-run.jar
+it_jar = fibula-it/target/fibula-it-$(VERSION).jar
+it_runner = fibula-it/target/fibula-it-$(VERSION)-runner
 java = $(JAVA_HOME)/bin/java
-samples_runner_jvm = fibula-samples/target/quarkus-app/quarkus-run.jar
-samples_runner_native = fibula-samples/target/fibula-samples-$(VERSION)-runner
-test_runner_jvm = fibula-it/target/quarkus-app/quarkus-run.jar
-test_runner_native = fibula-it/target/fibula-it-$(VERSION)-runner
+samples_runner = fibula-samples/target/fibula-samples-$(VERSION)-runner
 
 system_props =
 ifdef LOG_LEVEL
@@ -129,10 +127,10 @@ ifeq ($(MAVEN_DEBUG),test)
   mvnw += -Dmaven.surefire.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
 endif
 
-run: $(samples_runner_jvm) do-run
+run: $(it_jvm) do-run
 .PHONY: run
 
-run-native: $(samples_runner_native) do-run
+run-native: $(samples_runner) do-run
 .PHONY: run-native
 
 do-run:
@@ -140,48 +138,37 @@ do-run:
 > $(java) $(system_props) -jar $(benchmarks_jar) $(benchmark_params)
 .PHONY: do-run
 
-$(bootstrap_jar): $(shell find . -type f -name "*.java" ! -path "./fibula-it/*" ! -path "./fibula-samples/*" ! -path "./*/target/*")
-$(bootstrap_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
-$(bootstrap_jar): $(shell find . -type f -name "pom.xml" ! -path "./fibula-it/*" ! -path "./fibula-samples/*" ! -path "./*/target/*")
-$(bootstrap_jar): $(shell find . -type f -name "application.properties" ! -path "./fibula-it/*" ! -path "./fibula-samples/*" ! -path "./*/target/*")
-$(bootstrap_jar):
-> $(mvnw) install $(common_maven_args) -DskipTests --projects !fibula-samples,!fibula-it
+$(it_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
+$(it_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
+$(it_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
+$(it_jar):
+> $(mvnw) install $(common_maven_args) -DskipTests
+> touch $@
 
-$(samples_runner_jvm): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
-$(samples_runner_jvm): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
-$(samples_runner_jvm): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
-$(samples_runner_jvm): $(bootstrap_jar)
-> $(mvnw_runner) package -DskipTests -pl fibula-samples $(runner_build_args)
-
-$(samples_runner_native): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
-$(samples_runner_native): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
-$(samples_runner_native): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
-$(samples_runner_native): $(bootstrap_jar)
+$(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
+$(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
+$(samples_runner): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
+$(samples_runner): $(it_jar)
 > $(mvnw_runner) package -DskipTests -pl fibula-samples -Pnative $(runner_build_args)
 
-samples: $(samples_runner_jvm)
+samples: $(it_jar)
 > $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
 .PHONY: samples
 
-samples-native: $(samples_runner_native)
+samples-native: $(samples_runner)
 > $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
 .PHONY: samples-native
 
-$(test_runner_jvm): $(shell find fibula-it -type f -name "*.java" ! -path "./*/target/*")
-$(test_runner_jvm): $(shell find fibula-it -type f -name "pom.xml" ! -path "./*/target/*")
-$(test_runner_jvm): $(bootstrap_jar)
-> $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it $(runner_build_args)
-
-$(test_runner_native): $(shell find fibula-it -type f -name "*.java" ! -path "./*/target/*")
-$(test_runner_native): $(shell find fibula-it -type f -name "pom.xml" ! -path "./*/target/*")
-$(test_runner_native): $(bootstrap_jar)
+$(it_runner): $(shell find fibula-it -type f -name "*.java" ! -path "./*/target/*")
+$(it_runner): $(shell find fibula-it -type f -name "pom.xml" ! -path "./*/target/*")
+$(it_runner): $(it_jar)
 > $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it -Pnative $(runner_build_args)
 
-test: $(bootstrap_jar) $(test_runner_jvm)
+test: $(it_jar)
 > $(mvnw) $(test_args) -pl fibula-it $(system_props)
 .PHONY: test
 
-test-native: $(bootstrap_jar) $(test_runner_native)
+test-native: $(it_runner)
 > $(mvnw) $(test_args) $(common_maven_args) -pl fibula-it $(system_props)
 .PHONY: test-native
 
