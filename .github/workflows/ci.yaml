@@ -48,7 +48,6 @@ jobs:
         run: mvn test -pl fibula-it
 
   test-jvm:
-    needs: build-jmh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
