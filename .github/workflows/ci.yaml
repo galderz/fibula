@@ -8,7 +8,6 @@ on:
 
 env:
   ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
-  JMH_BRANCH: 1.37-jmh-core-it-test-jar
 
 jobs:
   test-native:
@@ -22,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: galderz/jmh
-          ref: $JMH_BRANCH
+          ref: 1.37-jmh-core-it-test-jar
           path: jmh
       - uses: graalvm/setup-graalvm@v1
         with:
@@ -59,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: galderz/jmh
-          ref: $JMH_BRANCH
+          ref: 1.37-jmh-core-it-test-jar
           path: jmh
       - uses: graalvm/setup-graalvm@v1
         with:
