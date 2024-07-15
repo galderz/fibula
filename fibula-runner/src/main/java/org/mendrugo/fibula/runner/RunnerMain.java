@@ -6,21 +6,16 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.mendrugo.fibula.results.Command;
-import org.mendrugo.fibula.results.Infrastructure;
 import org.mendrugo.fibula.results.IterationError;
 import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.Serializables;
 import org.mendrugo.fibula.results.VmInfo;
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.infra.ThreadParams;
-import org.openjdk.jmh.results.BenchmarkTaskResult;
 import org.openjdk.jmh.runner.BenchmarkException;
-import org.openjdk.jmh.runner.InfraControl;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiFunction;
 
 @QuarkusMain(name = "runner")
 public class RunnerMain implements QuarkusApplication
@@ -71,7 +66,7 @@ public class RunnerMain implements QuarkusApplication
             );
 
             final BenchmarkException e = new BenchmarkException(errorMsg, Collections.emptyList());
-            iterationClient.notifyError(createIterationError(benchmarkParams, e));
+            iterationClient.notifyError(createIterationError(e));
             return;
         }
 
@@ -86,16 +81,16 @@ public class RunnerMain implements QuarkusApplication
         }
         catch (BenchmarkException be)
         {
-            iterationClient.notifyError(createIterationError(benchmarkParams, be));
+            iterationClient.notifyError(createIterationError(be));
         }
     }
 
-    private static IterationError createIterationError(BenchmarkParams params, BenchmarkException exception)
+    private static IterationError createIterationError(BenchmarkException exception)
     {
         final List<IterationError.Detail> errorDetails = Arrays.stream(exception.getSuppressed())
             .map(RunnerMain::toErrorDetail)
             .toList();
-        return new IterationError(Serializables.toBase64(params), exception.getMessage(), errorDetails);
+        return new IterationError(exception.getMessage(), errorDetails);
     }
 
     private static IterationError.Detail toErrorDetail(Throwable t)

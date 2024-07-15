@@ -46,8 +46,7 @@ public class IterationResource
     public String error(IterationError iterationError)
     {
         Log.debugf("Received: %s", iterationError);
-        final BenchmarkParams params = Serializables.fromBase64(iterationError.benchmarkParams());
-        resultService.errorIteration(params, iterationError.errorMessage(), iterationError.details());
+        resultService.errorIteration(iterationError.errorMessage(), iterationError.details());
         return "Ok";
     }
 

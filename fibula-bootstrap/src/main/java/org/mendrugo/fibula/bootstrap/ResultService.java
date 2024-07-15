@@ -27,9 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,9 +37,9 @@ public class ResultService
     @Inject
     FormatService formatService;
 
-    // todo simplify with atomic references for exception, results and metadata for a single iteration
-    private final SortedMap<BenchmarkParams, Either<BenchmarkException, List<IterationResult>>> iterationResults = new TreeMap<>();
+    private final AtomicReference<List<IterationResult>> resultsRef = new AtomicReference<>(new ArrayList<>());
     private final AtomicReference<BenchmarkResultMetaData> resultMetadataRef = new AtomicReference<>();
+    private final AtomicReference<BenchmarkException> exceptionRef = new AtomicReference<>();
 
     // todo consider moving these two to bean of their own
     private Optional<String> resultFile;
@@ -90,14 +88,11 @@ public class ResultService
         formatService.output().iterationResult(benchmarkParams, iterationParams, iteration, result);
         if (IterationType.MEASUREMENT == iterationParams.getType())
         {
-            iterationResults
-                .computeIfAbsent(benchmarkParams, k -> Either.right(new ArrayList<>()))
-                .right()
-                .add(result);
+            resultsRef.get().add(result);
         }
     }
 
-    void errorIteration(BenchmarkParams params, String errorMessage, List<IterationError.Detail> errorDetails)
+    void errorIteration(String errorMessage, List<IterationError.Detail> errorDetails)
     {
         formatService.output().println("<failure>");
         formatService.output().println("");
@@ -107,7 +102,7 @@ public class ResultService
             .forEach(formatService.output()::println);
 
         formatService.output().println("");
-        iterationResults.put(params, Either.left(benchmarkException));
+        exceptionRef.set(benchmarkException);
     }
 
     void setResultMetadata(BenchmarkResultMetaData resultMetaData)
@@ -148,10 +143,10 @@ public class ResultService
 
     BenchmarkResult endFork(BenchmarkParams params, long startTime)
     {
-        final Either<BenchmarkException, List<IterationResult>> either = iterationResults.get(params);
-        if (either instanceof Either.Left<BenchmarkException, List<IterationResult>> left)
+        final BenchmarkException exception = exceptionRef.getAndSet(null);
+        if (exception != null)
         {
-            throw left.left();
+            throw exception;
         }
 
         final BenchmarkResultMetaData resultMetadata = resultMetadataRef.getAndSet(null);
@@ -160,7 +155,8 @@ public class ResultService
             resultMetadata.adjustStart(startTime);
         }
 
-        return new BenchmarkResult(params, either.right(), resultMetadata);
+        final List<IterationResult> results = resultsRef.getAndSet(new ArrayList<>());
+        return new BenchmarkResult(params, results, resultMetadata);
     }
 
     Collection<RunResult> endRun(Multimap<BenchmarkParams, BenchmarkResult> results)
