@@ -39,7 +39,7 @@ jobs:
         run: mvn install -DskipTests
       - name: Build Fibula
         working-directory: fibula
-        run: mvn install -DskipTests --projects !fibula-it
+        run: mvn install -DskipTests
       - name: Build native runner
         working-directory: fibula
         run: mvn package -DskipTests -pl fibula-it -Pnative
@@ -73,12 +73,6 @@ jobs:
       - name: Build JMH
         working-directory: jmh
         run: mvn install -DskipTests
-      - name: Build Fibula
+      - name: Test Fibula
         working-directory: fibula
-        run: mvn install -DskipTests --projects !fibula-it
-      - name: Build native runner
-        working-directory: fibula
-        run: mvn package -DskipTests -pl fibula-it
-      - name: Run integration tests
-        working-directory: fibula
-        run: mvn test -pl fibula-it
+        run: mvn install
