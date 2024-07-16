@@ -40,6 +40,7 @@ jobs:
       - name: Build Fibula
         working-directory: fibula
         run: mvn install -DskipTests
+      # todo make tests really IT to avoid the need to build first?
       - name: Build native runner
         working-directory: fibula
         run: mvn package -DskipTests -pl fibula-it -Pnative
@@ -73,6 +74,10 @@ jobs:
       - name: Build JMH
         working-directory: jmh
         run: mvn install -DskipTests
+      # todo make tests really IT to avoid the need to build first?
+      - name: Build Fibula
+        working-directory: fibula
+        run: mvn install -DskipTests
       - name: Test Fibula
         working-directory: fibula
-        run: mvn install
+        run: mvn test -pl fibula-it
