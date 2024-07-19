@@ -95,8 +95,10 @@ public enum Vm
             args.add(String.format("-D%s=%s", logLevelPropertyName, logLevel));
         }
 
-        // todo add an option for the native image agent and fix location of java
-        // , "-agentlib:native-image-agent=config-output-dir=target/native-agent-config"
+        if (Boolean.getBoolean("fibula.native.agent"))
+        {
+            args.add("-agentlib:native-image-agent=config-output-dir=target/native-agent-config");
+        }
 
         args.addAll(javaOptions);
 
