@@ -80,7 +80,7 @@ class BenchmarkProcessor
         final Collection<String> generatedBenchmarkFQNs = generator.generate(source);
         generator.complete(buildSystemTarget);
 
-        Log.info("Register generated benchmarks for reflection");
+        Log.infof("Register generated benchmarks for reflection: %s", generatedBenchmarkFQNs);
         generatedBenchmarkFQNs.stream()
             .map(ReflectiveClassBuildItem::builder)
             .map(builder -> builder.methods(true).build())
