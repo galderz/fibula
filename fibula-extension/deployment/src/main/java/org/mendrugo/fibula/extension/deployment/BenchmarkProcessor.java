@@ -10,6 +10,7 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.gizmo.ClassCreator;
@@ -34,6 +35,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +61,7 @@ class BenchmarkProcessor
         , BuildProducer<GeneratedClassBuildItem> generatedClasses
         , CombinedIndexBuildItem index
         , BuildSystemTargetBuildItem buildSystemTarget
+        , BuildProducer<ReflectiveClassBuildItem> reflection
     )
     {
         final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
@@ -74,8 +77,14 @@ class BenchmarkProcessor
         Log.info("Generate benchmark injections");
         final JandexGeneratorSource source = new JandexGeneratorSource(index.getIndex());
         final JmhBenchmarkGenerator generator = new JmhBenchmarkGenerator(beanOutput, classOutput);
-        generator.generate(source);
+        final Collection<String> generatedBenchmarkFQNs = generator.generate(source);
         generator.complete(buildSystemTarget);
+
+        Log.info("Register generated benchmarks for reflection");
+        generatedBenchmarkFQNs.stream()
+            .map(ReflectiveClassBuildItem::builder)
+            .map(builder -> builder.methods(true).build())
+            .forEach(reflection::produce);
     }
 
     private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir)

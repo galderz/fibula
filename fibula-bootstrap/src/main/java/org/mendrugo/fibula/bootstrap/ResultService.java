@@ -81,12 +81,9 @@ public class ResultService
         formatService.output().iteration(benchmarkParams, iterationParams, iteration);
     }
 
-    void endIteration(int iteration, IterationResult result)
+    void endIteration(IterationResult result)
     {
-        final BenchmarkParams benchmarkParams = result.getBenchmarkParams();
-        final IterationParams iterationParams = result.getParams();
-        formatService.output().iterationResult(benchmarkParams, iterationParams, iteration, result);
-        if (IterationType.MEASUREMENT == iterationParams.getType())
+        if (IterationType.MEASUREMENT == result.getParams().getType())
         {
             resultsRef.get().add(result);
         }
@@ -127,21 +124,33 @@ public class ResultService
             final Class<?> paramType = AssertionError.class == errorClass ? Object.class : String.class;
             final Constructor<?> constructor = errorClass.getDeclaredConstructor(paramType);
             final Throwable throwable = (Throwable) constructor.newInstance(errorDetail.message());
-            throwable.setStackTrace(errorDetail.stackTrace());
-            if (errorDetail.cause() != null)
-            {
-                final Throwable cause = toSuppressedException(errorDetail.cause());
-                throwable.initCause(cause);
-            }
+            initThrowable(errorDetail, throwable);
             return throwable;
+        }
+        catch (ClassNotFoundException cnfe)
+        {
+            final RuntimeException e = new RuntimeException(String.format("%s: %s", errorDetail.className(), errorDetail.message()));
+            initThrowable(errorDetail, e);
+            throw e;
+            // return new Exception(String.format("%s: %s", errorDetail.className(), errorDetail.message()), errorDetail.cause());
         }
         catch (Exception e)
         {
-            throw new BenchmarkException(e);
+            return new BenchmarkException(e);
         }
     }
 
-    BenchmarkResult endFork(BenchmarkParams params, long startTime)
+    private static void initThrowable(IterationError.Detail errorDetail, Throwable throwable)
+    {
+        throwable.setStackTrace(errorDetail.stackTrace());
+        if (errorDetail.cause() != null)
+        {
+            final Throwable cause = toSuppressedException(errorDetail.cause());
+            throwable.initCause(cause);
+        }
+    }
+
+    List<IterationResult> getResults()
     {
         final BenchmarkException exception = exceptionRef.getAndSet(null);
         if (exception != null)
@@ -149,14 +158,12 @@ public class ResultService
             throw exception;
         }
 
-        final BenchmarkResultMetaData resultMetadata = resultMetadataRef.getAndSet(null);
-        if (resultMetadata != null)
-        {
-            resultMetadata.adjustStart(startTime);
-        }
+        return resultsRef.getAndSet(new ArrayList<>());
+    }
 
-        final List<IterationResult> results = resultsRef.getAndSet(new ArrayList<>());
-        return new BenchmarkResult(params, results, resultMetadata);
+    public BenchmarkResultMetaData getMetadata()
+    {
+        return resultMetadataRef.getAndSet(null);
     }
 
     Collection<RunResult> endRun(Multimap<BenchmarkParams, BenchmarkResult> results)

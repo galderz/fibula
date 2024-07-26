@@ -53,54 +53,54 @@ final class BenchmarkHandler
 
     void runBenchmark(BenchmarkSupplier benchmark)
     {
-        long allWarmup = 0;
-        long allMeasurement = 0;
-
-        final IterationParams warmup = benchmarkParams.getWarmup();
-        final long warmupTime = System.currentTimeMillis();
-        for (int i = 1; i <= warmup.getCount(); i++)
-        {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(warmup), i));
-            final boolean isFirstIteration = (i == 1);
-            final boolean isLastIteration = i == warmup.getCount();
-            IterationResult iterationResult = runIteration(
-                benchmark
-                , warmup
-                , benchmarkParams
-                , isFirstIteration
-                , isLastIteration
-            );
-            iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
-            allWarmup += iterationResult.getMetadata().getAllOps();
-        }
-
-        IterationParams measurement = benchmarkParams.getMeasurement();
-        final long measurementTime = System.currentTimeMillis();
-        for (int i = 1; i <= measurement.getCount(); i++)
-        {
-            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(measurement), i));
-            final boolean isFirstIteration = (i == 1);
-            final boolean isLastIteration = i == measurement.getCount();
-            IterationResult iterationResult = runIteration(
-                benchmark
-                , measurement
-                , benchmarkParams
-                , isFirstIteration
-                , isLastIteration
-            );
-            iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
-            allMeasurement += iterationResult.getMetadata().getAllOps();
-        }
-        final long stopTime = System.currentTimeMillis();
-
-        BenchmarkResultMetaData resultMetaData = new BenchmarkResultMetaData(
-            warmupTime
-            , measurementTime
-            , stopTime
-            , allWarmup
-            , allMeasurement
-        );
-        iterationClient.notifyTelemetry(new IterationTelemetry(Serializables.toBase64(resultMetaData)));
+//        long allWarmup = 0;
+//        long allMeasurement = 0;
+//
+//        final IterationParams warmup = benchmarkParams.getWarmup();
+//        final long warmupTime = System.currentTimeMillis();
+//        for (int i = 1; i <= warmup.getCount(); i++)
+//        {
+//            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(warmup), i));
+//            final boolean isFirstIteration = (i == 1);
+//            final boolean isLastIteration = i == warmup.getCount();
+//            IterationResult iterationResult = runIteration(
+//                benchmark
+//                , warmup
+//                , benchmarkParams
+//                , isFirstIteration
+//                , isLastIteration
+//            );
+//            iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
+//            allWarmup += iterationResult.getMetadata().getAllOps();
+//        }
+//
+//        IterationParams measurement = benchmarkParams.getMeasurement();
+//        final long measurementTime = System.currentTimeMillis();
+//        for (int i = 1; i <= measurement.getCount(); i++)
+//        {
+//            iterationClient.notifyStart(new IterationStart(Serializables.toBase64(benchmarkParams), Serializables.toBase64(measurement), i));
+//            final boolean isFirstIteration = (i == 1);
+//            final boolean isLastIteration = i == measurement.getCount();
+//            IterationResult iterationResult = runIteration(
+//                benchmark
+//                , measurement
+//                , benchmarkParams
+//                , isFirstIteration
+//                , isLastIteration
+//            );
+//            iterationClient.notifyEnd(new IterationEnd(i, Serializables.toBase64(iterationResult)));
+//            allMeasurement += iterationResult.getMetadata().getAllOps();
+//        }
+//        final long stopTime = System.currentTimeMillis();
+//
+//        BenchmarkResultMetaData resultMetaData = new BenchmarkResultMetaData(
+//            warmupTime
+//            , measurementTime
+//            , stopTime
+//            , allWarmup
+//            , allMeasurement
+//        );
+//        iterationClient.notifyResultMetaData(new IterationTelemetry(Serializables.toBase64(resultMetaData)));
     }
 
     private void captureUnusedWorkerData() {

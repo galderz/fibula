@@ -88,13 +88,14 @@ ifdef DEBUG
   java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
 endif
 
-ifdef NATIVE_AGENT
-  java += -Dfibula.native.agent=true
-endif
-
 test_args = test
 ifdef TEST
   test_args += -Dtest=$(TEST)
+endif
+
+ifdef NATIVE_AGENT
+  java += -Dfibula.native.agent=true
+  test_args += -Dfibula.native.agent=true
 endif
 
 runner_build_args =

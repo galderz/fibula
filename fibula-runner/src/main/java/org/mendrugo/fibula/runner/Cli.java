@@ -88,7 +88,7 @@ final class Cli
             }
             else
             {
-                throw new IllegalArgumentException("Illegal parameter usage");
+                // Ignore unknown arguments
             }
         }
 

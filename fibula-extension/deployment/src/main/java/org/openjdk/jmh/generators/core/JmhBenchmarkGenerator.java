@@ -50,7 +50,10 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
         this.classOutput = classOutput;
     }
 
-    public void generate(JandexGeneratorSource source)
+    /**
+     * Returns a collection with the fully qualified names of the generated benchmark classes.
+     */
+    public Collection<String> generate(JandexGeneratorSource source)
     {
         Multimap<ClassInfo, MethodInfo> clazzes = buildAnnotatedSet_(source);
 
@@ -71,6 +74,10 @@ public final class JmhBenchmarkGenerator extends BenchmarkGenerator
                 }
             }
         }
+
+        return benchmarkInfos.stream()
+            .map(info -> info.generatedClassQName)
+            .toList();
     }
 
     public void complete(BuildSystemTargetBuildItem buildSystemTarget)

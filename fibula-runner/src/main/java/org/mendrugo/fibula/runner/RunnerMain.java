@@ -11,8 +11,12 @@ import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.Serializables;
 import org.mendrugo.fibula.results.VmInfo;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.runner.ActionPlan;
 import org.openjdk.jmh.runner.BenchmarkException;
+import org.openjdk.jmh.runner.DualRunner;
+import org.openjdk.jmh.runner.options.Options;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +27,9 @@ public class RunnerMain implements QuarkusApplication
     @RestClient
     IterationClient iterationClient;
 
+    @Inject
+    OutputFormatDelegate outputFormat;
+
     @RestClient
     VmRestClient vmClient;
 
@@ -31,17 +38,33 @@ public class RunnerMain implements QuarkusApplication
     List<BenchmarkSupplier> suppliers;
 
     @Override
-    public int run(String... args)
+    public int run(String... args) throws Exception
     {
-        final Cli cli = Cli.read(args);
-        final Command command = Command.valueOf(cli.text(RunnerArguments.COMMAND));
-        switch (command)
+        try
         {
-            case FORK -> runFork(cli);
-            case VM_INFO -> runVmInfo();
-        }
+            final Cli cli = Cli.read(args);
+            final Command command = Command.valueOf(cli.text(RunnerArguments.COMMAND));
+            switch (command)
+            {
+                case FORK -> runFork2(cli);
+                case VM_INFO -> runVmInfo();
+            }
 
-        return 0;
+            return 0;
+        }
+        catch (Throwable t)
+        {
+            iterationClient.notifyError(new IterationError(t.getMessage(), toErrorDetails(t)));
+            throw t;
+        }
+    }
+
+    private void runFork2(Cli cli)
+    {
+        final Options options = Serializables.fromBase64(cli.text(RunnerArguments.OPTIONS));
+        final ActionPlan actionPlan = Serializables.fromBase64(cli.text(RunnerArguments.ACTION_PLAN));
+        final DualRunner runner = new DualRunner(options, outputFormat, iterationClient);
+        runner.run(actionPlan);
     }
 
     private void runFork(Cli cli)
@@ -91,6 +114,18 @@ public class RunnerMain implements QuarkusApplication
             .map(RunnerMain::toErrorDetail)
             .toList();
         return new IterationError(exception.getMessage(), errorDetails);
+    }
+
+    private static List<IterationError.Detail> toErrorDetails(Throwable t)
+    {
+        final List<IterationError.Detail> details = new ArrayList<>();
+        Throwable current = t;
+        while(current != null)
+        {
+            details.add(toErrorDetail(current));
+            current = current.getCause();
+        }
+        return details;
     }
 
     private static IterationError.Detail toErrorDetail(Throwable t)

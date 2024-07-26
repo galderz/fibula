@@ -1,12 +1,17 @@
 package org.mendrugo.fibula.bootstrap;
 
+import joptsimple.internal.Strings;
+import org.openjdk.jmh.infra.BenchmarkParams;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public enum Vm
@@ -49,12 +54,23 @@ public enum Vm
         };
     }
 
-    List<String> vmArguments(String jvm, List<String> javaOptions)
+    Collection<String> jvmArgs(Collection<String> jvmArgs)
     {
         return switch (this)
         {
-            case HOTSPOT -> getHotSpotArguments(jvm, javaOptions);
-            case SUBSTRATE -> getNativeArguments(javaOptions);
+            case HOTSPOT -> jvmArgs;
+            case SUBSTRATE -> jvmArgs.stream()
+                .filter(arg -> !skipNativeJvmArgs().matcher(arg).matches())
+                .toList();
+        };
+    }
+
+    List<String> vmArguments(String jvm, Collection<String> jvmArgs, List<String> javaOptions)
+    {
+        return switch (this)
+        {
+            case HOTSPOT -> getHotSpotArguments(jvm, jvmArgs, javaOptions);
+            case SUBSTRATE -> getNativeArguments(jvmArgs, javaOptions);
         };
     }
 
@@ -83,10 +99,11 @@ public enum Vm
         throw new IllegalStateException("Could not resolve which VM invoker to use");
     }
 
-    private static List<String> getHotSpotArguments(String jvm, List<String> javaOptions)
+    private static List<String> getHotSpotArguments(String jvm, Collection<String> jvmArgs, List<String> javaOptions)
     {
         final List<String> args = new ArrayList<>();
         args.add(jvm);
+        args.addAll(jvmArgs);
 
         final String logLevelPropertyName = "quarkus.log.category.\"org.mendrugo.fibula\".level";
         final String logLevel = System.getProperty(logLevelPropertyName);
@@ -108,11 +125,23 @@ public enum Vm
         return args;
     }
 
-    private static List<String> getNativeArguments(List<String> javaOptions)
+    private static List<String> getNativeArguments(Collection<String> jvmArgs, List<String> javaOptions)
     {
         final List<String> args = new ArrayList<>();
         args.add(RUN_BINARY.getPath());
+        args.addAll(jvmArgs);
         args.addAll(javaOptions);
         return args;
+    }
+
+    private static Pattern skipNativeJvmArgs()
+    {
+        final List<String> skipJvmArgs = List.of(
+            "-XX:(\\+|-)UnlockExperimentalVMOptions"
+            , "-XX:(\\+|-)EnableJVMCIProduct"
+            , "-XX:ThreadPriorityPolicy=\\d+"
+        );
+
+        return Pattern.compile(Strings.join(skipJvmArgs, "|"));
     }
 }

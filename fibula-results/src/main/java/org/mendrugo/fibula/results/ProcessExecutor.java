@@ -23,8 +23,6 @@ public final class ProcessExecutor
 
     public ProcessResult runSync(List<String> arguments, boolean printOut, boolean printErr)
     {
-        // todo add profiler and option overrides for print*
-
         TempFile stdOut;
         TempFile stdErr;
         try
@@ -42,7 +40,6 @@ public final class ProcessExecutor
         )
         {
             final ProcessBuilder processBuilder = new ProcessBuilder(arguments);
-            long startTime = System.currentTimeMillis();
             final Process process = processBuilder.start();
 
             // drain streams, else we might lock up
@@ -67,7 +64,7 @@ public final class ProcessExecutor
             errDrainer.join();
             outDrainer.join();
 
-            return new ProcessResult(exitValue, stdOut, stdErr, startTime);
+            return new ProcessResult(exitValue, stdOut, stdErr);
         }
         catch (IOException e)
         {
@@ -109,6 +106,13 @@ public final class ProcessExecutor
         int exitCode
         , TempFile stdOut
         , TempFile stdErr
-        , long startTime
-    ) {}
+    ) implements AutoCloseable
+    {
+        @Override
+        public void close()
+        {
+            stdOut.delete();
+            stdErr.delete();
+        }
+    }
 }

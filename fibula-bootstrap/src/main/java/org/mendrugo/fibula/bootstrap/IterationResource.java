@@ -20,26 +20,26 @@ public class IterationResource
     @Inject
     ResultService resultService;
 
-    @Path("/start")
-    @POST
-    public String start(IterationStart iterationStart)
-    {
-        Log.debugf("Received: %s", iterationStart);
-        final BenchmarkParams benchmarkParams = Serializables.fromBase64(iterationStart.benchmarkParams());
-        final IterationParams iterationParams = Serializables.fromBase64(iterationStart.iterationParams());
-        resultService.startIteration(benchmarkParams, iterationParams, iterationStart.iteration());
-        return "Ok";
-    }
-
-    @Path("/end")
-    @POST
-    public String end(IterationEnd iterationEnd)
-    {
-        Log.debugf("Received: %s", iterationEnd);
-        final IterationResult result = Serializables.fromBase64(iterationEnd.result());
-        resultService.endIteration(iterationEnd.iteration(), result);
-        return "Ok";
-    }
+//    @Path("/start")
+//    @POST
+//    public String start(IterationStart iterationStart)
+//    {
+//        Log.debugf("Received: %s", iterationStart);
+//        final BenchmarkParams benchmarkParams = Serializables.fromBase64(iterationStart.benchmarkParams());
+//        final IterationParams iterationParams = Serializables.fromBase64(iterationStart.iterationParams());
+//        resultService.startIteration(benchmarkParams, iterationParams, iterationStart.iteration());
+//        return "Ok";
+//    }
+//
+//    @Path("/end")
+//    @POST
+//    public String end(IterationEnd iterationEnd)
+//    {
+//        Log.debugf("Received: %s", iterationEnd);
+//        final IterationResult result = Serializables.fromBase64(iterationEnd.result());
+//        resultService.endIteration(iterationEnd.iteration(), result);
+//        return "Ok";
+//    }
 
     @Path("/error")
     @POST
@@ -50,13 +50,21 @@ public class IterationResource
         return "Ok";
     }
 
-    @Path("/telemetry")
+    @Path("/result-metadata")
     @POST
-    public String telemetry(IterationTelemetry telemetry)
+    public String resultMetadata(String resultMetadata)
     {
-        Log.debugf("Received: %s", telemetry);
-        final BenchmarkResultMetaData resultMetaData = Serializables.fromBase64(telemetry.telemetry());
-        resultService.setResultMetadata(resultMetaData);
+        Log.debugf("Received: result-metadata %s", resultMetadata);
+        resultService.setResultMetadata(Serializables.fromBase64(resultMetadata));
+        return "Ok";
+    }
+
+    @Path("/result")
+    @POST
+    public String result(String result)
+    {
+        Log.debugf("Received: result %s", result);
+        resultService.endIteration(Serializables.fromBase64(result));
         return "Ok";
     }
 }
