@@ -41,13 +41,19 @@ jobs:
           native-image --version
       - name: Build JMH
         working-directory: jmh
+        # Needs to be built with HotSpot,
+        # otherwise benchmarks not generated.
+        # Examples relying on JMH samples,
+        # or test relying on core-it tests,
+        # would fail otherwise.
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: mvn install -DskipTests
       - name: Build Fibula
         working-directory: fibula
         run: mvn install -DskipTests
-      # todo make tests really IT to avoid the need to build first?
+      # Building Fibula runner first because integration tests don't run as Quarkus integration tests.
+      # Running them as normal Quarkus tests makes it easy to run them via API.
       - name: Build native runner
         working-directory: fibula
         run: mvn package -DskipTests -pl fibula-it -Pnative
@@ -84,10 +90,15 @@ jobs:
           echo "JAVA_HOME_21_X64: $JAVA_HOME_21_X64"
           java --version
       - name: Build JMH
+        env:
+          # Needs to be built with HotSpot,
+          # otherwise benchmarks not generated.
+          # Examples relying on JMH samples,
+          # or test relying on core-it tests,
+          # would fail otherwise.
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         working-directory: jmh
         run: mvn install -DskipTests
-      # todo make tests really IT to avoid the need to build first?
       - name: Build Fibula
         working-directory: fibula
         run: mvn install -DskipTests
