@@ -44,6 +44,9 @@ jobs:
       - name: Build native runner
         working-directory: fibula
         run: mvn package -DskipTests -pl fibula-it -Pnative
+      - name: List jars in native image source jar
+        working-directory: fibula
+        run: ls -al fibula-it/target/fibula-it-999-SNAPSHOT-native-image-source-jar/lib
       - name: Run integration tests
         working-directory: fibula
         run: mvn test -pl fibula-it
