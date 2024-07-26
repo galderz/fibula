@@ -47,6 +47,9 @@ jobs:
       - name: List jars in native image source jar
         working-directory: fibula
         run: ls -al fibula-it/target/fibula-it-999-SNAPSHOT-native-image-source-jar/lib
+      - name: List contents of JMH core-it test jar
+        working-directory: fibula
+        run: jar tf fibula-it/target/fibula-it-999-SNAPSHOT-native-image-source-jar/lib/org.openjdk.jmh.jmh-core-it-1.37-tests.jar
       - name: Run integration tests
         working-directory: fibula
         run: mvn test -pl fibula-it
