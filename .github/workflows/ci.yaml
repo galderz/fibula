@@ -23,6 +23,10 @@ jobs:
           repository: galderz/jmh
           ref: 1.37-jmh-core-it-test-jar
           path: jmh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: 'dev'
@@ -32,10 +36,13 @@ jobs:
         run: |
           echo "GRAALVM_HOME: $GRAALVM_HOME"
           echo "JAVA_HOME: $JAVA_HOME"
+          echo "JAVA_HOME_21_X64: $JAVA_HOME_21_X64"
           java --version
           native-image --version
       - name: Build JMH
         working-directory: jmh
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: mvn install -DskipTests
       - name: Build Fibula
         working-directory: fibula
