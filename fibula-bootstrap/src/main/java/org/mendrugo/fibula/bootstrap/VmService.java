@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mendrugo.fibula.results.Command;
 import org.mendrugo.fibula.results.ProcessExecutor;
+import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 import org.mendrugo.fibula.results.RunnerArguments;
 import org.mendrugo.fibula.results.VmInfo;
 import org.openjdk.jmh.runner.BenchmarkException;
@@ -55,13 +56,16 @@ public class VmService
 
     private int runInfo(Vm vm)
     {
-        final List<String> baseArguments = vm.vmArguments(Utils.getCurrentJvm(), Collections.emptyList());
+        final List<String> baseArguments = vm.vmArguments(Utils.getCurrentJvm(), Collections.emptyList(), Collections.emptyList());
         final List<String> arguments = new ArrayList<>(baseArguments);
         arguments.add("--" + RunnerArguments.COMMAND);
         arguments.add(Command.VM_INFO.toString());
         Log.debugf("Executing: %s", String.join(" ", arguments));
 
         final ProcessExecutor processExec = new ProcessExecutor(formatService.output());
-        return processExec.runSync(arguments, false, false).exitCode();
+        try (ProcessResult result = processExec.runSync(arguments, false, false))
+        {
+            return result.exitCode();
+        }
     }
 }

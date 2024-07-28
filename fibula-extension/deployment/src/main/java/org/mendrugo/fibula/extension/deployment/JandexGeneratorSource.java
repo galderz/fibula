@@ -2,7 +2,6 @@ package org.mendrugo.fibula.extension.deployment;
 
 import io.quarkus.logging.Log;
 import org.jboss.jandex.AnnotationInstance;
-import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.jboss.jandex.MethodInfo;
@@ -13,7 +12,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.generators.core.ClassInfo;
 import org.openjdk.jmh.generators.core.GeneratorSource;
-import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +26,6 @@ public class JandexGeneratorSource implements GeneratorSource
 {
     private static final DotName BENCHMARK = DotName.createSimple(Benchmark.class.getName());
     private static final DotName BENCHMARK_MODE = DotName.createSimple(BenchmarkMode.class.getName());
-    private static final DotName BLACKHOLE = DotName.createSimple(Blackhole.class.getName());
     private static final DotName STATE = DotName.createSimple(State.class.getName());
     private static final DotName SETUP = DotName.createSimple(Setup.class.getName());
     private static final DotName TEAR_DOWN = DotName.createSimple(TearDown.class.getName());

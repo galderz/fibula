@@ -2,14 +2,13 @@ package org.mendrugo.fibula.extension.deployment;
 
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
-import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.deployment.GeneratedClassGizmoAdaptor;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.gizmo.ClassCreator;
@@ -34,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -54,14 +54,13 @@ class BenchmarkProcessor
 
     @BuildStep
     void generateBenchmarks(
-        BuildProducer<GeneratedBeanBuildItem> generatedBeanClasses
-        , OutputTargetBuildItem outputTargetBuildItem
+        OutputTargetBuildItem outputTargetBuildItem
         , BuildProducer<GeneratedClassBuildItem> generatedClasses
         , CombinedIndexBuildItem index
         , BuildSystemTargetBuildItem buildSystemTarget
+        , BuildProducer<ReflectiveClassBuildItem> reflection
     )
     {
-        final ClassOutput beanOutput = new GeneratedBeanGizmoAdaptor(generatedBeanClasses);
         final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
 
         Log.info("Generating blackhole substitution");
@@ -71,11 +70,22 @@ class BenchmarkProcessor
         final List<GeneratedClassBuildItem> compiled = compileBenchmarks(outputTargetBuildItem.getOutputDirectory());
         compiled.forEach(generatedClasses::produce);
 
-        Log.info("Generate benchmark injections");
+        // todo Find an alternative way to get all generated benchmark FQNs.
+        //      Generated benchmark classes could be just compiled above,
+        //      or it could be in a dependency,
+        //      so jandex would be best place to find classes with `jmhTest` prefix.
         final JandexGeneratorSource source = new JandexGeneratorSource(index.getIndex());
-        final JmhBenchmarkGenerator generator = new JmhBenchmarkGenerator(beanOutput, classOutput);
-        generator.generate(source);
+        final JmhBenchmarkGenerator generator = new JmhBenchmarkGenerator();
+        final Collection<String> generatedBenchmarkFQNs = generator.generate(source);
         generator.complete(buildSystemTarget);
+        Log.infof("Found %d generated benchmarks", generatedBenchmarkFQNs.size());
+        Log.debugf("Generated benchmarks found are: %s", generatedBenchmarkFQNs);
+
+        Log.info("Register generated benchmarks for reflection");
+        generatedBenchmarkFQNs.stream()
+            .map(ReflectiveClassBuildItem::builder)
+            .map(builder -> builder.methods(true).build())
+            .forEach(reflection::produce);
     }
 
     private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir)

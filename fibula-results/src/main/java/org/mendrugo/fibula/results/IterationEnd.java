@@ -1,6 +1,8 @@
 package org.mendrugo.fibula.results;
 
 public record IterationEnd(
-    int iteration
-    , String result
+    String benchmarkParams
+    , String iterationParams
+    , int iteration
+    , String iterationResult
 ) {}

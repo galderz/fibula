@@ -4,7 +4,25 @@
       "name":"int[]"
     },
     {
+      "name":"java.lang.Boolean"
+    },
+    {
+      "name":"java.lang.Double"
+    },
+    {
       "name":"java.lang.Enum"
+    },
+    {
+      "name":"java.lang.Enum[]"
+    },
+    {
+      "name":"java.lang.Integer"
+    },
+    {
+      "name":"java.lang.Long"
+    },
+    {
+      "name":"java.lang.Number"
     },
     {
       "name":"java.lang.String"
@@ -23,6 +41,12 @@
     },
     {
       "name":"java.util.Collections$UnmodifiableCollection"
+    },
+    {
+      "name":"java.util.EnumSet$SerializationProxy"
+    },
+    {
+      "name":"java.util.HashMap"
     },
     {
       "name":"java.util.TreeMap"
@@ -79,13 +103,37 @@
       "name":"org.openjdk.jmh.results.ResultRole"
     },
     {
+      "name":"org.openjdk.jmh.results.SampleTimeResult"
+    },
+    {
+      "name":"org.openjdk.jmh.results.SingleShotResult"
+    },
+    {
       "name":"org.openjdk.jmh.results.ThroughputResult"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.Action"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.ActionMode"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.ActionPlan"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.ActionType"
     },
     {
       "name":"org.openjdk.jmh.runner.IterationType"
     },
     {
       "name":"org.openjdk.jmh.runner.WorkloadParams"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.options.CommandLineOptions"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.options.OptionsBuilder"
     },
     {
       "name":"org.openjdk.jmh.runner.options.TimeValue"
@@ -97,10 +145,28 @@
       "name":"org.openjdk.jmh.util.DelegatingMultimap"
     },
     {
+      "name":"org.openjdk.jmh.util.DelegatingMultiset"
+    },
+    {
+      "name":"org.openjdk.jmh.util.HashMultimap"
+    },
+    {
+      "name":"org.openjdk.jmh.util.MultisetStatistics"
+    },
+    {
+      "name":"org.openjdk.jmh.util.Optional"
+    },
+    {
+      "name":"org.openjdk.jmh.util.SampleBuffer"
+    },
+    {
       "name":"org.openjdk.jmh.util.SingletonStatistics"
     },
     {
       "name":"org.openjdk.jmh.util.TreeMultimap"
+    },
+    {
+      "name":"org.openjdk.jmh.util.TreeMultiset"
     }
   ],
   "lambdaCapturingTypes":[

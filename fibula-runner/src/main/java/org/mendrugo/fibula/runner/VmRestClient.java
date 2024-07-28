@@ -8,6 +8,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mendrugo.fibula.results.VmInfo;
 
+// todo rename class to VmInfoClient
 @Path("/vm")
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.APPLICATION_JSON)

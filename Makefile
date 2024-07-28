@@ -88,13 +88,14 @@ ifdef DEBUG
   java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
 endif
 
-ifdef NATIVE_AGENT
-  java += -Dfibula.native.agent=true
-endif
-
 test_args = test
 ifdef TEST
   test_args += -Dtest=$(TEST)
+endif
+
+ifdef NATIVE_AGENT
+  java += -Dfibula.native.agent=true
+  test_args += -Dfibula.native.agent=true
 endif
 
 runner_build_args =
@@ -146,7 +147,7 @@ $(it_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
 $(it_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
 $(it_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(it_jar):
-> $(mvnw) install $(common_maven_args) -DskipTests
+> $(mvnw_runner) install $(common_maven_args) -DskipTests
 > touch $@
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")

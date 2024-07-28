@@ -1,7 +1,8 @@
 package org.mendrugo.fibula.results;
 
+// todo test with only passing iteration params (since benchmark params are included?)
 public record IterationStart(
-    String benchmarkParams // todo do I need this? doesn't iteration params include benchparams?
+    String benchmarkParams
     , String iterationParams
     , int iteration
 ) {}

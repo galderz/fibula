@@ -1,6 +1,5 @@
 package org.mendrugo.fibula.extension.deployment;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public final class Reflection
@@ -38,20 +37,6 @@ public final class Reflection
             return Cast.cast(method.invoke(instance, arg1, arg2));
         }
         catch (Exception e)
-        {
-            throw new RuntimeException("Reflection error", e);
-        }
-    }
-
-    public <T> T field(String name, Object obj)
-    {
-        try
-        {
-            final Field field = clazz.getDeclaredField(name);
-            field.setAccessible(true);
-            return Cast.cast(field.get(obj));
-        }
-        catch (NoSuchFieldException | IllegalAccessException e)
         {
             throw new RuntimeException("Reflection error", e);
         }

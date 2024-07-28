@@ -1,12 +1,9 @@
 package org.mendrugo.fibula.runner;
 
-import org.openjdk.jmh.runner.options.TimeValue;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Optional;
 
 final class Cli
 {
@@ -14,12 +11,6 @@ final class Cli
 
     Cli(Map<String, List<String>> params) {
         this.params = params;
-    }
-
-    List<String> multi(String name)
-    {
-        final var options = params.get(name);
-        return options == null ? List.of() : options;
     }
 
     String text(String name)
@@ -34,33 +25,6 @@ final class Cli
         }
 
         return option.getFirst();
-    }
-
-    int integer(String name)
-    {
-        return Integer.parseInt(text(name));
-    }
-
-    String textOpt(String name, String defaultValue)
-    {
-        final var option = params.get(name);
-        return option != null ? option.getFirst() : defaultValue;
-    }
-
-    Optional<String> textOpt(String name)
-    {
-        final var option = params.get(name);
-        return option != null ? Optional.ofNullable(option.getFirst()) : Optional.empty();
-    }
-
-    Optional<Integer> integerOpt(String name)
-    {
-        return textOpt(name).map(Integer::parseInt);
-    }
-
-    Optional<TimeValue> timeValueOpt(String name)
-    {
-        return textOpt(name).map(TimeValue::fromString);
     }
 
     static Cli read(String... args)
@@ -86,10 +50,7 @@ final class Cli
             {
                 options.add(arg);
             }
-            else
-            {
-                throw new IllegalArgumentException("Illegal parameter usage");
-            }
+            // Ignore unknown arguments
         }
 
         return new Cli(params);
