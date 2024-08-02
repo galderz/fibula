@@ -133,6 +133,9 @@
       "name":"org.openjdk.jmh.runner.options.CommandLineOptions"
     },
     {
+      "name":"org.openjdk.jmh.runner.options.ProfilerConfig"
+    },
+    {
       "name":"org.openjdk.jmh.runner.options.OptionsBuilder"
     },
     {
