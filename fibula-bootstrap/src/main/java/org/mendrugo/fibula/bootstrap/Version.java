@@ -7,7 +7,7 @@ import java.util.Properties;
 
 final class Version
 {
-    static String getVersion()
+    String getVersion()
     {
         final Properties p = new Properties();
         try (InputStream s = Version.class.getResourceAsStream("/fibula.properties"))

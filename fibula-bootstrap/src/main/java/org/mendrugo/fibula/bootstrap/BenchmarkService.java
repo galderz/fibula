@@ -258,7 +258,7 @@ public class BenchmarkService
         {
             Log.debugf("Virtual machine is: %s", vmService.vm());
             final VmInfo vmInfo = vmService.queryInfo();
-            final BenchmarkParams params = applyVmInfo(ActionPlans.getParams(actionPlan), vmInfo);
+            final BenchmarkParams params = amendBenchmarkParams(ActionPlans.getParams(actionPlan), vmInfo, new Version());
 
             List<ExternalProfiler> profilers = ProfilerFactory.getSupportedExternal(options.getProfilers());
 
@@ -433,14 +433,10 @@ public class BenchmarkService
         command.add("--" + RunnerArguments.ACTION_PLAN);
         command.add(Serializables.toBase64(actionPlan));
 
-//        command.add("--" + RunnerArguments.SUPPLIER_NAME);
-//        command.add(RunnerArguments.toSupplierName(params));
-//        command.add("--" + RunnerArguments.PARAMS);
-//        command.add(Serializables.toBase64(params));
         return command;
     }
 
-    private BenchmarkParams applyVmInfo(BenchmarkParams params, VmInfo vmInfo)
+    private BenchmarkParams amendBenchmarkParams(BenchmarkParams params, VmInfo vmInfo, Version version)
     {
         return new BenchmarkParams(
             params.getBenchmark()
@@ -462,7 +458,7 @@ public class BenchmarkService
             , vmInfo.jdkVersion()
             , vmInfo.vmName()
             , vmInfo.vmVersion()
-            , params.getJmhVersion()
+            , "fibula:" + version.getVersion()
             , params.getTimeout()
         );
     }
@@ -491,69 +487,6 @@ public class BenchmarkService
             destination.printError(msg, e);
         }
         return "";
-    }
-
-    private static BenchmarkParams getBenchmarkParams(BenchmarkListEntry benchmark, Options jmhOptions)
-    {
-        final int measurementForks = JmhOptionals.<Integer>fromJmh(jmhOptions.getForkCount())
-            .orElse(benchmark.getForks()
-                .orElse(Defaults.MEASUREMENT_FORKS));
-        final int measurementIterations = JmhOptionals.<Integer>fromJmh(jmhOptions.getMeasurementIterations())
-            .orElse(benchmark.getMeasurementIterations()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? Defaults.MEASUREMENT_ITERATIONS_SINGLESHOT
-                    : Defaults.MEASUREMENT_ITERATIONS)
-            );
-        final TimeValue measurementTime = JmhOptionals.<TimeValue>fromJmh(jmhOptions.getMeasurementTime())
-            .orElse(benchmark.getMeasurementTime()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? TimeValue.NONE
-                    : Defaults.MEASUREMENT_TIME)
-            );
-
-        final TimeUnit outputTimeUnit = JmhOptionals.<TimeUnit>fromJmh(jmhOptions.getTimeUnit())
-            .orElse(benchmark.getTimeUnit()
-                .orElse(Defaults.OUTPUT_TIMEUNIT)
-            );
-
-        final int warmupForks = JmhOptionals.<Integer>fromJmh(jmhOptions.getWarmupForkCount())
-            .orElse(benchmark.getForks()
-                .orElse(Defaults.WARMUP_FORKS));
-        final int warmupIterations = JmhOptionals.<Integer>fromJmh(jmhOptions.getWarmupIterations())
-            .orElse(benchmark.getWarmupIterations()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? Defaults.WARMUP_ITERATIONS_SINGLESHOT
-                    : Defaults.WARMUP_ITERATIONS)
-            );
-        final TimeValue warmupTime = JmhOptionals.<TimeValue>fromJmh(jmhOptions.getWarmupTime())
-            .orElse(benchmark.getWarmupTime()
-                .orElse(benchmark.getMode() == Mode.SingleShotTime
-                    ? TimeValue.NONE
-                    : Defaults.WARMUP_TIME)
-            );
-
-        final String jvm = JmhOptionals.<String>fromJmh(jmhOptions.getJvm())
-            .orElse(benchmark.getJvm()
-                .orElse(Utils.getCurrentJvm()));
-
-        final IterationParams warmup = new IterationParams(
-            IterationType.WARMUP
-            , warmupIterations
-            , warmupTime
-            , Defaults.WARMUP_BATCHSIZE
-        );
-
-        final IterationParams measurement = new IterationParams(
-            IterationType.MEASUREMENT
-            , measurementIterations
-            , measurementTime
-            , Defaults.MEASUREMENT_BATCHSIZE
-        );
-
-        final WorkloadParams params = new WorkloadParams();
-
-        // Null values fixed at runtime based on vm running fork
-        return new BenchmarkParams(benchmark.getUsername(), benchmark.generatedTarget(), true, 1, new int[]{1}, Collections.emptyList(), measurementForks, warmupForks, warmup, measurement, benchmark.getMode(), params, outputTimeUnit, 1, jvm, new ArrayList<>(), null, null, null, "fibula:" + Version.getVersion(), TimeValue.minutes(10));
     }
 
     // todo Runner.explodeAllParams copy
