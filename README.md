@@ -188,10 +188,20 @@ because it needs to tailor made invocation according to whether native or JVM mo
 Hence, this module copies logic in `*Runner` to construct `ActionPlan` instances,
 e.g. `Runner.getActionPlans()`, `Runner.newBenchmarkParams()`...etc.
 
+Ideally Fibula would use the existing binary link client/server architecture,
+but it's not clear what kind of additional configuration it would need to work with native.
+Also, Fibula has an extra information negotiation to find out VM information from the binary,
+and this is currently extracted from a running native image.
+There could be ways to extract that information from the binary itself,
+which would remove the need for the additional command.
+
 Switch `org.openjdk.jmh.runner.BaseRunner` from package private to public.
 If Fibula can work with the existing binary link client,
 then rather than `BaseRunner`,
 `org.openjdk.jmh.runner.ForkedRunner` should switch from package private to public.
+
+`JmhBytecodeGenerator` and System.exit() calls.
+Maybe Fibula can tap directly into the reflection generator and avoid these in case of errors.
 
 ## Architecture
 
