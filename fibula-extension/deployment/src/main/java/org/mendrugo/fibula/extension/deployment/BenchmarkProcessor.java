@@ -2,6 +2,7 @@ package org.mendrugo.fibula.extension.deployment;
 
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
+import io.quarkus.bootstrap.model.ApplicationModel;
 import io.quarkus.deployment.GeneratedClassGizmoAdaptor;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -10,15 +11,19 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
-import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
+import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.logging.Log;
+import io.quarkus.maven.dependency.ResolvedDependency;
+import io.quarkus.paths.OpenPathTree;
+import io.quarkus.paths.PathFilter;
+import io.quarkus.paths.PathTree;
 import org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator;
-import org.openjdk.jmh.generators.core.JmhBenchmarkGenerator;
+import org.openjdk.jmh.runner.BenchmarkList;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -33,8 +38,10 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -54,11 +61,11 @@ class BenchmarkProcessor
 
     @BuildStep
     void generateBenchmarks(
-        OutputTargetBuildItem outputTargetBuildItem
-        , BuildProducer<GeneratedClassBuildItem> generatedClasses
+        BuildProducer<GeneratedClassBuildItem> generatedClasses
         , CombinedIndexBuildItem index
         , BuildSystemTargetBuildItem buildSystemTarget
         , BuildProducer<ReflectiveClassBuildItem> reflection
+        , CurateOutcomeBuildItem curateOutcomeBuildItem
     )
     {
         final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
@@ -67,25 +74,90 @@ class BenchmarkProcessor
         generateBlackholeSubstitution(classOutput);
 
         Log.info("Compile benchmarks");
-        final List<GeneratedClassBuildItem> compiled = compileBenchmarks(outputTargetBuildItem.getOutputDirectory());
+        final List<GeneratedClassBuildItem> compiled = compileBenchmarks(buildSystemTarget.getOutputDirectory());
         compiled.forEach(generatedClasses::produce);
+        Log.infof("Compiled %d classes", compiled.size());
+        Log.debugf("Compiled classes are: %s", compiled.stream().map(GeneratedClassBuildItem::getName).sorted().collect(Collectors.joining(", ")));
 
-        // todo Find an alternative way to get all generated benchmark FQNs.
-        //      Generated benchmark classes could be just compiled above,
-        //      or it could be in a dependency,
-        //      so jandex would be best place to find classes with `jmhTest` prefix.
-        final JandexGeneratorSource source = new JandexGeneratorSource(index.getIndex());
-        final JmhBenchmarkGenerator generator = new JmhBenchmarkGenerator();
-        final Collection<String> generatedBenchmarkFQNs = generator.generate(source);
-        generator.complete(buildSystemTarget);
-        Log.infof("Found %d generated benchmarks", generatedBenchmarkFQNs.size());
-        Log.debugf("Generated benchmarks found are: %s", generatedBenchmarkFQNs);
+        final Set<String> jmhTestsCompiled = compiled.stream()
+            .map(GeneratedClassBuildItem::getName)
+            .filter(name -> name.endsWith("jmhTest"))
+            .map(name -> name.replace('/', '.'))
+            .collect(Collectors.toSet());
+        Log.infof("Found %d generated benchmarks in compiled code", jmhTestsCompiled.size());
+        Log.debugf("Compiled benchmarks are: %s", jmhTestsCompiled.stream().sorted().collect(Collectors.joining(", ")));
+        final Collection<String> generatedBenchmarkFQNs = new HashSet<>(jmhTestsCompiled);
+
+        final Set<String> jmhTestsInJandex = index.getIndex().getKnownClasses().stream()
+            .filter(classInfo -> classInfo.name().toString().endsWith("jmhTest"))
+            .filter(classInfo -> isSupported(classInfo.name().toString()))
+            .map(info -> info.name().toString())
+            .collect(Collectors.toSet());
+        Log.infof("Found %d generated benchmarks in jandex", jmhTestsInJandex.size());
+        Log.debugf("Generated benchmarks in jandex are: %s", jmhTestsInJandex.stream().sorted().collect(Collectors.joining(", ")));
+        generatedBenchmarkFQNs.addAll(jmhTestsInJandex);
+
+        Log.infof("Collect BenchmarkList metadata from dependencies and project");
+        collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
 
         Log.info("Register generated benchmarks for reflection");
         generatedBenchmarkFQNs.stream()
             .map(ReflectiveClassBuildItem::builder)
             .map(builder -> builder.methods(true).build())
             .forEach(reflection::produce);
+    }
+
+    private void collectBenchmarkList(ApplicationModel applicationModel, Path outputDirectory)
+    {
+        final Path benchmarkListPath = outputDirectory
+            .resolve("classes")
+            .resolve(BenchmarkList.BENCHMARK_LIST.substring(1));
+        benchmarkListPath.getParent().toFile().mkdirs();
+
+        appendBenchmarkListInClassPath(applicationModel, benchmarkListPath);
+        appendToBenchmarkList(outputDirectory.resolve("generated-classes/META-INF/BenchmarkList"), benchmarkListPath);
+    }
+
+    public static void appendBenchmarkListInClassPath(ApplicationModel applicationModel, Path benchmarkListPath)
+    {
+        for (ResolvedDependency dependency : applicationModel.getDependencies())
+        {
+            final PathTree tree = dependency.getContentTree(new PathFilter(
+                List.of("**/BenchmarkList")
+                , List.of())
+            );
+            try(final OpenPathTree open = tree.open())
+            {
+                open.walk(visit -> {
+                    Log.infof("Found %s in %s", visit.getPath(), dependency);
+                    appendToBenchmarkList(visit.getPath(), benchmarkListPath);
+                });
+            }
+            catch (IOException e)
+            {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    private static void appendToBenchmarkList(Path path, Path benchmarkListPath)
+    {
+        try
+        {
+            for (String line : Files.readAllLines(path))
+            {
+                Files.writeString(
+                    benchmarkListPath
+                    , line + System.lineSeparator()
+                    , StandardOpenOption.CREATE
+                    , StandardOpenOption.APPEND
+                );
+            }
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir)
@@ -287,6 +359,31 @@ class BenchmarkProcessor
             consume.invokeStaticMethod(MethodDescriptor.ofMethod(graalCompilerPackagePrefix + ".compiler.api.directives.GraalDirectives", "blackhole", void.class, clazz), value);
             consume.returnVoid();
         }
+    }
+
+    private static boolean isSupported(String fqn)
+    {
+        if (fqn.startsWith("org.mendrugo.fibula"))
+        {
+            return true;
+        }
+
+        if (fqn.startsWith("org.openjdk.jmh.it"))
+        {
+            return fqn.endsWith("interorder.jmh_generated.BenchmarkStateOrderTest_test_jmhTest")
+                || fqn.endsWith("profilers.jmh_generated.LinuxPerfProfiler_test_jmhTest")
+                || fqn.endsWith("profilers.jmh_generated.LinuxPerfNormProfilerTest_test_jmhTest");
+        }
+
+        if (fqn.startsWith("org.openjdk.jmh.samples"))
+        {
+            return fqn.contains("JMHSample_01")
+                || fqn.contains("JMHSample_03")
+                || fqn.contains("JMHSample_04")
+                || fqn.contains("JMHSample_09");
+        }
+
+        return true;
     }
 }
 
