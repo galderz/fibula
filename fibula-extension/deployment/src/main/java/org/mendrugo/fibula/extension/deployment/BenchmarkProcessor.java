@@ -20,6 +20,7 @@ import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.logging.Log;
 import io.quarkus.maven.dependency.ResolvedDependency;
 import io.quarkus.paths.OpenPathTree;
+import io.quarkus.paths.PathCollection;
 import io.quarkus.paths.PathFilter;
 import io.quarkus.paths.PathTree;
 import org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -74,10 +76,13 @@ class BenchmarkProcessor
         generateBlackholeSubstitution(classOutput);
 
         Log.info("Compile benchmarks");
-        final List<GeneratedClassBuildItem> compiled = compileBenchmarks(buildSystemTarget.getOutputDirectory());
+        final List<GeneratedClassBuildItem> compiled = compileBenchmarks(buildSystemTarget.getOutputDirectory(), curateOutcomeBuildItem.getApplicationModel());
         compiled.forEach(generatedClasses::produce);
         Log.infof("Compiled %d classes", compiled.size());
-        Log.debugf("Compiled classes are: %s", compiled.stream().map(GeneratedClassBuildItem::getName).sorted().collect(Collectors.joining(", ")));
+        Log.debugf(
+            "Compiled classes are: %s"
+            , compiled.stream().map(GeneratedClassBuildItem::getName).sorted().collect(Collectors.joining(", "))
+        );
 
         final Set<String> jmhTestsCompiled = compiled.stream()
             .map(GeneratedClassBuildItem::getName)
@@ -85,7 +90,10 @@ class BenchmarkProcessor
             .map(name -> name.replace('/', '.'))
             .collect(Collectors.toSet());
         Log.infof("Found %d generated benchmarks in compiled code", jmhTestsCompiled.size());
-        Log.debugf("Compiled benchmarks are: %s", jmhTestsCompiled.stream().sorted().collect(Collectors.joining(", ")));
+        Log.debugf(
+            "Compiled benchmarks are: %s"
+            , jmhTestsCompiled.stream().sorted().collect(Collectors.joining(", "))
+        );
         final Collection<String> generatedBenchmarkFQNs = new HashSet<>(jmhTestsCompiled);
 
         final Set<String> jmhTestsInJandex = index.getIndex().getKnownClasses().stream()
@@ -94,7 +102,10 @@ class BenchmarkProcessor
             .map(info -> info.name().toString())
             .collect(Collectors.toSet());
         Log.infof("Found %d generated benchmarks in jandex", jmhTestsInJandex.size());
-        Log.debugf("Generated benchmarks in jandex are: %s", jmhTestsInJandex.stream().sorted().collect(Collectors.joining(", ")));
+        Log.debugf(
+            "Generated benchmarks in jandex are: %s"
+            , jmhTestsInJandex.stream().sorted().collect(Collectors.joining(", "))
+        );
         generatedBenchmarkFQNs.addAll(jmhTestsInJandex);
 
         Log.infof("Collect BenchmarkList metadata from dependencies and project");
@@ -160,7 +171,7 @@ class BenchmarkProcessor
         }
     }
 
-    private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir)
+    private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir, ApplicationModel applicationModel)
     {
         final Path sourceDirectory = buildDir.resolve("generated-sources").resolve("bc");
         final Path classesDir = buildDir.resolve("classes");
@@ -189,12 +200,16 @@ class BenchmarkProcessor
         }
 
         final Set<File> javaFiles = classFilesInDirectory(sourceDirectory);
-        // todo use the ApplicationModel to extract the classpath
-        final List<Path> classPath = List.of(
-            classesDir
-            , Path.of(System.getProperty("user.home"))
-                .resolve(".m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar")
-        );
+        final Set<Path> dependencyPaths = applicationModel.getRuntimeDependencies().stream()
+            .map(ResolvedDependency::getResolvedPaths)
+            .map(PathCollection::getSinglePath)
+            .collect(Collectors.toSet());
+
+        final List<Path> classPath = new ArrayList<>();
+        classPath.add(classesDir);
+        classPath.addAll(dependencyPaths);
+        Log.debugf("Compile classpath is: %s", classPath);
+
         return compile(javaFiles, classPath, generatedClassesDir, sourceDirectory);
     }
 
@@ -244,7 +259,7 @@ class BenchmarkProcessor
                 null // a writer for additional output from the compiler; use System.err if null
                 , fileManager
                 , diagnostics
-                , null // no compiler options
+                , List.of("-proc:none") // no annotation processing
                 , null // names of classes to be processed by annotation processing, null means no classes
                 , compilationUnit
             );
