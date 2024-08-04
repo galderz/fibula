@@ -1,15 +1,19 @@
 package org.mendrugo.fibula.bootstrap;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mendrugo.fibula.results.JmhFormats;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.format.OutputFormat;
+import org.openjdk.jmh.runner.format.OutputFormatFactory;
+import org.openjdk.jmh.runner.options.VerboseMode;
+import org.openjdk.jmh.util.UnCloseablePrintStream;
+import org.openjdk.jmh.util.Utils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 
 @ApplicationScoped
@@ -19,13 +23,21 @@ public class OutputFormatService implements OutputFormat
 
     public OutputFormatService()
     {
-        this.out = JmhFormats.outputFormat();
+        this.out = outputFormat();
     }
 
-//    OutputFormat output()
-//    {
-//        return this.out;
-//    }
+    private static OutputFormat outputFormat()
+    {
+        try
+        {
+            final UnCloseablePrintStream printStream = new UnCloseablePrintStream(System.out, Utils.guessConsoleEncoding());
+            return OutputFormatFactory.createFormatInstance(printStream, VerboseMode.NORMAL);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new IllegalStateException(e);
+        }
+    }
 
     @Override
     public void iteration(BenchmarkParams benchParams, IterationParams params, int iteration)

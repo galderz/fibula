@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ResultService
 {
     @Inject
-    FormatService formatService;
+    OutputFormatService out;
 
     private final AtomicReference<List<IterationResult>> resultsRef = new AtomicReference<>(new ArrayList<>());
     private final AtomicReference<BenchmarkResultMetaData> resultMetadataRef = new AtomicReference<>();
@@ -35,14 +35,14 @@ public class ResultService
 
     void errorIteration(String errorMessage, List<IterationError.Detail> errorDetails)
     {
-        formatService.output().println("<failure>");
-        formatService.output().println("");
+        out.println("<failure>");
+        out.println("");
         final BenchmarkException benchmarkException = toBenchmarkException(errorMessage, errorDetails);
         Arrays.stream(benchmarkException.getSuppressed())
             .map(Utils::throwableToString)
-            .forEach(formatService.output()::println);
+            .forEach(out::println);
 
-        formatService.output().println("");
+        out.println("");
         exceptionRef.set(benchmarkException);
     }
 

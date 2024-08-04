@@ -20,7 +20,7 @@ import java.util.List;
 public class VmService
 {
     @Inject
-    FormatService formatService;
+    OutputFormatService out;
 
     private Vm vm;
     private VmInfo info;
@@ -62,7 +62,7 @@ public class VmService
         arguments.add(Command.VM_INFO.toString());
         Log.debugf("Executing: %s", String.join(" ", arguments));
 
-        final ProcessExecutor processExec = new ProcessExecutor(formatService.output());
+        final ProcessExecutor processExec = new ProcessExecutor(out);
         try (ProcessResult result = processExec.runSync(arguments, false, false))
         {
             return result.exitCode();
