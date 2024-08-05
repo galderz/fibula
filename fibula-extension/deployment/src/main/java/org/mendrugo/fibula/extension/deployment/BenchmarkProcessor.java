@@ -23,8 +23,12 @@ import io.quarkus.paths.OpenPathTree;
 import io.quarkus.paths.PathCollection;
 import io.quarkus.paths.PathFilter;
 import io.quarkus.paths.PathTree;
-import org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator;
+import org.openjdk.jmh.generators.core.BenchmarkGenerator;
+import org.openjdk.jmh.generators.core.FileSystemDestination;
+import org.openjdk.jmh.generators.core.SourceError;
+import org.openjdk.jmh.generators.reflection.RFGeneratorSource;
 import org.openjdk.jmh.runner.BenchmarkList;
+import org.openjdk.jmh.util.FileUtils;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -36,6 +40,8 @@ import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,8 +81,11 @@ class BenchmarkProcessor
         Log.info("Generating blackhole substitution");
         generateBlackholeSubstitution(classOutput);
 
+        Log.info("Generate benchmarks");
+        final BenchmarksPaths benchmarksPaths = generateBenchmarksFromBytecode(buildSystemTarget.getOutputDirectory());
+
         Log.info("Compile benchmarks");
-        final List<GeneratedClassBuildItem> compiled = compileBenchmarks(buildSystemTarget.getOutputDirectory(), curateOutcomeBuildItem.getApplicationModel());
+        final List<GeneratedClassBuildItem> compiled = compileBenchmarks(benchmarksPaths, curateOutcomeBuildItem.getApplicationModel());
         compiled.forEach(generatedClasses::produce);
         Log.infof("Compiled %d classes", compiled.size());
         Log.debugf(
@@ -116,6 +125,77 @@ class BenchmarkProcessor
             .map(ReflectiveClassBuildItem::builder)
             .map(builder -> builder.methods(true).build())
             .forEach(reflection::produce);
+    }
+
+    private BenchmarksPaths generateBenchmarksFromBytecode(Path buildDir)
+    {
+        final Path classesDir = buildDir.resolve("classes");
+        final Path sourceDirectory = buildDir.resolve("generated-sources").resolve("bc");
+        final Path generatedClassesDir = buildDir.resolve("generated-classes");
+        final BenchmarksPaths paths = new BenchmarksPaths(classesDir, sourceDirectory, generatedClassesDir);
+
+        final ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        try
+        {
+            final URLClassLoader amendedCL = new URLClassLoader(
+                new URL[]{paths.classesDir.toFile().toURI().toURL()},
+                Thread.currentThread().getContextClassLoader());
+
+            Thread.currentThread().setContextClassLoader(amendedCL);
+
+            final FileSystemDestination destination = new FileSystemDestination(
+                paths.generatedClassesDir.toFile()
+                , paths.sourceDirectory.toFile()
+            );
+
+            Collection<File> classes = FileUtils.getClasses(paths.classesDir.toFile());
+            Log.infof(
+                "Processing %d classes from %s with reflection generator"
+                , classes.size()
+                , paths.classesDir.toFile()
+            );
+            Log.infof(
+                "Writing out Java source to %s and resources to %s"
+                , paths.sourceDirectory
+                , paths.generatedClassesDir
+            );
+
+            final RFGeneratorSource source = new RFGeneratorSource();
+            for (File f : classes)
+            {
+                String name = f.getAbsolutePath().substring(paths.classesDir.toFile().getAbsolutePath().length() + 1);
+                name = name.replaceAll("\\\\", ".");
+                name = name.replaceAll("/", ".");
+                if (name.endsWith(".class"))
+                {
+                    source.processClasses(Class.forName(name.substring(0, name.length() - 6), false, amendedCL));
+                }
+            }
+
+            final BenchmarkGenerator generator = new BenchmarkGenerator();
+            generator.generate(source, destination);
+            generator.complete(source, destination);
+
+            if (destination.hasErrors())
+            {
+                for (SourceError e : destination.getErrors())
+                {
+                    System.err.println(e.toString() + "\n");
+                }
+                throw new RuntimeException("Failure to generate benchmarks, see errors above");
+            }
+
+            // Restore classloader
+            return paths;
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+        finally
+        {
+            Thread.currentThread().setContextClassLoader(tccl);
+        }
     }
 
     private void collectBenchmarkList(ApplicationModel applicationModel, Path outputDirectory)
@@ -171,46 +251,20 @@ class BenchmarkProcessor
         }
     }
 
-    private List<GeneratedClassBuildItem> compileBenchmarks(Path buildDir, ApplicationModel applicationModel)
+    private List<GeneratedClassBuildItem> compileBenchmarks(BenchmarksPaths paths, ApplicationModel applicationModel)
     {
-        final Path sourceDirectory = buildDir.resolve("generated-sources").resolve("bc");
-        final Path classesDir = buildDir.resolve("classes");
-        final Path generatedClassesDir = buildDir.resolve("generated-classes");
-        final List<Path> pathArgs = List.of(
-            classesDir // compiled bytecode directory
-            , sourceDirectory // output source directory
-            , generatedClassesDir // output resources directory
-        );
-
-        final String[] bytecodeGenArgs = pathArgs.stream()
-            .map(Path::toString)
-            .toArray(String[]::new);
-
-        try
-        {
-            // todo use asm/reflection generators directly to avoid potential for System.exit() calls
-            final ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-            JmhBytecodeGenerator.main(bytecodeGenArgs);
-            // Restore classloader manually because wrapper doesn't do so
-            Thread.currentThread().setContextClassLoader(tccl);
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
-
-        final Set<File> javaFiles = classFilesInDirectory(sourceDirectory);
+        final Set<File> javaFiles = classFilesInDirectory(paths.sourceDirectory);
         final Set<Path> dependencyPaths = applicationModel.getRuntimeDependencies().stream()
             .map(ResolvedDependency::getResolvedPaths)
             .map(PathCollection::getSinglePath)
             .collect(Collectors.toSet());
 
         final List<Path> classPath = new ArrayList<>();
-        classPath.add(classesDir);
+        classPath.add(paths.classesDir);
         classPath.addAll(dependencyPaths);
         Log.debugf("Compile classpath is: %s", classPath);
 
-        return compile(javaFiles, classPath, generatedClassesDir, sourceDirectory);
+        return compile(javaFiles, classPath, paths);
     }
 
     private static Set<File> classFilesInDirectory(Path dir)
@@ -230,7 +284,7 @@ class BenchmarkProcessor
         }
     }
 
-    public List<GeneratedClassBuildItem> compile(Set<File> files, List<Path> classPath, Path classOutputDir, Path sourceDirectory)
+    public List<GeneratedClassBuildItem> compile(Set<File> files, List<Path> classPath, BenchmarksPaths paths)
     {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         assert compiler != null : "no system java compiler available - JDK is required!";
@@ -249,7 +303,7 @@ class BenchmarkProcessor
             );
             fileManager.setLocation(
                 StandardLocation.CLASS_OUTPUT
-                , List.of(classOutputDir.toFile())
+                , List.of(paths.generatedClassesDir.toFile())
             );
 
             final Iterable<? extends JavaFileObject> compilationUnit = fileManager
@@ -281,7 +335,7 @@ class BenchmarkProcessor
             else
             {
                 System.out.println("Compilation success.");
-                return compiledClassItems(sourceDirectory, compilationUnit.iterator().next(), classOutputDir);
+                return compiledClassItems(compilationUnit.iterator().next(), paths);
             }
         }
         catch (IOException e)
@@ -290,16 +344,16 @@ class BenchmarkProcessor
         }
     }
 
-    List<GeneratedClassBuildItem> compiledClassItems(Path sourceDirectory, JavaFileObject javaFileObject, Path classesDir)
+    List<GeneratedClassBuildItem> compiledClassItems(JavaFileObject javaFileObject, BenchmarksPaths paths)
     {
         final Path absoluteSourceFilePath = Path.of(javaFileObject.toUri());
-        final Path relativeSourceFilePath = absoluteSourceFilePath.subpath(sourceDirectory.getNameCount(), absoluteSourceFilePath.getNameCount());
+        final Path relativeSourceFilePath = absoluteSourceFilePath.subpath(paths.sourceDirectory.getNameCount(), absoluteSourceFilePath.getNameCount());
         final Path generatedPackagePath = relativeSourceFilePath.subpath(0, relativeSourceFilePath.getNameCount() - 1);
 
         Log.debugf("Relative source file path: %s", relativeSourceFilePath);
         Log.debugf("Generated package path: %s", generatedPackagePath);
 
-        Path jmhGeneratedClassDir = classesDir.resolve(generatedPackagePath);
+        Path jmhGeneratedClassDir = paths.generatedClassesDir.resolve(generatedPackagePath);
         try(Stream<Path> files = Files.list(jmhGeneratedClassDir))
         {
             return files
@@ -400,5 +454,11 @@ class BenchmarkProcessor
 
         return true;
     }
+
+    record BenchmarksPaths(
+        Path classesDir // compiled bytecode directory
+        , Path sourceDirectory // output source directory
+        , Path generatedClassesDir // output resources directory
+    ) {}
 }
 

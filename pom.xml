@@ -47,7 +47,7 @@
             </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
-                <artifactId>jmh-generator-bytecode</artifactId>
+                <artifactId>jmh-generator-reflection</artifactId>
                 <version>${jmh.version}</version>
             </dependency>
             <dependency>

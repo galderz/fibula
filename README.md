@@ -200,9 +200,6 @@ If Fibula can work with the existing binary link client,
 then rather than `BaseRunner`,
 `org.openjdk.jmh.runner.ForkedRunner` should switch from package private to public.
 
-`JmhBytecodeGenerator` and System.exit() calls.
-Maybe Fibula can tap directly into the reflection generator and avoid these in case of errors.
-
 ## Architecture
 
 `fibula-bootstrap` module is a Quarkus JVM application that coordinates benchmarks.

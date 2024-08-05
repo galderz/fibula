@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-bytecode</artifactId>
+            <artifactId>jmh-generator-reflection</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
