@@ -10,6 +10,7 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.gizmo.ClassCreator;
@@ -65,6 +66,35 @@ class BenchmarkProcessor
     FeatureBuildItem feature()
     {
         return new FeatureBuildItem(FEATURE);
+    }
+
+    @BuildStep
+    void runtimeInit(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInit)
+    {
+        // Make InfraControl runtime initialized because it uses unsafe
+        // to calculate field offsets during a static initializer.
+        runtimeInit.produce(new RuntimeInitializedClassBuildItem("org.openjdk.jmh.runner.InfraControl"));
+    }
+
+    @BuildStep
+    void reflection(BuildProducer<ReflectiveClassBuildItem> reflection)
+    {
+        // Register org.openjdk.jmh.runner.InfraControl fields for reflection
+        // so that field offset calculations that rely on getting declared fields with reflection,
+        // work as expected.
+        // All classes in the InfraControl hierarchy need to be registered for reflection
+        // so that the gaps between the fields are maintained.
+        reflection.produce(ReflectiveClassBuildItem
+            .builder(
+                "org.openjdk.jmh.runner.InfraControlL0"
+                , "org.openjdk.jmh.runner.InfraControlL1"
+                , "org.openjdk.jmh.runner.InfraControlL2"
+                , "org.openjdk.jmh.runner.InfraControlL3"
+                , "org.openjdk.jmh.runner.InfraControlL4"
+            )
+            .fields()
+            .build()
+        );
     }
 
     @BuildStep
