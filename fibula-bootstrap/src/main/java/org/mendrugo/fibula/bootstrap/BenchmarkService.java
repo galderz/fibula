@@ -9,7 +9,6 @@ import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.profile.ProfilerException;
 import org.openjdk.jmh.profile.ProfilerFactory;
@@ -21,7 +20,6 @@ import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.ProfilerConfig;
-import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.FileUtils;
 import org.openjdk.jmh.util.HashMultimap;
@@ -46,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class BenchmarkService
@@ -57,14 +54,15 @@ public class BenchmarkService
     @Inject
     ResultService resultService;
 
-    @Inject
-    VmService vmService;
-
     BenchmarkList benchmarkList;
+
+    Vm vm;
 
     @PostConstruct
     void init()
     {
+        this.vm = Vm.instance();
+
         final String benchmarks = readBenchmarks();
         Log.debugf("Read from benchmark list file: %n%s", benchmarks);
         this.benchmarkList = BenchmarkList.fromString(benchmarks);
@@ -251,13 +249,13 @@ public class BenchmarkService
         }
     }
 
-    private Multimap<BenchmarkParams, BenchmarkResult> runSeparate(ActionPlan actionPlan, Options options) throws RunnerException
+    private Multimap<BenchmarkParams, BenchmarkResult> runSeparate(ActionPlan actionPlan, Options options)
     {
         final Multimap<BenchmarkParams, BenchmarkResult> results = new HashMultimap<>();
         try
         {
-            Log.debugf("Virtual machine is: %s", vmService.vm());
-            final VmInfo vmInfo = vmService.queryInfo();
+            Log.debugf("Virtual machine is: %s", vm);
+            final VmInfo vmInfo = vm.info();
             final BenchmarkParams params = amendBenchmarkParams(ActionPlans.getParams(actionPlan), vmInfo, new Version());
 
             List<ExternalProfiler> profilers = ProfilerFactory.getSupportedExternal(options.getProfilers());
@@ -376,12 +374,6 @@ public class BenchmarkService
 
             out.endBenchmark(new RunResult(params, results.get(params)).getAggregatedResult());
         }
-        catch (InterruptedException e)
-        {
-            out.println("<host VM has been interrupted waiting for forked VM: " + e.getMessage() + ">");
-            out.println("");
-            throw new RunnerException(e);
-        }
         catch (BenchmarkException e)
         {
             results.clear();
@@ -423,11 +415,9 @@ public class BenchmarkService
         }
 
         final List<String> command = new ArrayList<>(javaInvokeOptions);
-        final List<String> baseArguments = vmService.vm().vmArguments(params.getJvm(), params.getJvmArgs(), javaOptions);
+        final List<String> baseArguments = vm.vmArguments(params.getJvm(), params.getJvmArgs(), javaOptions);
         command.addAll(baseArguments);
 
-        command.add("--" + RunnerArguments.COMMAND);
-        command.add(Command.FORK.toString());
         command.add("--" + RunnerArguments.OPTIONS);
         command.add(Serializables.toBase64(options));
         command.add("--" + RunnerArguments.ACTION_PLAN);
@@ -453,8 +443,8 @@ public class BenchmarkService
             , new WorkloadParams() // todo need to bring them from base but not exposed? Order?
             , params.getTimeUnit()
             , params.getOpsPerInvocation()
-            , vmService.vm().executablePath(params.getJvm())
-            , vmService.vm().jvmArgs(params.getJvmArgs())
+            , vm.executablePath(params.getJvm())
+            , vm.jvmArgs(params.getJvmArgs())
             , vmInfo.jdkVersion()
             , vmInfo.vmName()
             , vmInfo.vmVersion()
@@ -492,7 +482,7 @@ public class BenchmarkService
     // todo Runner.explodeAllParams copy
     private List<WorkloadParams> explodeAllParams(BenchmarkListEntry br, Options options) throws RunnerException
     {
-        final Map<String, String[]> benchParams = br.getParams().orElse(Collections.<String, String[]>emptyMap());
+        final Map<String, String[]> benchParams = br.getParams().orElse(Collections.emptyMap());
         List<WorkloadParams> ps = new ArrayList<>();
         for (Map.Entry<String, String[]> e : benchParams.entrySet())
         {

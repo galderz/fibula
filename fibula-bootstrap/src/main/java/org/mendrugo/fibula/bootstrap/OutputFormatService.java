@@ -26,7 +26,7 @@ public class OutputFormatService implements OutputFormat
         this.out = outputFormat();
     }
 
-    private static OutputFormat outputFormat()
+    static OutputFormat outputFormat()
     {
         try
         {

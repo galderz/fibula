@@ -1,11 +1,14 @@
 package org.mendrugo.fibula.bootstrap;
 
 import joptsimple.internal.Strings;
-import org.openjdk.jmh.infra.BenchmarkParams;
+import org.mendrugo.fibula.results.ProcessExecutor;
+import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
+import org.mendrugo.fibula.results.VmInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -72,6 +75,52 @@ public enum Vm
             case HOTSPOT -> getHotSpotArguments(jvm, jvmArgs, javaOptions);
             case SUBSTRATE -> getNativeArguments(jvmArgs, javaOptions);
         };
+    }
+
+    VmInfo info()
+    {
+        return switch (this)
+        {
+            case HOTSPOT -> new VmInfo(
+                System.getProperty("java.version")
+                , System.getProperty("java.vm.name")
+                , System.getProperty("java.vm.version")
+            );
+            case SUBSTRATE -> new VmInfo(
+                binaryReadString("com.oracle.svm.core.VM.Java.Version=")
+                , "Substrate VM"
+                , binaryReadString("com.oracle.svm.core.VM=")
+            );
+        };
+    }
+
+    // todo support windows
+    private String binaryReadString(String key)
+    {
+        final ProcessExecutor processExecutor = new ProcessExecutor(OutputFormatService.outputFormat());
+        final List<String> args = List.of(
+            "/bin/sh"
+            , "-c"
+            , String.format(
+                "strings %s| grep %s"
+                , RUN_BINARY.getPath()
+                , key
+            )
+        );
+        try (final ProcessResult result = processExecutor.runSync(args, false, false))
+        {
+            final String output = Files.readString(
+                Path.of(result.stdOut().getAbsolutePath())
+                , StandardCharsets.UTF_8
+            );
+            return output
+                .split("=")[1] // extract only the version
+                .trim(); // trim to remove any additional space or carriage return
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
     }
 
     static Vm instance()
