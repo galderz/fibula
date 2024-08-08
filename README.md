@@ -275,6 +275,26 @@ The bootstrap module defines the main class as `bootstrap`.
 Although the bootstrap process is executed as is, without any additional bytecode in it,
 it reads the metadata generated when the Quarkus build run on the end-user JMH benchmark project.
 
+## Differences with JMH
+
+### Custom exceptions
+
+Any of the annotated methods in JMH benchmarks can throw a custom exception.
+Whereas the bootstrap and runner code in JMH reside in the same jar,
+that is not the case in Fibula.
+This is because of the split in Fibula to enable the runner side to be compiled to native independent of the bootstrap process.
+So, if an annotated method in a JMH benchmark throws a custom exception,
+Fibula would report a `ClassNotFoundException` for that custom exception class.
+This issue can be avoided by modifying the benchmark invocation call to use `-cp` or `-classpath` option,
+adding the project jar as classpath entry,
+and passing `io.quarkus.runner.GeneratedMain` as the main class to execute.
+Additional arguments would be passed after the main class.
+For example:
+
+```shell
+java -cp target/fibula-samples-999-SNAPSHOT.jar:target/benchmarks.jar io.quarkus.runner.GeneratedMain ...
+```
+
 ## Makefile Guide
 
 The project contains a Makefile designed to speed up typical development tasks.
