@@ -57,6 +57,10 @@ benchmark_params += -wi
 benchmark_params += $(WARMUP_IT)
 benchmark_params += -w
 benchmark_params += $(WARMUP_TIME)
+benchmark_params += -foe
+benchmark_params += true
+benchmark_params += -v
+benchmark_params += EXTRA
 
 ifdef RESULT_FORMAT
   benchmark_params += -rf
