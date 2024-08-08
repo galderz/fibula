@@ -75,7 +75,7 @@ public class ResultService
         {
             final RuntimeException e = new RuntimeException(String.format("%s: %s", errorDetail.className(), errorDetail.message()));
             initThrowable(errorDetail, e);
-            throw e;
+            return e;
         }
         catch (Exception e)
         {
