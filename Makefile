@@ -86,6 +86,8 @@ endif
 
 ifdef DEBUG
   java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
+  benchmark_params += -jvmArgs
+  benchmark_params += ""
 endif
 
 test_args = test
@@ -96,6 +98,11 @@ endif
 ifdef NATIVE_AGENT
   java += -Dfibula.native.agent=true
   test_args += -Dfibula.native.agent=true
+endif
+
+ifdef RUNNER_DEBUG
+  java += -Dfibula.runner.debug=true
+  test_args += -Dfibula.runner.debug=true
 endif
 
 runner_build_args =

@@ -166,6 +166,11 @@ public enum Vm
             args.add("-agentlib:native-image-agent=config-output-dir=target/native-agent-config");
         }
 
+        if (Boolean.getBoolean("fibula.runner.debug"))
+        {
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:9000");
+        }
+
         args.addAll(javaOptions);
 
         args.add("-jar");
