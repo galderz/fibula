@@ -27,6 +27,11 @@ final class Cli
         return option.getFirst();
     }
 
+    int integer(String name)
+    {
+        return Integer.parseInt(text(name));
+    }
+
     static Cli read(String... args)
     {
         final Map<String, List<String>> params = new HashMap<>();

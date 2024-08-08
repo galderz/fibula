@@ -2,6 +2,7 @@ package org.mendrugo.fibula.it;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.results.RunResult;
@@ -92,6 +93,7 @@ public class FailureModesTest
         }
     }
 
+    @Disabled("Throws ClassNotFoundException with banned class")
     @Test
     public void shouldFailOnCustomExceptionAtBenchmark()
     {

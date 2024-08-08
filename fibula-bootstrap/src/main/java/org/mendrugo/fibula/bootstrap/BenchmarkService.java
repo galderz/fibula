@@ -4,6 +4,7 @@ import io.quarkus.logging.Log;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import joptsimple.internal.Strings;
 import org.mendrugo.fibula.results.*;
 import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 import org.openjdk.jmh.annotations.Mode;
@@ -18,6 +19,7 @@ import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.*;
+import org.openjdk.jmh.runner.link.BinaryLinkServer;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.ProfilerConfig;
 import org.openjdk.jmh.runner.options.VerboseMode;
@@ -252,8 +254,13 @@ public class BenchmarkService
     private Multimap<BenchmarkParams, BenchmarkResult> runSeparate(ActionPlan actionPlan, Options options)
     {
         final Multimap<BenchmarkParams, BenchmarkResult> results = new HashMultimap<>();
+        BinaryLinkServer server = null;
         try
         {
+            server = new BinaryLinkServer(options, out);
+
+            server.setPlan(actionPlan);
+
             Log.debugf("Virtual machine is: %s", vm);
             final VmInfo vmInfo = vm.info();
             final BenchmarkParams params = amendBenchmarkParams(ActionPlans.getParams(actionPlan), vmInfo, new Version());
@@ -285,21 +292,21 @@ public class BenchmarkService
             for (int i = 0; i < totalForks; i++)
             {
                 boolean warmupFork = (i < warmupForkCount);
-                final List<String> forkedString = getForkedMainCommand(params, profilers, options, actionPlan);
+                final List<String> forkedString = getForkedMainCommand(params, profilers, server.getHost(), server.getPort());
 
                 // etaBeforeBenchmark();
 
                 if (warmupFork)
                 {
                     // todo dup
-                    out.verbosePrintln("Warmup forking using command: " + forkedString);
-                    Log.debug("Warmup forking using command: " + forkedString);
+                    out.verbosePrintln("Warmup forking using command: " + Strings.join(forkedString, " "));
+                    Log.debug("Warmup forking using command: " + Strings.join(forkedString, " "));
                     out.println("# Warmup Fork: " + (i + 1) + " of " + warmupForkCount);
                 } else
                 {
                     // todo dup
-                    out.verbosePrintln("Forking using command: " + forkedString);
-                    Log.debug("Forking using command: " + forkedString);
+                    out.verbosePrintln("Forking using command: " + Strings.join(forkedString, " "));
+                    Log.debug("Forking using command: " + Strings.join(forkedString, " "));
                     out.println("# Fork: " + (i + 1 - warmupForkCount) + " of " + forkCount);
                 }
 
@@ -331,7 +338,7 @@ public class BenchmarkService
 
                 long startTime = System.currentTimeMillis();
 
-                final ForkResult forkResult = doFork(forkedString);
+                final ForkResult forkResult = doFork(server, forkedString);
                 final List<IterationResult> result = forkResult.results;
                 if (!result.isEmpty())
                 {
@@ -374,6 +381,11 @@ public class BenchmarkService
 
             out.endBenchmark(new RunResult(params, results.get(params)).getAggregatedResult());
         }
+        catch (IOException e)
+        {
+            results.clear();
+            throw new BenchmarkException(e);
+        }
         catch (BenchmarkException e)
         {
             results.clear();
@@ -385,26 +397,43 @@ public class BenchmarkService
         }
         finally
         {
+            if (server != null)
+            {
+                server.terminate();
+            }
             FileUtils.purgeTemps();
         }
 
         return results;
     }
 
-    ForkResult doFork(List<String> commandString)
+    ForkResult doFork(BinaryLinkServer reader, List<String> commandString)
     {
         final ProcessExecutor processExec = new ProcessExecutor(out);
         final ProcessResult processResult = processExec.runSync(commandString, false, false);
 
-        if (processResult.exitCode() != 0)
-        {
-            throw new RuntimeException(String.format("Error in forked runner (exit code %d)", processResult.exitCode()));
-        }
+        reader.waitFinish();
 
-        return new ForkResult(resultService.getResults(), processResult);
+        BenchmarkException exception = reader.getException();
+        if (exception == null)
+        {
+            if (processResult.exitCode() == 0)
+            {
+                return new ForkResult(reader.getResults(), processResult);
+            }
+            else
+            {
+                // throw new RuntimeException(String.format("Error in forked runner (exit code %d)", processResult.exitCode()));
+                throw new BenchmarkException(new IllegalStateException("Forked VM failed with exit code " + processResult.exitCode()));
+            }
+        }
+        else
+        {
+            throw exception;
+        }
     }
 
-    private List<String> getForkedMainCommand(BenchmarkParams params, List<ExternalProfiler> profilers, Options options, ActionPlan actionPlan)
+    private List<String> getForkedMainCommand(BenchmarkParams params, List<ExternalProfiler> profilers, String host, int port)
     {
         final List<String> javaInvokeOptions = new ArrayList<>();
         final List<String> javaOptions = new ArrayList<>();
@@ -418,10 +447,10 @@ public class BenchmarkService
         final List<String> baseArguments = vm.vmArguments(params.getJvm(), params.getJvmArgs(), javaOptions);
         command.addAll(baseArguments);
 
-        command.add("--" + RunnerArguments.OPTIONS);
-        command.add(Serializables.toBase64(options));
-        command.add("--" + RunnerArguments.ACTION_PLAN);
-        command.add(Serializables.toBase64(actionPlan));
+        command.add("--" + RunnerArguments.HOST);
+        command.add(host);
+        command.add("--" + RunnerArguments.PORT);
+        command.add(Integer.toString(port));
 
         return command;
     }
