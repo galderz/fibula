@@ -171,7 +171,7 @@ samples-native: $(samples_runner)
 > $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
 .PHONY: samples-native
 
-$(it_runner): $(shell find fibula-it -type f -name "*.java" ! -path "./*/target/*")
+$(it_runner): $(shell find fibula-it/src -type f -name "*.java" ! -path "./*/target/*")
 $(it_runner): $(shell find fibula-it -type f -name "pom.xml" ! -path "./*/target/*")
 $(it_runner): $(it_jar)
 > $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it -Pnative $(runner_build_args)
