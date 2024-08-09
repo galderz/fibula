@@ -145,6 +145,24 @@ java -jar target/benchmarks.jar MyFirst
 > If it finds both the native and JVM runner applications,
 > it will run the JVM application.
 
+### Custom exceptions
+
+Any of the annotated methods in JMH benchmarks can throw a custom exception.
+Whereas the bootstrap and runner code in JMH reside in the same jar,
+that is not the case in Fibula.
+This is because of the split in Fibula to enable the runner side to be compiled to native independent of the bootstrap process.
+So, if an annotated method in a JMH benchmark throws a custom exception,
+Fibula would report a `ClassNotFoundException` for that custom exception class.
+This issue can be avoided by modifying the benchmark invocation call to use `-cp` or `-classpath` option,
+adding the project jar as classpath entry,
+and passing `io.quarkus.runner.GeneratedMain` as the main class to execute.
+Additional arguments would be passed after the main class.
+For example:
+
+```shell
+java -cp target/fibula-samples-999-SNAPSHOT.jar:target/benchmarks.jar io.quarkus.runner.GeneratedMain ...
+```
+
 ## JMH Features Checklist
 
 These are the JMH features that Fibula currently supports:
@@ -155,15 +173,14 @@ These are the JMH features that Fibula currently supports:
 - [x] Output time unit definitions via `@OutputTimeUnit` annotation.
 - [x] `@Setup` and `@TearDown` annotations.
 - [x] `perf` and `perfnorm` profilers.
+- [x] `State` annotated objects with `Benchmark` and `Thread` scopes.
 
 Some JMH features are partially supported:
 
 * `perfasm` profile (see "Profiling" section for details).
-* `State` annotated objects with `Benchmark` and `Thread` scopes supported,
-but annotation not yet supported on super classes.
 
 It is possible to run Fibula against existing
-[JMH Samples](https://github.com/Frankqsy/jmh-samples/tree/master/src/main/java/org/openjdk/jmh/samples),
+[JMH Samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples),
 but since not all JMH features are supported yet,
 Fibula explicitly excludes unsupported samples.
 Therefore, inspect the source code before trying to run a specific JMH sample to see if it's supported.
@@ -274,26 +291,6 @@ This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder
 The bootstrap module defines the main class as `bootstrap`.
 Although the bootstrap process is executed as is, without any additional bytecode in it,
 it reads the metadata generated when the Quarkus build run on the end-user JMH benchmark project.
-
-## Differences with JMH
-
-### Custom exceptions
-
-Any of the annotated methods in JMH benchmarks can throw a custom exception.
-Whereas the bootstrap and runner code in JMH reside in the same jar,
-that is not the case in Fibula.
-This is because of the split in Fibula to enable the runner side to be compiled to native independent of the bootstrap process.
-So, if an annotated method in a JMH benchmark throws a custom exception,
-Fibula would report a `ClassNotFoundException` for that custom exception class.
-This issue can be avoided by modifying the benchmark invocation call to use `-cp` or `-classpath` option,
-adding the project jar as classpath entry,
-and passing `io.quarkus.runner.GeneratedMain` as the main class to execute.
-Additional arguments would be passed after the main class.
-For example:
-
-```shell
-java -cp target/fibula-samples-999-SNAPSHOT.jar:target/benchmarks.jar io.quarkus.runner.GeneratedMain ...
-```
 
 ## Makefile Guide
 
