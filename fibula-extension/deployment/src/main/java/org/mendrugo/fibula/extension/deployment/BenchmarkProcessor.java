@@ -460,6 +460,7 @@ class BenchmarkProcessor
         }
     }
 
+    // todo do I still need this?
     private static boolean isSupported(String fqn)
     {
         if (fqn.startsWith("org.mendrugo.fibula"))
@@ -469,9 +470,7 @@ class BenchmarkProcessor
 
         if (fqn.startsWith("org.openjdk.jmh.it"))
         {
-            return fqn.endsWith("interorder.jmh_generated.BenchmarkStateOrderTest_test_jmhTest")
-                || fqn.endsWith("profilers.jmh_generated.LinuxPerfProfiler_test_jmhTest")
-                || fqn.endsWith("profilers.jmh_generated.LinuxPerfNormProfilerTest_test_jmhTest");
+            return true;
         }
 
         if (fqn.startsWith("org.openjdk.jmh.samples"))

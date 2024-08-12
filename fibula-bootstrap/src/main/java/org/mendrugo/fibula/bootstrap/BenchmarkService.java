@@ -342,7 +342,7 @@ public class BenchmarkService
                 final List<IterationResult> result = forkResult.results;
                 if (!result.isEmpty())
                 {
-                    final BenchmarkResultMetaData md = resultService.getMetadata();
+                    final BenchmarkResultMetaData md = server.getMetadata();
                     if (md != null)
                     {
                         md.adjustStart(startTime);
