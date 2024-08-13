@@ -53,9 +53,6 @@ public class BenchmarkService
     @Inject
     OutputFormatService out;
 
-    @Inject
-    ResultService resultService;
-
     BenchmarkList benchmarkList;
 
     Vm vm;
