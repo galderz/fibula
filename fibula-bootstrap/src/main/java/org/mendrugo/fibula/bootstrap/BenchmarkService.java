@@ -5,8 +5,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import joptsimple.internal.Strings;
-import org.mendrugo.fibula.results.*;
-import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
+import org.mendrugo.fibula.bootstrap.ProcessExecutor.ProcessResult;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.generators.core.FileSystemDestination;
 import org.openjdk.jmh.infra.BenchmarkParams;
@@ -444,9 +443,9 @@ public class BenchmarkService
         final List<String> baseArguments = vm.vmArguments(params.getJvm(), params.getJvmArgs(), javaOptions);
         command.addAll(baseArguments);
 
-        command.add("--" + RunnerArguments.HOST);
+        command.add("--host");
         command.add(host);
-        command.add("--" + RunnerArguments.PORT);
+        command.add("--port");
         command.add(Integer.toString(port));
 
         return command;

@@ -1,9 +1,7 @@
 package org.mendrugo.fibula.bootstrap;
 
 import joptsimple.internal.Strings;
-import org.mendrugo.fibula.results.ProcessExecutor;
-import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
-import org.mendrugo.fibula.results.VmInfo;
+import org.mendrugo.fibula.bootstrap.ProcessExecutor.ProcessResult;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.results;
+package org.mendrugo.fibula.bootstrap;
 
 import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.runner.format.OutputFormat;
