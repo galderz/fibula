@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class DwarfPerfAsmProfiler extends LinuxPerfAsmProfiler
 {
     public DwarfPerfAsmProfiler(String initLine) throws ProfilerException
