@@ -120,6 +120,32 @@
                     <outputDirectory>${project.build.directory}</outputDirectory>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>modify-jar</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <jar destfile="${project.build.directory}/benchmarks.jar" update="true">
+                                    <fileset dir="${project.build.directory}/classes">
+                                        <include name="META-INF/BenchmarkList"/>
+                                    </fileset>
+<!--                                    <fileset dir="${project.build.directory}/classes/META-INF">-->
+<!--                                        <include name="BenchmarkList"/>-->
+<!--                                    </fileset>-->
+                                </jar>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <profiles>

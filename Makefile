@@ -94,7 +94,7 @@ ifdef DEBUG
   benchmark_params += ""
 endif
 
-test_args = test
+test_args += test
 ifdef TEST
   test_args += -Dtest=$(TEST)
 endif

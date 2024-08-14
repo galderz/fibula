@@ -1,13 +1,13 @@
-package org.mendrugo.fibula.bootstrap;
+package org.mendrugo.fibula.results;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Properties;
 
-final class Version
+public final class Version
 {
-    String getVersion()
+    public String getVersion()
     {
         final Properties p = new Properties();
         try (InputStream s = Version.class.getResourceAsStream("/fibula.properties"))

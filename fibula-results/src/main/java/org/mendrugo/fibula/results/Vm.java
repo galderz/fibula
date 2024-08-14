@@ -1,7 +1,7 @@
-package org.mendrugo.fibula.bootstrap;
+package org.mendrugo.fibula.results;
 
 import joptsimple.internal.Strings;
-import org.mendrugo.fibula.bootstrap.ProcessExecutor.ProcessResult;
+import org.mendrugo.fibula.results.ProcessExecutor.ProcessResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public enum Vm
         }
     }
 
-    String executablePath(String jvm)
+    public String executablePath(String jvm)
     {
         return switch (this)
         {
@@ -55,18 +55,18 @@ public enum Vm
         };
     }
 
-    Collection<String> jvmArgs(Collection<String> jvmArgs)
+    public Collection<String> jvmArgs(Collection<String> jvmArgs)
     {
         return switch (this)
         {
             case HOTSPOT -> jvmArgs;
             case SUBSTRATE -> jvmArgs.stream()
-                .filter(arg -> !skipNativeJvmArgs().matcher(arg).matches())
+                .filter(arg -> !skipNativeInvalidJvmArgs().matcher(arg).matches())
                 .toList();
         };
     }
 
-    List<String> vmArguments(String jvm, Collection<String> jvmArgs, List<String> javaOptions)
+    public List<String> vmArguments(String jvm, Collection<String> jvmArgs, List<String> javaOptions)
     {
         return switch (this)
         {
@@ -75,7 +75,7 @@ public enum Vm
         };
     }
 
-    VmInfo info()
+    public VmInfo info()
     {
         return switch (this)
         {
@@ -95,7 +95,7 @@ public enum Vm
     // todo support windows
     private String binaryReadString(String key)
     {
-        final ProcessExecutor processExecutor = new ProcessExecutor(OutputFormatService.outputFormat());
+        final ProcessExecutor processExecutor = new ProcessExecutor(OutputFormats.outputFormat());
         final List<String> args = List.of(
             "/bin/sh"
             , "-c"
@@ -121,7 +121,7 @@ public enum Vm
         }
     }
 
-    static Vm instance()
+    public static Vm instance()
     {
         if (RUN_JAR.exists() && RUN_BINARY.exists())
         {
@@ -181,12 +181,15 @@ public enum Vm
     {
         final List<String> args = new ArrayList<>();
         args.add(RUN_BINARY.getPath());
-        args.addAll(jvmArgs);
+        final List<String> nativeValidJvmArgs = jvmArgs.stream()
+            .filter(arg -> !skipNativeInvalidJvmArgs().matcher(arg).matches())
+            .toList();
+        args.addAll(nativeValidJvmArgs);
         args.addAll(javaOptions);
         return args;
     }
 
-    private static Pattern skipNativeJvmArgs()
+    private static Pattern skipNativeInvalidJvmArgs()
     {
         final List<String> skipJvmArgs = List.of(
             "-XX:(\\+|-)UnlockExperimentalVMOptions"
