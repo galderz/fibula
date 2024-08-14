@@ -93,7 +93,7 @@ public class FailureModesTest
         }
     }
 
-    @Disabled("Throws ClassNotFoundException with banned class")
+    @Disabled("Does not work in native because it needs to be registered for serialization")
     @Test
     public void shouldFailOnCustomExceptionAtBenchmark()
     {
