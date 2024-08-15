@@ -10,7 +10,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>fibula-extension</module>
-        <module>fibula-results</module>
         <module>fibula-runner</module>
         <module>fibula-bootstrap</module>
         <module>fibula-benchmarks</module>

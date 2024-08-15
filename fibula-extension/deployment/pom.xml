@@ -24,11 +24,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.mendrugo.fibula</groupId>
-            <artifactId>fibula-results</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-reflection</artifactId>
         </dependency>

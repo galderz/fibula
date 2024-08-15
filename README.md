@@ -234,16 +234,6 @@ into a `benchmarks.jar` uber-jar.
 `fibula-runner` module is the Quarkus application that actually runs the benchmark code.
 It is a command line application that uses an HTTP REST client to communicate with the bootstrap process.
 
-`fibula-results` is a module that contains classes that are common to the bootstrap and runner modules.
-The module name does not clearly represent what it contains and the name is legacy from early prototypes.
-A lot of classes in there should also go away,
-but they remain until more functionality has been implemented,
-and a clearer idea on what is really common.
-There is no desire to simply refactor this module to `fibula-common`,
-because such modules can often become kitchen sinks.
-Once a clearer idea emerges on what is common,
-the module will be renamed accordingly.
-
 The bootstrap module interacts with the runner module via its command line API.
 The runner module interacts with the boostrap module via the HTTP REST endpoint.
 JMH serializable types are used in these interactions as much as possible,

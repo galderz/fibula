@@ -1,8 +1,8 @@
 package org.openjdk.jmh.runner;
 
-import org.mendrugo.fibula.results.Version;
-import org.mendrugo.fibula.results.Vm;
-import org.mendrugo.fibula.results.VmInfo;
+import org.mendrugo.fibula.bootstrap.Version;
+import org.mendrugo.fibula.bootstrap.Vm;
+import org.mendrugo.fibula.bootstrap.VmInfo;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;

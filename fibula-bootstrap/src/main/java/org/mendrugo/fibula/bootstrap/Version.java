@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.results;
+package org.mendrugo.fibula.bootstrap;
 
 import java.io.IOException;
 import java.io.InputStream;
