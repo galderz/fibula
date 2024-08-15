@@ -134,9 +134,6 @@
                                     <fileset dir="${project.build.directory}/classes">
                                         <include name="META-INF/BenchmarkList"/>
                                     </fileset>
-<!--                                    <fileset dir="${project.build.directory}/classes/META-INF">-->
-<!--                                        <include name="BenchmarkList"/>-->
-<!--                                    </fileset>-->
                                 </jar>
                             </target>
                         </configuration>
