@@ -2,6 +2,7 @@ package org.mendrugo.fibula.bootstrap;
 
 import joptsimple.internal.Strings;
 import org.mendrugo.fibula.bootstrap.ProcessExecutor.ProcessResult;
+import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,27 +76,27 @@ public enum Vm
         };
     }
 
-    public VmInfo info()
+    public Info info(OutputFormat out)
     {
         return switch (this)
         {
-            case HOTSPOT -> new VmInfo(
+            case HOTSPOT -> new Info(
                 System.getProperty("java.version")
                 , System.getProperty("java.vm.name")
                 , System.getProperty("java.vm.version")
             );
-            case SUBSTRATE -> new VmInfo(
-                binaryReadString("com.oracle.svm.core.VM.Java.Version=")
+            case SUBSTRATE -> new Info(
+                binaryReadString("com.oracle.svm.core.VM.Java.Version=", out)
                 , "Substrate VM"
-                , binaryReadString("com.oracle.svm.core.VM=")
+                , binaryReadString("com.oracle.svm.core.VM=", out)
             );
         };
     }
 
     // todo support windows
-    private String binaryReadString(String key)
+    private String binaryReadString(String key, OutputFormat out)
     {
-        final ProcessExecutor processExecutor = new ProcessExecutor(OutputFormats.outputFormat());
+        final ProcessExecutor processExecutor = new ProcessExecutor(out);
         final List<String> args = List.of(
             "/bin/sh"
             , "-c"
@@ -199,4 +200,10 @@ public enum Vm
 
         return Pattern.compile(Strings.join(skipJvmArgs, "|"));
     }
+
+    public record Info(
+        String jdkVersion
+        , String vmName
+        , String vmVersion
+    ) {}
 }

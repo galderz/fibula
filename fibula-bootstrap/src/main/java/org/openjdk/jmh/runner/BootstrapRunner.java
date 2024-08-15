@@ -2,7 +2,6 @@ package org.openjdk.jmh.runner;
 
 import org.mendrugo.fibula.bootstrap.Version;
 import org.mendrugo.fibula.bootstrap.Vm;
-import org.mendrugo.fibula.bootstrap.VmInfo;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
@@ -124,7 +123,7 @@ public class BootstrapRunner extends Runner
 
         private void amendBenchmarkParams(BenchmarkParams benchmark)
         {
-            final VmInfo vmInfo = Vm.instance().info();
+            final Vm.Info vmInfo = Vm.instance().info(out);
             amendBenchmarkParamsField("jdkVersion", vmInfo.jdkVersion(), benchmark);
             amendBenchmarkParamsField("vmName", vmInfo.vmName(), benchmark);
             amendBenchmarkParamsField("vmVersion", vmInfo.vmVersion(), benchmark);
