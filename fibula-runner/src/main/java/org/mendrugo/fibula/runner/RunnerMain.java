@@ -10,10 +10,17 @@ public class RunnerMain implements QuarkusApplication
 {
     public static void main(String... args)
     {
-        final Cli cli = Cli.read(args);
-        final String host = cli.text("host");
-        final String port = cli.text("port");
-        invokeForkedMain(host, port);
+        try
+        {
+            final Class<?> clazz = Class.forName("org.openjdk.jmh.runner.ForkedMain");
+            final Method mainMethod = clazz.getDeclaredMethod("main", String[].class);
+            mainMethod.setAccessible(true);
+            mainMethod.invoke(null, new Object[]{args});
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -21,20 +28,5 @@ public class RunnerMain implements QuarkusApplication
     {
         // No-op
         return 0;
-    }
-
-    private static void invokeForkedMain(String host, String port)
-    {
-        try
-        {
-            final Class<?> clazz = Class.forName("org.openjdk.jmh.runner.ForkedMain");
-            final Method mainMethod = clazz.getDeclaredMethod("main", String[].class);
-            mainMethod.setAccessible(true);
-            mainMethod.invoke(null, new Object[]{new String[]{host, port}});
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
     }
 }

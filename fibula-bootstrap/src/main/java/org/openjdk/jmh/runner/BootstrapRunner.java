@@ -84,9 +84,7 @@ public class BootstrapRunner extends Runner
         final List<String> baseArguments = vm.vmArguments(benchmark.getJvm(), benchmark.getJvmArgs(), javaOptions);
         command.addAll(baseArguments);
 
-        command.add("--host");
         command.add(host);
-        command.add("--port");
         command.add(Integer.toString(port));
 
         return command;
