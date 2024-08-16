@@ -14,7 +14,6 @@
     <properties>
         <hamcrest.version>2.2</hamcrest.version>
         <junit.version>5.10.2</junit.version>
-        <zt-exec.version>1.12</zt-exec.version>
     </properties>
 
     <dependencies>
@@ -70,12 +69,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.moshi</groupId>
-            <artifactId>moshi</artifactId>
-            <version>1.15.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
