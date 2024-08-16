@@ -8,13 +8,18 @@ import java.lang.reflect.Method;
 @QuarkusMain(name = "runner")
 public class RunnerMain implements QuarkusApplication
 {
-    @Override
-    public int run(String... args) throws Exception
+    public static void main(String... args)
     {
         final Cli cli = Cli.read(args);
         final String host = cli.text("host");
         final String port = cli.text("port");
         invokeForkedMain(host, port);
+    }
+
+    @Override
+    public int run(String... args) throws Exception
+    {
+        // No-op
         return 0;
     }
 
