@@ -11,9 +11,7 @@
     </parent>
     <artifactId>fibula-samples</artifactId>
     <properties>
-        <hamcrest.version>2.2</hamcrest.version>
         <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
-        <skipTests>true</skipTests>
     </properties>
     <dependencies>
         <dependency>
@@ -29,22 +27,6 @@
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-samples</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.moshi</groupId>
-            <artifactId>moshi</artifactId>
-            <version>1.15.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <version>${hamcrest.version}</version>
         </dependency>
     </dependencies>
     <build>
