@@ -121,7 +121,10 @@ public class BootstrapRunner extends Runner
 
         private void amendBenchmarkParams(BenchmarkParams benchmark)
         {
-            final Vm.Info vmInfo = Vm.instance().info(out);
+            final Vm vm = Vm.instance();
+            final Vm.Info vmInfo = vm.info(out);
+            amendBenchmarkParamsField("jvm", vm.executablePath(benchmark.getJvm()), benchmark);
+            amendBenchmarkParamsField("jvmArgs", vm.jvmArgs(benchmark.getJvmArgs()), benchmark);
             amendBenchmarkParamsField("jdkVersion", vmInfo.jdkVersion(), benchmark);
             amendBenchmarkParamsField("vmName", vmInfo.vmName(), benchmark);
             amendBenchmarkParamsField("vmVersion", vmInfo.vmVersion(), benchmark);

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum Vm
@@ -63,7 +64,7 @@ public enum Vm
             case HOTSPOT -> jvmArgs;
             case SUBSTRATE -> jvmArgs.stream()
                 .filter(arg -> !skipNativeInvalidJvmArgs().matcher(arg).matches())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
         };
     }
 
@@ -182,10 +183,7 @@ public enum Vm
     {
         final List<String> args = new ArrayList<>();
         args.add(RUN_BINARY.getPath());
-        final List<String> nativeValidJvmArgs = jvmArgs.stream()
-            .filter(arg -> !skipNativeInvalidJvmArgs().matcher(arg).matches())
-            .toList();
-        args.addAll(nativeValidJvmArgs);
+        args.addAll(jvmArgs);
         args.addAll(javaOptions);
         return args;
     }
