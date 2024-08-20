@@ -1,6 +1,5 @@
 package org.mendrugo.fibula.bootstrap;
 
-import io.quarkus.logging.Log;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
@@ -15,7 +14,6 @@ public class BootstrapMain implements QuarkusApplication
     @Override
     public int run(String... args) throws Exception
     {
-        Log.debug("Running bootstrap");
         // Read command line arguments just like JMH does
         final CommandLineOptions options = new CommandLineOptions(args);
         benchmarkService.run(options);
