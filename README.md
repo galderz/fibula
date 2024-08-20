@@ -4,16 +4,18 @@ Fibula allows you to run JMH benchmarks as GraalVM native executables.
 
 # Pre-requisites
 
-Build JMH [`1.37-patches` branch](https://github.com/galderz/jmh/tree/1.37-patches) locally to include the following patches:
+Build JMH
+[`1.37-patches.v2` branch](https://github.com/galderz/jmh/tree/1.37-patches.v2)
+locally to include the following patches:
 
 * Install `jmh-core-it` tests jar locally.
 This enables JMH integration tests to be run with Fibula.
-* Fix for [`perf stat` command not constructed right for event selection](https://bugs.openjdk.org/browse/CODETOOLS-7903739) bug.
 * Fix for [Perf event validation not working with skid options](https://bugs.openjdk.org/browse/CODETOOLS-7903740) bug.
+* Print exception in case the exception truncates the stream (e.g. serialization error).
 
 ```shell
 git clone https://github.com/galderz/jmh && cd jmh
-git checkout 1.37-patches
+git checkout 1.37-patches.v2
 mvn install -DskipTests
 ```
 
@@ -49,13 +51,6 @@ Run the benchmark:
 java -jar target/benchmarks.jar MyFirst
 ```
 
-## Logging
-
-It is possible to enable logging by changing the log level globally,
-e.g. `-Dquarkus.log.level=DEBUG`,
-or per category,
-e.g. `-Dquarkus.log.category.\"org.mendrugo.fibula\".level=DEBUG`.
-
 ## Profiling
 
 `perf` and `perfnorm` can be used just like with JMH.
@@ -73,7 +68,8 @@ mvn package -Dnative -Dquarkus.native.debug.enabled \
     -Dfibula.native.additional-build-args=-H:-DeleteLocalSymbols
 ```
 
-> **NOTE**: For those familiar with Quarkus,
+> **NOTE**:
+> For those familiar with Quarkus,
 > note that deleting local symbols is passed via `fibula.native.additional-build-args` instead of `quarkus.native.additional-build-args`.
 > This is needed because Fibula already defines configuration for `quarkus.native.additional-build-args` internally,
 > and so the contents of `fibula.native.additional-build-args` get appended to it.
@@ -124,8 +120,7 @@ Native images are slow to build,
 so it is more productive to develop Fibula running JMH benchmarks in JVM mode.
 When things are working switch to native to make sure it works there too.
 2. At times performance of JMH benchmarks in native might be different to JMH with HotSpot.
-Running Fibula in JVM mode can help detect issues specific to the Fibula integration,
-e.g. bytecode generation issues. 
+Running Fibula in JVM mode can help detect issues specific to the Fibula integration.
 
 To do, just remove the `-Dnative` argument to build the benchmarks as a standard JVM application:
 
@@ -140,7 +135,8 @@ no matter if built for native or JVM:
 java -jar target/benchmarks.jar MyFirst
 ```
 
-> **IMPORTANT**: There are no flags in Fibula to decide whether ro run a native or JVM runner application.
+> **IMPORTANT**:
+> There are no flags in Fibula to decide whether ro run a native or JVM runner application.
 > Instead, the bootstrap makes the decision based on whether the native or JVM runner applications have been previously built.
 > If it finds both the native and JVM runner applications,
 > it will run the JVM application.
@@ -163,64 +159,49 @@ For example:
 java -cp target/fibula-samples-999-SNAPSHOT.jar:target/benchmarks.jar io.quarkus.runner.GeneratedMain ...
 ```
 
-## JMH Features Checklist
-
-These are the JMH features that Fibula currently supports:
-
-- [x] Throughput and average benchmark modes.
-- [x] Implicit blackhole support for returned values.
-- [x] Explicit `Blackhole` benchmark parameters.
-- [x] Output time unit definitions via `@OutputTimeUnit` annotation.
-- [x] `@Setup` and `@TearDown` annotations.
-- [x] `perf` and `perfnorm` profilers.
-- [x] `State` annotated objects with `Benchmark` and `Thread` scopes.
-
-Some JMH features are partially supported:
-
-* `perfasm` profile (see "Profiling" section for details).
-
-It is possible to run Fibula against existing
-[JMH Samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples),
-but since not all JMH features are supported yet,
-Fibula explicitly excludes unsupported samples.
-Therefore, inspect the source code before trying to run a specific JMH sample to see if it's supported.
-
-## JMH Wishlist
-
-aka "The shopping list for Shipilev".
-
-The patches in the JMH [`1.37-patches` branch](https://github.com/galderz/jmh/tree/1.37-patches).
-
-Make `org.openjdk.jmh.runner.ActionType` public.
-Although `org.openjdk.jmh.runner.ActionPlan` is public,
-Fibula can't easily construct it because `ActionType` is package private.
-Fibula needs `org.openjdk.jmh.runner.ActionPlan` because the bootstrap process serializes them,
-and ships them to the runner process for execution.
-
-Make `org.openjdk.jmh.runner.Action` public.
-This type is needed to construct `org.openjdk.jmh.runner.ActionPlan` instances.
-
-The bootstrap process can't easily reuse the `*Runner` logic,
-because it needs to tailor made invocation according to whether native or JVM modes are selected.
-Hence, this module copies logic in `*Runner` to construct `ActionPlan` instances,
-e.g. `Runner.getActionPlans()`, `Runner.newBenchmarkParams()`...etc.
-
-Ideally Fibula would use the existing binary link client/server architecture,
-but it's not clear what kind of additional configuration it would need to work with native.
-Also, Fibula has an extra information negotiation to find out VM information from the binary,
-and this is currently extracted from a running native image.
-There could be ways to extract that information from the binary itself,
-which would remove the need for the additional command.
-
-Switch `org.openjdk.jmh.runner.BaseRunner` from package private to public.
-If Fibula can work with the existing binary link client,
-then rather than `BaseRunner`,
-`org.openjdk.jmh.runner.ForkedRunner` should switch from package private to public.
-
 ## Architecture
 
+JMH benchmarks work by having a runner process coordinate benchmark runners embedded in the same process,
+or forked runners running in separate processes.
+When running inside a JVM, there's no real reason to separate the codebases for both sides into separate modules,
+hence JMH's jmh-core module contains all the logic for both sides.
+
+Fibula's aim is to run the benchmark runners as GraalVM native image executables,
+and therefore it splits the code such that only the benchmark runner is converted into native executables.
+The benefits of having this split are the following:
+
+* By only converting the benchmark runner into native, 
+a smaller universe has to be transformed which makes it native image process less error-prone.
+A smaller universe also means smaller native executables and less moving parts.
+* The benchmark runner can still run as a separate JVM process,
+which means the native image agent can be plugged into it to detect any missing configuration.
+
+The downsides of this split are:
+
+* It is not possible to Fibula in native mode and fork=0 mode,
+where benchmark runner runs embedded in the same process as the coordinator/bootstrap process.
+This is small price to pay since this mode is mostly used for testing and not to gather meaningful benchmark results.
+* A more complex build and module structure is required in Fibula's source tree.
+
+Following is a description of Fibula's modules and their jobs:
+
 `fibula-bootstrap` module is a Quarkus JVM application that coordinates benchmarks.
-It starts an HTTP REST endpoint to receive data from forked runners that it launches.
+It's main job is to run `org.openjdk.jmh.runner.Runner` process,
+but it does not run this class directly.
+Instead, it extends it to achieve two objects:
+
+* It overrides the `getForkedMainCommand` method
+in order to run benchmarks either as native executables or JVM applications.
+JMH's implementation hardcodes the commmand to be a JVM application that runs `org.openjdk.jmh.runner.ForkedMain` class. 
+Fibula runs either the `fibula-runner` application either as a native executable or a JVM application.
+The method is package private,
+so the override is achieved by using the same JMH package name.
+* Amends `jvm`, `jvmArgs`, `jdkVersion`, `vmName`, `vmVersion` and `jmhVersion` presented in the console when the benchmark starts,
+in order to present relevant information to a Fibula run.
+For example, `vmName` for native executables will be `Substrate VM`,
+and vm invoker shows the native binary rather than the `java` process.
+To amend these fields Fibula wraps the `OutputFormat` and overrides `startBenchmark` method to apply the changes before they are shown to the user.
+Also, since these fields are private and final, it uses reflection to modify them.
 
 `fibula-benchmarks` module enables end-user experience akin to JMH,
 whereby users expect a single `benchmarks.jar` to execute.
@@ -231,27 +212,60 @@ This effectively transforms the `fibula-bootstrap` module,
 and all of its dependencies,
 into a `benchmarks.jar` uber-jar.
 
-`fibula-runner` module is the Quarkus application that actually runs the benchmark code.
-It is a command line application that uses an HTTP REST client to communicate with the bootstrap process.
+> **IMPORTANT**:
+> Since the `benchmarks.jar` does not contain user classes,
+> `ClassNotFoundExceptions` can appear if any benchmark throws a custom exception defined by the user.
+> This can easily be worked around as explained in the "Custom exceptions" section. 
 
-The bootstrap module interacts with the runner module via its command line API.
-The runner module interacts with the boostrap module via the HTTP REST endpoint.
-JMH serializable types are used in these interactions as much as possible,
-e.g. `ActionPlan`, `ThroughputResult`...etc.
-Their binary payloads are exchanged as base 64 encoded text.
+`fibula-runner` module is the Java application that actually runs the benchmark code.
+Although it's actually a Quarkus application, no Quarkus application is run per-se.
+It uses the method explained
+[here](https://quarkus.io/blog/magic-control/#the-almost-no-magic-approach)
+in order to avoid starting any Quarkus components, not even a CDI container.
+This is particularly good for user benchmarks that use CDI,
+because by not running the Quarkus CDI layer,
+there is no risk of CDI compatibility issues.
 
-`fibula-it` is the integration testsuite containing tests homegrown tests,
+> **NOTE**:
+> `fibula-bootstrap` and `fibula-runner` communicate using the same binary client/server architecture that JMH uses.
+
+`fibula-it` is the integration testsuite containing homegrown tests,
 and tests that run against JMH benchmarks defined in JMH's `jmh-core-it` module.
+It reuses as much as JMH's code for testing,
+which includes benchmark definitions,
+but because JMH does not abstract away how the benchmark is constructed,
+the benchmark construction and assertions are duplicated.
 
 `fibula-samples` is a module containing JMH benchmark samples created to demonstrate some of the JMH features Fibula currently supports.
 On top of that,
 this module depends on JMH's `jmh-samples` module,
 so it can be used to run any of JMH's own samples with Fibula.
-The module contains an integration testsuite that tried to verify JMH and Fibula performance was within certain %,
-but testing has showed that this is not easy to quantify,
-and it would be expensive to try to do it in a clean environment.
-This module will be refactored very soon to leave it only with the ability to run benchmarks in JMH's module `jmh-samples`.
-The integration testsuite part has been superseded by the `fibula-it` module.
+
+## JMH Wishlist
+
+aka "The shopping list for Shipilev".
+
+The patches in the JMH [`1.37-patches` branch](https://github.com/galderz/jmh/tree/1.37-patches).
+
+Make `org.openjdk.jmh.runner.ForkedMain` public.
+This is the entry point for the runner process.
+Fibula currently uses reflection to access and instantiate it.
+
+Switch `org.openjdk.jmh.runner.Runner.getForkedMainCommand`
+from package private to protected.
+That way it can be extended without the need to create a split package situation.
+
+A cleaner way to adjust the target runner specific benchmark parameters.
+`jvm` and `jvmArgs` could be adjusted by wrapping `Options` around,
+and returning the correct values based on the target runner.
+`jdkVersion`, `vmName`, `vmVersion` and `jmhVersion` are trickier to easily adjust.
+Although `PrintPropertiesMain` can help when the target jvm and the bootstrap jvm are different,
+it falls short to cover scenarios like this.
+An alternative way would be to extend `AbstractOutputFormat`,
+wrap the original `OutputFormat` instance,
+and reimplement the `startBenchmark` logic.
+The issue with this approach is that `startBenchmark` is a lengthy method,
+but the benefit is that no reflection is needed.
 
 ### Entrypoint Duality
 
@@ -278,9 +292,8 @@ Selecting the use case to run happens this way:
 which defines the main class as the `runner`. 
 * End use applications enable the `maven-dependency-plugin` to depend on the bootstrap, indirectly via the `fibula-benchmarks` process.
 This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder.
+Additionally, `BenchmarkList` metadata generated for the user benchmarks are stored inside the uber jar so that JMH locates the metadata on startup.
 The bootstrap module defines the main class as `bootstrap`.
-Although the bootstrap process is executed as is, without any additional bytecode in it,
-it reads the metadata generated when the Quarkus build run on the end-user JMH benchmark project.
 
 ## Makefile Guide
 
