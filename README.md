@@ -5,7 +5,7 @@ Fibula allows you to run JMH benchmarks as GraalVM native executables.
 # Pre-requisites
 
 Build JMH
-[`1.37-patches.v2` branch](https://github.com/galderz/jmh/tree/1.37-patches.v2)
+[`1.38-patches` branch](https://github.com/galderz/jmh/tree/1.38-patches)
 locally to include the following patches:
 
 * Install `jmh-core-it` tests jar locally.
@@ -15,9 +15,15 @@ This enables JMH integration tests to be run with Fibula.
 
 ```shell
 git clone https://github.com/galderz/jmh && cd jmh
-git checkout 1.37-patches.v2
+git checkout 1.38-patches
 mvn install -DskipTests
 ```
+
+> **IMPORTANT**:
+> Do not use GraalVM to build JMH because annotation processor does not work as expected,
+> and therefore no JMH benchmark source will be generated.
+> Instead we recommend you use standard JDK releases,
+> e.g. Adoptium Eclipse Temurin.
 
 Build Fibula with JDK 21 or newer:
 
@@ -329,7 +335,7 @@ Selecting the use case to run happens this way:
 
 aka "The shopping list for Shipilev".
 
-The patches in the JMH [`1.37-patches` branch](https://github.com/galderz/jmh/tree/1.37-patches).
+The patches in the JMH [`1.38-patches` branch](https://github.com/galderz/jmh/tree/1.38-patches).
 
 Make `org.openjdk.jmh.runner.ForkedMain` public.
 This is the entry point for the runner process.
