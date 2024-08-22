@@ -290,6 +290,40 @@ The extension has a few additional notable responsibilities:
   and these field offsets need to be computed at runtime.
 * `org.openjdk.jmh.runner.InfraControl` is also registered for reflection
   so that all padded fields that would appear unused to the GraalVM native image points-to analysis are not dead-code eliminated.
+* The contents of all `BenchmarkList` metadata files found in user benchmark dependencies,
+  as well as the metadata for the user benchmarks,
+  are stored into a single `BenchmarkList` file.
+  Doing so at build time makes it easy to relocate a single file into the `benchmarks.jar` that the user run,
+  and be able to locate benchmark metadata within dependencies (e.g. `jmh-samples`), 
+  as well as user code.
+
+### Entrypoint Duality
+
+Building and running a JMH benchmark with Fibula is powered by two Quarkus applications,
+which means there are 2 different application entry points:
+the entry point for the JVM-mode `fibula-bootstrap` (aka bootstrap) process,
+and the entry point for the `fibula-runner` (aka runner), which can be run in either native or JVM mode.
+Benchmarks written by end users of Fibula users need to rely on both Quarkus applications simultaneously:
+
+* On one hand, they need to depend on the runner process because bytecode needs to generated based on the JMH benchmarks(s) in the end-user project.
+  This bytecode then needs to be fed to the Quarkus build that creates the package that contains the runner plus the bytecode,
+  and builds it as either a native or JVM application.
+* On the other hand, they need the bootstrap process (indirectly via the `fibula-benchmarks` process),
+  to be able to kickstart the benchmark coordination process,
+  and this will fire of either the native or JVM pre-built runner application.
+
+To signal the 2 application entrypoints,
+and allow selection of entrypoint depending on the use case,
+Fibula relies on Quarkus' `@QuarkusMain` annotation and customizes its name based on the use case
+(`bootstrap` or `runner`).
+Selecting the use case to run happens this way:
+
+* End user applications have a compile time dependency on `fibula-runner`,
+  which defines the main class as the `runner`.
+* End use applications enable the `maven-dependency-plugin` to depend on the bootstrap, indirectly via the `fibula-benchmarks` process.
+  This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder.
+  Additionally, `BenchmarkList` metadata generated for the user benchmarks are stored inside the uber jar so that JMH locates the metadata on startup.
+  The bootstrap module defines the main class as `bootstrap`.
 
 ## JMH Wishlist
 
@@ -316,34 +350,6 @@ wrap the original `OutputFormat` instance,
 and reimplement the `startBenchmark` logic.
 The issue with this approach is that `startBenchmark` is a lengthy method,
 but the benefit is that no reflection is needed.
-
-### Entrypoint Duality
-
-Building and running a JMH benchmark with Fibula is powered by two Quarkus applications,
-which means there are 2 different application entry points:
-the entry point for the JVM-mode `fibula-bootstrap` (aka bootstrap) process,
-and the entry point for the `fibula-runner` (aka runner), which can be run in either native or JVM mode.
-Benchmarks written by end users of Fibula users need to rely on both Quarkus applications simultaneously:
-
-* On one hand, they need to depend on the runner process because bytecode needs to generated based on the JMH benchmarks(s) in the end-user project.
-This bytecode then needs to be fed to the Quarkus build that creates the package that contains the runner plus the bytecode,
-and builds it as either a native or JVM application.
-* On the other hand, they need the bootstrap process (indirectly via the `fibula-benchmarks` process),
-to be able to kickstart the benchmark coordination process,
-and this will fire of either the native or JVM pre-built runner application.
-
-To signal the 2 application entrypoints,
-and allow selection of entrypoint depending on the use case,
-Fibula relies on Quarkus' `@QuarkusMain` annotation and customizes its name based on the use case
-(`bootstrap` or `runner`).
-Selecting the use case to run happens this way:
-
-* End user applications have a compile time dependency on `fibula-runner`,
-which defines the main class as the `runner`. 
-* End use applications enable the `maven-dependency-plugin` to depend on the bootstrap, indirectly via the `fibula-benchmarks` process.
-This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder.
-Additionally, `BenchmarkList` metadata generated for the user benchmarks are stored inside the uber jar so that JMH locates the metadata on startup.
-The bootstrap module defines the main class as `bootstrap`.
 
 ## Makefile Guide
 
