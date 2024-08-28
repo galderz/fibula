@@ -156,6 +156,7 @@ do-run:
 
 $(it_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
 $(it_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
+$(it_jar): $(shell find . -type f -name "pom.xml" ! -path "./*/target/*")
 $(it_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(it_jar):
 > $(mvnw_runner) install $(common_maven_args) -DskipTests
