@@ -17,19 +17,6 @@
         </dependency>
     </dependencies>
     <build>
-        <plugins>
-            <!-- todo need this plugin? -->
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${compiler-plugin.version}</version>
-                <configuration>
-                    <compilerArgs>
-                        <arg>-parameters</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
-        </plugins>
-
         <resources>
             <resource>
                 <directory>src/main/resources/</directory>
