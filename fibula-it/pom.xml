@@ -24,6 +24,11 @@
         </dependency>
         <dependency>
             <groupId>org.mendrugo.fibula</groupId>
+            <artifactId>fibula-bootstrap</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mendrugo.fibula</groupId>
             <artifactId>fibula-runner</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -37,39 +42,10 @@
             <version>${jmh.version}</version>
             <type>test-jar</type>
         </dependency>
-        <!-- Dependency for jmh-core-it tests -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <version>${hamcrest.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mendrugo.fibula</groupId>
-            <artifactId>fibula-bootstrap</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

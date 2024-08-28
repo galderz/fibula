@@ -1,9 +1,7 @@
 package org.mendrugo.fibula.it.profilers;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.it.Fixtures;
 import org.openjdk.jmh.it.profilers.ProfilerTestUtils;
@@ -17,12 +15,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.Map;
 
-@QuarkusTest
-public class LinuxPerfProfilerTest extends org.openjdk.jmh.it.profilers.LinuxPerfProfilerTest
+ public class LinuxPerfProfilerTest extends org.openjdk.jmh.it.profilers.LinuxPerfProfilerTest
 {
-    @Inject
-    BenchmarkService benchmarkService;
-
     @Override
     @Test
     public void test() throws RunnerException
@@ -40,7 +34,7 @@ public class LinuxPerfProfilerTest extends org.openjdk.jmh.it.profilers.LinuxPer
             .addProfiler(LinuxPerfProfiler.class)
             .build();
 
-        final RunResult rr = benchmarkService.runSingle(opts);
+        final RunResult rr = new BenchmarkService().runSingle(opts);
 
         Map<String, Result> sr = rr.getSecondaryResults();
         String msg = ProfilerTestUtils.checkedGet(sr, "perf").extendedInfo();

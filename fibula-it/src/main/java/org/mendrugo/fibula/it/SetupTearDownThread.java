@@ -1,5 +1,6 @@
 package org.mendrugo.fibula.it;
 
+import org.junit.Assert;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
@@ -8,9 +9,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 
 // todo consider not only invocations but also order, see state order tests
 @State(Scope.Thread)
@@ -43,9 +41,9 @@ public class SetupTearDownThread
     @TearDown(Level.Trial)
     public void afterTrial()
     {
-        assertThat(trialCounter.get(), is(1));
-        assertThat(beforeIterationCounter.get(), is(2));
-        assertThat(afterIterationCounter.get(), is(2));
+        Assert.assertEquals(1, trialCounter.get());
+        Assert.assertEquals(2, beforeIterationCounter.get());
+        Assert.assertEquals(2, afterIterationCounter.get());
 
         final int minInvalidInvocationCount = 2;
         MonoAssert.assertThatGreaterThan(beforeInvocationCounter.get(), minInvalidInvocationCount);

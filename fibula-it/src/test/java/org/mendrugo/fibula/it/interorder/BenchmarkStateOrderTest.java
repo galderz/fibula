@@ -1,20 +1,14 @@
 package org.mendrugo.fibula.it.interorder;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.it.Fixtures;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-@QuarkusTest
 public class BenchmarkStateOrderTest extends org.openjdk.jmh.it.interorder.BenchmarkStateOrderTest
 {
-    @Inject
-    BenchmarkService benchmarkService;
-
     @Override
     @Test
     public void invokeAPI() throws RunnerException
@@ -26,7 +20,7 @@ public class BenchmarkStateOrderTest extends org.openjdk.jmh.it.interorder.Bench
                 .shouldFailOnError(true)
                 .syncIterations(false)
                 .build();
-            benchmarkService.run(opt);
+            new BenchmarkService().run(opt);
         }
     }
 }

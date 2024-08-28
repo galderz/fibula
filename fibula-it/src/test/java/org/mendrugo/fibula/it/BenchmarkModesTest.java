@@ -1,8 +1,7 @@
 package org.mendrugo.fibula.it;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
@@ -14,15 +13,8 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-@QuarkusTest
 public class BenchmarkModesTest
 {
-    @Inject
-    BenchmarkService benchmarkService;
-
     @Test
     public void benchmarkModes() throws RunnerException
     {
@@ -35,8 +27,8 @@ public class BenchmarkModesTest
             .warmupIterations(0)
             .build();
 
-        final Collection<RunResult> results = benchmarkService.run(opt);
-        assertThat(results.size(), is(3));
+        final Collection<RunResult> results = new BenchmarkService().run(opt);
+        Assert.assertEquals(3,(results.size()));
         for (RunResult result : results)
         {
             final BenchmarkParams params = result.getParams();
@@ -45,12 +37,12 @@ public class BenchmarkModesTest
             {
                 case "defaultMode":
                 case "throughputMode":
-                    assertThat(params.getMode(), is(Mode.Throughput));
-                    assertThat(result.getPrimaryResult().getScoreUnit(), is("ops/s"));
+                    Assert.assertEquals(Mode.Throughput, params.getMode());
+                    Assert.assertEquals("ops/s", result.getPrimaryResult().getScoreUnit());
                     break;
                 case "averageTimeMode":
-                    assertThat(params.getMode(), is(Mode.AverageTime));
-                    assertThat(result.getPrimaryResult().getScoreUnit(), is("s/op"));
+                    Assert.assertEquals(Mode.AverageTime, params.getMode());
+                    Assert.assertEquals("s/op", result.getPrimaryResult().getScoreUnit());
                     break;
                 default:
                     throw new AssertionError("Unknonw benchmark: " + params.getBenchmark());

@@ -1,8 +1,7 @@
 package org.mendrugo.fibula.it;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.RunResult;
@@ -13,15 +12,8 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-@QuarkusTest
 public class OutputUnitsTest
 {
-    @Inject
-    BenchmarkService benchmarkService;
-
     @Test
     public void outputUnits() throws RunnerException
     {
@@ -34,8 +26,8 @@ public class OutputUnitsTest
             .warmupIterations(0)
             .build();
 
-        final Collection<RunResult> results = benchmarkService.run(opt);
-        assertThat(results.size(), is(2));
+        final Collection<RunResult> results = new BenchmarkService().run(opt);
+        Assert.assertEquals(2, results.size());
         for (RunResult result : results)
         {
             final BenchmarkParams params = result.getParams();
@@ -43,10 +35,10 @@ public class OutputUnitsTest
             switch (benchmarkElements[benchmarkElements.length - 1])
             {
                 case "nanoseconds":
-                    assertThat(result.getPrimaryResult().getScoreUnit(), is("ops/ns"));
+                    Assert.assertEquals("ops/ns", result.getPrimaryResult().getScoreUnit());
                     break;
                 case "milliseconds":
-                    assertThat(result.getPrimaryResult().getScoreUnit(), is("ops/ms"));
+                    Assert.assertEquals("ops/ms", result.getPrimaryResult().getScoreUnit());
                     break;
                 default:
                     throw new AssertionError("Unknonw benchmark: " + params.getBenchmark());

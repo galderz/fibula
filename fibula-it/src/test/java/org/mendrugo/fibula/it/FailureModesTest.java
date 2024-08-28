@@ -1,9 +1,8 @@
 package org.mendrugo.fibula.it;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkException;
@@ -14,16 +13,8 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-
-@QuarkusTest
 public class FailureModesTest
 {
-    @Inject
-    BenchmarkService benchmarkService;
-
     @Test
     public void shouldNotFailOnErrorByDefault() throws RunnerException
     {
@@ -35,8 +26,8 @@ public class FailureModesTest
             .warmupIterations(0)
             .build();
 
-        final Collection<RunResult> results = benchmarkService.run(opt);
-        assertThat(results.isEmpty(), is(true));
+        final Collection<RunResult> results = new BenchmarkService().run(opt);
+        Assert.assertTrue(results.isEmpty());
     }
 
     @Test
@@ -53,15 +44,15 @@ public class FailureModesTest
 
         try
         {
-            benchmarkService.run(opt);
+            new BenchmarkService().run(opt);
             throw new AssertionError("Expected exception to be thrown");
         }
         catch (RunnerException e)
         {
             final BenchmarkException cause = (BenchmarkException) e.getCause();
             final Throwable suppressed = cause.getSuppressed()[0];
-            assertThat(suppressed, is(instanceOf(IllegalStateException.class)));
-            assertThat(suppressed.getMessage(), is("Provoke exception in @Benchmark"));
+            Assert.assertTrue(suppressed instanceof IllegalStateException);
+            Assert.assertEquals("Provoke exception in @Benchmark", suppressed.getMessage());
         }
     }
 
@@ -79,21 +70,21 @@ public class FailureModesTest
 
         try
         {
-            benchmarkService.run(opt);
+            new BenchmarkService().run(opt);
             throw new AssertionError("Expected exception to be thrown");
         }
         catch (RunnerException e)
         {
             final Throwable suppressed = e.getCause().getSuppressed()[0];
-            assertThat(suppressed, is(instanceOf(RuntimeException.class)));
-            assertThat(suppressed.getMessage(), is("Provoke a runtime exception with cause"));
+            Assert.assertTrue(suppressed instanceof RuntimeException);
+            Assert.assertEquals("Provoke a runtime exception with cause", suppressed.getMessage());
             final Throwable cause = suppressed.getCause();
-            assertThat(cause, is(instanceOf(NullPointerException.class)));
-            assertThat(cause.getMessage(), is("Provoke null pointer exception"));
+            Assert.assertTrue(cause instanceof NullPointerException);
+            Assert.assertEquals("Provoke null pointer exception", cause.getMessage());
         }
     }
 
-    @Disabled("Does not work in native because it needs to be registered for serialization")
+    @Ignore("Does not work in native because it needs to be registered for serialization")
     @Test
     public void shouldFailOnCustomExceptionAtBenchmark()
     {
@@ -108,15 +99,15 @@ public class FailureModesTest
 
         try
         {
-            benchmarkService.run(opt);
+            new BenchmarkService().run(opt);
             throw new AssertionError("Expected exception to be thrown");
         }
         catch (RunnerException e)
         {
             final BenchmarkException cause = (BenchmarkException) e.getCause();
             final Throwable suppressed = cause.getSuppressed()[0];
-            assertThat(suppressed, is(instanceOf(CustomException.class)));
-            assertThat(suppressed.getMessage(), is("Provoke a custom exception in @Benchmark"));
+            Assert.assertTrue(suppressed instanceof CustomException);
+            Assert.assertEquals("Provoke a custom exception in @Benchmark", suppressed.getMessage());
         }
     }
 
