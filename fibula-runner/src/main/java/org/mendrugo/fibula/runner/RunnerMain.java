@@ -5,7 +5,7 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 
 import java.lang.reflect.Method;
 
-@QuarkusMain(name = "runner")
+@QuarkusMain
 public class RunnerMain implements QuarkusApplication
 {
     public static void main(String... args)
