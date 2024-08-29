@@ -112,7 +112,7 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <jar destfile="${project.build.directory}/${uberjar.name}" update="true">
+                                <jar destfile="${project.build.directory}/${uberjar.name}.jar" update="true">
                                     <fileset dir="${project.build.directory}/classes">
                                         <include name="META-INF/BenchmarkList"/>
                                     </fileset>
