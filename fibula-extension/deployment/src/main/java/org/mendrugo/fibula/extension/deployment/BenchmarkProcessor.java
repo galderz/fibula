@@ -44,8 +44,10 @@ import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,14 +149,14 @@ class BenchmarkProcessor
         );
         generatedBenchmarkFQNs.addAll(jmhTestsInJandex);
 
-        Log.infof("Collect BenchmarkList metadata from dependencies and project");
-        collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
-
         Log.info("Register generated benchmarks for reflection");
         generatedBenchmarkFQNs.stream()
             .map(ReflectiveClassBuildItem::builder)
             .map(builder -> builder.methods(true).build())
             .forEach(reflection::produce);
+
+        Log.infof("Collect BenchmarkList metadata from dependencies and project");
+        collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
     }
 
     private BenchmarksPaths generateBenchmarksFromBytecode(Path buildDir)
@@ -353,9 +355,8 @@ class BenchmarkProcessor
             {
                 for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics())
                 {
-                    System.out.format("Error on line %d in %s: %s%n"
+                    Log.errorf("Error on line %d in %s: %s%n"
                         , diagnostic.getLineNumber()
-                        // , diagnostic.getSource().toUri()
                         , diagnostic.getSource() == null ? "NA" : diagnostic.getSource().toUri()
                         , diagnostic.getMessage(Locale.ENGLISH)
                     );
@@ -364,7 +365,7 @@ class BenchmarkProcessor
             }
             else
             {
-                System.out.println("Compilation success.");
+                Log.info("Compilation success.");
                 return compiledClassItems(compilationUnit.iterator().next(), paths);
             }
         }
