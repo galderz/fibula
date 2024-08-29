@@ -147,24 +147,6 @@ java -jar target/benchmarks.jar MyFirst
 > If it finds both the native and JVM runner applications,
 > it will run the JVM application.
 
-### Custom exceptions
-
-Any of the annotated methods in JMH benchmarks can throw a custom exception.
-Whereas the bootstrap and runner code in JMH reside in the same jar,
-that is not the case in Fibula.
-This is because of the split in Fibula to enable the runner side to be compiled to native independent of the bootstrap process.
-So, if an annotated method in a JMH benchmark throws a custom exception,
-Fibula would report a `ClassNotFoundException` for that custom exception class.
-This issue can be avoided by modifying the benchmark invocation call to use `-cp` or `-classpath` option,
-adding the project jar as classpath entry,
-and passing `io.quarkus.runner.GeneratedMain` as the main class to execute.
-Additional arguments would be passed after the main class.
-For example:
-
-```shell
-java -cp target/fibula-samples-999-SNAPSHOT.jar:target/benchmarks.jar io.quarkus.runner.GeneratedMain ...
-```
-
 ## Architecture
 
 JMH benchmarks work by having a runner process coordinate benchmark runners embedded in the same process,
@@ -356,6 +338,30 @@ wrap the original `OutputFormat` instance,
 and reimplement the `startBenchmark` logic.
 The issue with this approach is that `startBenchmark` is a lengthy method,
 but the benefit is that no reflection is needed.
+
+### Exceptions in native benchmarks
+
+Any of the annotated methods in JMH benchmarks can throw an exception,
+which gets serialized and sent back from the forked (runner) process,
+back to the bootstrap process.
+Serializing these exceptions in native requires pre-registration of the exceptions,
+so that GraalVM native image knows how to serialize them.
+
+However, there's currently no easy way to know in advance which exceptions will be thrown at runtime,
+and the spectrum of potential exceptions that could be thrown is infinite.
+Fibula registers some commonly thrown exceptions (like `NullPointerException`),
+but for the majority of exceptions users will get errors like this when running Fibula in native mode:
+
+```shell
+com.oracle.svm.core.jdk.UnsupportedFeatureError: SerializationConstructorAccessor class not found for declaringClass: org.mendrugo.fibula.samples.SampleCustomException (targetConstructorClass: java.lang.Object). Usually adding org.mendrugo.fibula.samples.SampleCustomException to serialization-config.json fixes the problem.
+```
+
+The best fix here is really to fix to the source of exception,
+because for benchmarks results to be meaningful,
+they should not throw any exceptions.
+
+Eventually there might be a way for the user to define exceptions that the benchmark might throw in advance,
+and for Fibula to read those and register them for serialization in GraalVM native image.
 
 ## Makefile Guide
 
