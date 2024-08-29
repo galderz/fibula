@@ -152,7 +152,7 @@ java -jar target/benchmarks.jar MyFirst
 JMH benchmarks work by having a runner process coordinate benchmark runners embedded in the same process,
 or forked runners running in separate processes.
 When running inside a JVM, there's no real reason to separate the codebases for both sides into separate modules,
-hence JMH's jmh-core module contains all the logic for both sides.
+hence JMH's `jmh-core` module contains all the logic for both sides.
 
 Fibula's aim is to run the benchmark runners as GraalVM native image executables,
 and therefore it splits the code such that only the benchmark runner is converted into native executables.
@@ -166,7 +166,7 @@ which means the native image agent can be plugged into it to detect any missing 
 
 The downsides of this split are:
 
-* It is not possible to Fibula in native mode and fork=0 mode,
+* It is not possible to Fibula in native mode and `fork=0` mode,
 where benchmark runner runs embedded in the same process as the coordinator/bootstrap process.
 This is small price to pay since this mode is mostly used for testing and not to gather meaningful benchmark results.
 * A more complex build and module structure is required in Fibula's source tree.
@@ -175,14 +175,14 @@ Following is a description of Fibula's modules and their jobs:
 
 ### `fibula-bootstrap`
 
-`fibula-bootstrap` module is a Quarkus JVM application that coordinates benchmarks.
+`fibula-bootstrap` module is a JVM application that coordinates benchmarks.
 It's main job is to run `org.openjdk.jmh.runner.Runner` process,
 but it does not run this class directly.
 Instead, it extends it to achieve two objects:
 
 * It overrides the `getForkedMainCommand` method
 in order to run benchmarks either as native executables or JVM applications.
-JMH's implementation hardcodes the commmand to be a JVM application that runs `org.openjdk.jmh.runner.ForkedMain` class. 
+JMH's implementation hardcodes the command to be a JVM application that runs `org.openjdk.jmh.runner.ForkedMain` class. 
 Fibula runs either the `fibula-runner` application either as a native executable or a JVM application.
 The method is package private,
 so the override is achieved by using the same JMH package name.
@@ -192,22 +192,6 @@ For example, `vmName` for native executables will be `Substrate VM`,
 and vm invoker shows the native binary rather than the `java` process.
 To amend these fields Fibula wraps the `OutputFormat` and overrides `startBenchmark` method to apply the changes before they are shown to the user.
 Also, since these fields are private and final, it uses reflection to modify them.
-
-### `fibula-benchmarks`
-
-`fibula-benchmarks` module enables end-user experience akin to JMH,
-whereby users expect a single `benchmarks.jar` to execute.
-It achieves that by depending solely on the `fibula-bootstrap` module,
-which is the module where benchmark coordination begins,
-and then making the module an `uber-jar`.
-This effectively transforms the `fibula-bootstrap` module,
-and all of its dependencies,
-into a `benchmarks.jar` uber-jar.
-
-> **IMPORTANT**:
-> Since the `benchmarks.jar` does not contain user classes,
-> `ClassNotFoundExceptions` can appear if any benchmark throws a custom exception defined by the user.
-> This can easily be worked around as explained in the "Custom exceptions" section. 
 
 ### `fibula-runner`
 
@@ -281,37 +265,7 @@ The extension has a few additional notable responsibilities:
 * The contents of all `BenchmarkList` metadata files found in user benchmark dependencies,
   as well as the metadata for the user benchmarks,
   are stored into a single `BenchmarkList` file.
-  Doing so at build time makes it easy to relocate a single file into the `benchmarks.jar` that the user run,
-  and be able to locate benchmark metadata within dependencies (e.g. `jmh-samples`), 
-  as well as user code.
-
-### Entrypoint Duality
-
-Building and running a JMH benchmark with Fibula is powered by two Quarkus applications,
-which means there are 2 different application entry points:
-the entry point for the JVM-mode `fibula-bootstrap` (aka bootstrap) process,
-and the entry point for the `fibula-runner` (aka runner), which can be run in either native or JVM mode.
-Benchmarks written by end users of Fibula users need to rely on both Quarkus applications simultaneously:
-
-* On one hand, they need to depend on the runner process because bytecode needs to generated based on the JMH benchmarks(s) in the end-user project.
-  This bytecode then needs to be fed to the Quarkus build that creates the package that contains the runner plus the bytecode,
-  and builds it as either a native or JVM application.
-* On the other hand, they need the bootstrap process (indirectly via the `fibula-benchmarks` process),
-  to be able to kickstart the benchmark coordination process,
-  and this will fire of either the native or JVM pre-built runner application.
-
-To signal the 2 application entrypoints,
-and allow selection of entrypoint depending on the use case,
-Fibula relies on Quarkus' `@QuarkusMain` annotation and customizes its name based on the use case
-(`bootstrap` or `runner`).
-Selecting the use case to run happens this way:
-
-* End user applications have a compile time dependency on `fibula-runner`,
-  which defines the main class as the `runner`.
-* End use applications enable the `maven-dependency-plugin` to depend on the bootstrap, indirectly via the `fibula-benchmarks` process.
-  This causes the `fibula-benchmarks` uber jar to be copied to the `target` folder.
-  Additionally, `BenchmarkList` metadata generated for the user benchmarks are stored inside the uber jar so that JMH locates the metadata on startup.
-  The bootstrap module defines the main class as `bootstrap`.
+  This enables benchmarks in the current project and in any of its dependencies to be located successfully.
 
 ## JMH Wishlist
 
@@ -338,6 +292,10 @@ wrap the original `OutputFormat` instance,
 and reimplement the `startBenchmark` logic.
 The issue with this approach is that `startBenchmark` is a lengthy method,
 but the benefit is that no reflection is needed.
+
+More of the `jmh-core-it` code could be reused by Fibula if the way the `Runner` instance is constructed would be abstracted away.
+Doing so would enable not only benchmark annotated code to be reused,
+but the code that starts the runner and asserts expectations as well.
 
 ### Exceptions in native benchmarks
 
