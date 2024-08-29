@@ -27,7 +27,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
 
         <jmh.version>1.38-SNAPSHOT</jmh.version>
-        <quarkus.platform.version>3.11.1</quarkus.platform.version>
+        <quarkus.platform.version>3.14.1</quarkus.platform.version>
     </properties>
     <dependencyManagement>
         <dependencies>
