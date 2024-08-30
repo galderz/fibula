@@ -338,6 +338,10 @@ Debugging benchmark test execution for one of the tests:
 ```shell script
 make test MAVEN_DEBUG=test TEST=FailureModesTest
 ```
+Running individual test method in native:
+```shell script
+make test-native MAVEN_DEBUG=test TEST="FailureModesTest#shouldFailOnCustomExceptionAtBenchmark"
+```
 Running a benchmark sample in Native mode with perf or perfnorm profiler:
 ```shell script
 make run-native BENCHMARK=JMHSample_01 PROF=perf
