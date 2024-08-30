@@ -297,30 +297,6 @@ More of the `jmh-core-it` code could be reused by Fibula if the way the `Runner`
 Doing so would enable not only benchmark annotated code to be reused,
 but the code that starts the runner and asserts expectations as well.
 
-### Exceptions in native benchmarks
-
-Any of the annotated methods in JMH benchmarks can throw an exception,
-which gets serialized and sent back from the forked (runner) process,
-back to the bootstrap process.
-Serializing these exceptions in native requires pre-registration of the exceptions,
-so that GraalVM native image knows how to serialize them.
-
-However, there's currently no easy way to know in advance which exceptions will be thrown at runtime,
-and the spectrum of potential exceptions that could be thrown is infinite.
-Fibula registers some commonly thrown exceptions (like `NullPointerException`),
-but for the majority of exceptions users will get errors like this when running Fibula in native mode:
-
-```shell
-com.oracle.svm.core.jdk.UnsupportedFeatureError: SerializationConstructorAccessor class not found for declaringClass: org.mendrugo.fibula.samples.SampleCustomException (targetConstructorClass: java.lang.Object). Usually adding org.mendrugo.fibula.samples.SampleCustomException to serialization-config.json fixes the problem.
-```
-
-The best fix here is really to fix to the source of exception,
-because for benchmarks results to be meaningful,
-they should not throw any exceptions.
-
-Eventually there might be a way for the user to define exceptions that the benchmark might throw in advance,
-and for Fibula to read those and register them for serialization in GraalVM native image.
-
 ## Makefile Guide
 
 The project contains a Makefile designed to speed up typical development tasks.
