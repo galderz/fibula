@@ -172,6 +172,9 @@
       "name":"org.openjdk.jmh.runner.link.InfraFrame$Type"
     },
     {
+      "name":"org.openjdk.jmh.runner.link.OutputFrame"
+    },
+    {
       "name":"org.openjdk.jmh.runner.link.OutputFormatFrame"
     },
     {
