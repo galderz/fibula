@@ -113,11 +113,8 @@ runner_build_args =
 ifdef DECOMPILE
   runner_build_args += -Dquarkus.package.jar.decompiler.enabled
 endif
-ifdef GRAALVM_VERSION
-  ifeq ($(GRAALVM_VERSION),24)
-    runner_build_args += -Dfibula.graal.compiler.module=jdk.graal.compiler
-    runner_build_args += -Dfibula.graal.compiler.package.prefix=jdk.graal
-  endif
+ifdef REPORTS
+  runner_build_args += -Dquarkus.native.enable-reports
 endif
 ifdef GEN
   runner_build_args += -Dfibula.generate=$(GEN)
