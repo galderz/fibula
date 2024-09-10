@@ -47,10 +47,8 @@ import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -132,12 +130,13 @@ class BenchmarkProcessor
         , BuildSystemTargetBuildItem buildSystemTarget
         , BuildProducer<ReflectiveClassBuildItem> reflection
         , CurateOutcomeBuildItem curateOutcomeBuildItem
+        , NativeImageRunnerBuildItem nativeImageRunnerBuildItem
     )
     {
         final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
 
         Log.info("Generating blackhole substitution");
-        generateBlackholeSubstitution(classOutput);
+        generateBlackholeSubstitution(classOutput, nativeImageRunnerBuildItem.getBuildRunner().getGraalVMVersion());
 
         Log.info("Generate benchmarks");
         final BenchmarksPaths benchmarksPaths = generateBenchmarksFromBytecode(buildSystemTarget.getOutputDirectory());
@@ -442,7 +441,7 @@ class BenchmarkProcessor
         }
     }
 
-    private void generateBlackholeSubstitution(ClassOutput classOutput)
+    private void generateBlackholeSubstitution(ClassOutput classOutput, GraalVM.Version graalVMVersion)
     {
         final String className = String.format(
             "%s.Target_org_openjdk_jmh_infra_Blackhole"
@@ -458,7 +457,10 @@ class BenchmarkProcessor
         {
             blackhole.addAnnotation(TargetClass.class).add("className", "org.openjdk.jmh.infra.Blackhole");
 
-            final String graalCompilerPackagePrefix = System.getProperty("fibula.graal.compiler.package.prefix", "org.graalvm");
+            final String graalCompilerPackagePrefix =
+                graalVMVersion.compareTo(GraalVM.Version.VERSION_23_1_0) <= 0
+                ? "org.graalvm"
+                : "jdk.graal";
 
             List<Class<?>> consumeParameterTypes = List.of(
                 byte.class
