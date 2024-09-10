@@ -16,6 +16,8 @@ import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.pkg.builditem.NativeImageRunnerBuildItem;
 import io.quarkus.deployment.pkg.steps.GraalVM;
+import io.quarkus.deployment.pkg.steps.NativeBuild;
+import io.quarkus.deployment.pkg.steps.NativeOrNativeSourcesBuild;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.MethodCreator;
@@ -123,6 +125,17 @@ class BenchmarkProcessor
         }
     }
 
+    @BuildStep(onlyIf = NativeBuild.class)
+    void linkBlackholeToGraal(
+        BuildProducer<GeneratedClassBuildItem> generatedClasses
+        , NativeImageRunnerBuildItem nativeImageRunnerBuildItem
+    )
+    {
+        Log.info("Generating blackhole substitution");
+        final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
+        generateBlackholeSubstitution(classOutput, nativeImageRunnerBuildItem.getBuildRunner().getGraalVMVersion());
+    }
+
     @BuildStep
     void generateBenchmarks(
         BuildProducer<GeneratedClassBuildItem> generatedClasses
@@ -130,14 +143,8 @@ class BenchmarkProcessor
         , BuildSystemTargetBuildItem buildSystemTarget
         , BuildProducer<ReflectiveClassBuildItem> reflection
         , CurateOutcomeBuildItem curateOutcomeBuildItem
-        , NativeImageRunnerBuildItem nativeImageRunnerBuildItem
     )
     {
-        final ClassOutput classOutput = new GeneratedClassGizmoAdaptor(generatedClasses, true);
-
-        Log.info("Generating blackhole substitution");
-        generateBlackholeSubstitution(classOutput, nativeImageRunnerBuildItem.getBuildRunner().getGraalVMVersion());
-
         Log.info("Generate benchmarks");
         final BenchmarksPaths benchmarksPaths = generateBenchmarksFromBytecode(buildSystemTarget.getOutputDirectory());
 
