@@ -146,10 +146,8 @@ class BenchmarkProcessor
         , CurateOutcomeBuildItem curateOutcomeBuildItem
     )
     {
-        Log.info("Generate benchmarks");
         final BenchmarksPaths benchmarksPaths = generateBenchmarksFromBytecode(buildSystemTarget.getOutputDirectory());
 
-        Log.info("Compile benchmarks");
         final List<GeneratedClassBuildItem> compiled = compileBenchmarks(benchmarksPaths, curateOutcomeBuildItem.getApplicationModel());
         compiled.forEach(generatedClasses::produce);
         Log.infof("Compiled %d classes", compiled.size());
@@ -186,14 +184,14 @@ class BenchmarkProcessor
         );
         generatedBenchmarkFQNs.addAll(jmhTestsInJandex);
 
-        Log.info("Register generated benchmarks for reflection");
         generatedBenchmarkFQNs.stream()
             .map(ReflectiveClassBuildItem::builder)
             .map(builder -> builder.methods(true).build())
             .forEach(reflection::produce);
+        Log.infof("Registered %d generated benchmarks for reflection", generatedBenchmarkFQNs.size());
 
-        Log.infof("Collect BenchmarkList metadata from dependencies and project");
         collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
+        Log.info("Collected BenchmarkList metadata from dependencies and project");
     }
 
     private int copyCompiledGeneratedClassesToTest(Path generatedClassesDir, Path testClassesPath)
@@ -253,11 +251,11 @@ class BenchmarkProcessor
 
             Collection<File> classes = FileUtils.getClasses(paths.classesDir.toFile());
             Log.infof(
-                "Processing %d classes from %s with reflection generator"
+                "Generating benchmarks from %d classes from %s with reflection generator"
                 , classes.size()
                 , paths.classesDir.toFile()
             );
-            Log.infof(
+            Log.debugf(
                 "Writing out Java source to %s and resources to %s"
                 , paths.sourceDirectory
                 , paths.generatedClassesDir
@@ -436,7 +434,6 @@ class BenchmarkProcessor
             }
             else
             {
-                Log.info("Compilation success.");
                 return compiledClassItems(paths.generatedClassesDir);
             }
         }
