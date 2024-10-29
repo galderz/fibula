@@ -50,7 +50,6 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -160,6 +159,7 @@ class BenchmarkProcessor
 
         Log.info("Copy compiled benchmarks to test classes");
         copyCompiledClassesToTest(benchmarksPaths.generatedClassesDir, buildSystemTarget.getOutputDirectory().resolve("test-classes"));
+        // TODO move info message and print number of copied classes
 
         final Set<String> jmhTestsCompiled = compiled.stream()
             .map(GeneratedClassBuildItem::getName)
@@ -173,6 +173,7 @@ class BenchmarkProcessor
         );
         final Collection<String> generatedBenchmarkFQNs = new HashSet<>(jmhTestsCompiled);
 
+        // TODO is this needed?
         final Set<String> jmhTestsInJandex = index.getIndex().getKnownClasses().stream()
             .filter(classInfo -> classInfo.name().toString().endsWith("jmhTest"))
             .filter(classInfo -> isSupported(classInfo.name().toString()))
@@ -195,6 +196,7 @@ class BenchmarkProcessor
         collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
     }
 
+    // TODO try to do it more neatly
     private void copyCompiledClassesToTest(Path generatedClassesDir, Path testClassesPath)
     {
         // This helps with integration testing.
@@ -452,7 +454,7 @@ class BenchmarkProcessor
             else
             {
                 Log.info("Compilation success.");
-                return compiledClassItems(compilationUnit.iterator().next(), paths);
+                return compiledClassItems(paths.generatedClassesDir);
             }
         }
         catch (IOException e)
@@ -461,20 +463,13 @@ class BenchmarkProcessor
         }
     }
 
-    List<GeneratedClassBuildItem> compiledClassItems(JavaFileObject javaFileObject, BenchmarksPaths paths)
+    List<GeneratedClassBuildItem> compiledClassItems(Path generatedClassesDir)
     {
-        final Path absoluteSourceFilePath = Path.of(javaFileObject.toUri());
-        final Path relativeSourceFilePath = absoluteSourceFilePath.subpath(paths.sourceDirectory.getNameCount(), absoluteSourceFilePath.getNameCount());
-        final Path generatedPackagePath = relativeSourceFilePath.subpath(0, relativeSourceFilePath.getNameCount() - 1);
-
-        Log.debugf("Relative source file path: %s", relativeSourceFilePath);
-        Log.debugf("Generated package path: %s", generatedPackagePath);
-
-        Path jmhGeneratedClassDir = paths.generatedClassesDir.resolve(generatedPackagePath);
-        try(Stream<Path> files = Files.list(jmhGeneratedClassDir))
+        try(final Stream<Path> walk = Files.walk(generatedClassesDir))
         {
-            return files
-                .map(classFile -> compiledClassItem(classFile, generatedPackagePath))
+            return walk
+                .filter(path -> !Files.isDirectory(path))
+                .map(path -> toGeneratedClassBuildItem(path, generatedClassesDir))
                 .toList();
         }
         catch (IOException e)
@@ -483,18 +478,18 @@ class BenchmarkProcessor
         }
     }
 
-    private static GeneratedClassBuildItem compiledClassItem(Path file, Path packagePath)
+    private static GeneratedClassBuildItem toGeneratedClassBuildItem(Path file, Path base)
     {
         try
         {
-            final String name = String.format(
-                "%s/%s"
-                , packagePath.toString()
-                , file.getFileName().toString().replaceAll("(?<!^)[.].*", "")
-            );
+            final Path relativePath = base.relativize(file);
+            final String withoutExtension = relativePath
+                .getFileName().toString()
+                .replaceFirst("\\.class$", "");
+            final Path path = relativePath.getParent().resolve(withoutExtension);
             final byte[] classData = Files.readAllBytes(file);
-            Log.debugf("Generate class build item for: %s", name);
-            return new GeneratedClassBuildItem(true, name, classData);
+            Log.debugf("Generate class build item for: %s", path);
+            return new GeneratedClassBuildItem(true, path.toString(), classData);
         }
         catch (IOException e)
         {

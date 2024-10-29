@@ -34,11 +34,11 @@ public class FailureModesTest
     {
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName() + ".singleException")
+            .shouldFailOnError(true)
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
             .warmupIterations(0)
-            .shouldFailOnError(true)
             .build();
 
         try
@@ -60,11 +60,11 @@ public class FailureModesTest
     {
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName() + ".chainedException")
+            .shouldFailOnError(true)
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
             .warmupIterations(0)
-            .shouldFailOnError(true)
             .build();
 
         try
@@ -88,11 +88,11 @@ public class FailureModesTest
     {
         final Options opt = new OptionsBuilder()
             .include(FailAtBenchmark.class.getCanonicalName() + ".customException")
+            .shouldFailOnError(true)
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
             .warmupIterations(0)
-            .shouldFailOnError(true)
             .build();
 
         try

@@ -1,7 +1,6 @@
 package org.mendrugo.fibula.it.profilers;
 
 import org.junit.Assert;
-import org.openjdk.jmh.it.profilers.ItExternalProfiler;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.Result;
 

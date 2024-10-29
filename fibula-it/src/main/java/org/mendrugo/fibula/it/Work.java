@@ -2,11 +2,10 @@ package org.mendrugo.fibula.it;
 
 import java.util.concurrent.TimeUnit;
 
-final class Work
+public final class Work
 {
-    static void work()
+    public static void work()
     {
-        // courtesy for parallel-running tests
         try
         {
             TimeUnit.MILLISECONDS.sleep(10);

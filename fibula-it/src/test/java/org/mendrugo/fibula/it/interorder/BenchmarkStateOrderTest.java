@@ -2,21 +2,20 @@ package org.mendrugo.fibula.it.interorder;
 
 import org.junit.Test;
 import org.mendrugo.fibula.bootstrap.BenchmarkService;
-import org.openjdk.jmh.it.Fixtures;
+import org.mendrugo.fibula.it.Repetitions;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-public class BenchmarkStateOrderTest extends org.openjdk.jmh.it.interorder.BenchmarkStateOrderTest
+public class BenchmarkStateOrderTest
 {
-    @Override
     @Test
     public void invokeAPI() throws RunnerException
     {
-        for (int c = 0; c < Fixtures.repetitionCount(); c++)
+        for (int c = 0; c < Repetitions.count(); c++)
         {
             Options opt = new OptionsBuilder()
-                .include(Fixtures.getTestMask(this.getClass().getSuperclass()))
+                .include(BenchmarkStateOrderIB.class.getCanonicalName())
                 .shouldFailOnError(true)
                 .syncIterations(false)
                 .build();

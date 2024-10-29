@@ -37,12 +37,6 @@
             <artifactId>jmh-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core-it</artifactId>
-            <version>${jmh.version}</version>
-            <type>test-jar</type>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>

@@ -14,11 +14,11 @@ public class SetupTearDownTest
     {
         final Options opt = new OptionsBuilder()
             .include(SetupTearDownGlobal.class.getCanonicalName())
+            .shouldFailOnError(true)
             .forks(1)
             .measurementIterations(2)
             .measurementTime(TimeValue.milliseconds(200))
             .warmupIterations(0)
-            .shouldFailOnError(true)
             .build();
 
         new BenchmarkService().run(opt);
@@ -29,11 +29,11 @@ public class SetupTearDownTest
     {
         final Options opt = new OptionsBuilder()
             .include(SetupTearDownThread.class.getCanonicalName())
+            .shouldFailOnError(true)
             .forks(1)
             .measurementIterations(2)
             .measurementTime(TimeValue.milliseconds(200))
             .warmupIterations(0)
-            .shouldFailOnError(true)
             .build();
 
         new BenchmarkService().run(opt);
