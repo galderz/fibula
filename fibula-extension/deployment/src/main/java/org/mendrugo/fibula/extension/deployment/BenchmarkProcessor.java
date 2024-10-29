@@ -59,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -157,9 +158,8 @@ class BenchmarkProcessor
             , compiled.stream().map(GeneratedClassBuildItem::getName).sorted().collect(Collectors.joining(", "))
         );
 
-        Log.info("Copy compiled benchmarks to test classes");
-        copyCompiledClassesToTest(benchmarksPaths.generatedClassesDir, buildSystemTarget.getOutputDirectory().resolve("test-classes"));
-        // TODO move info message and print number of copied classes
+        final int copyCount = copyCompiledGeneratedClassesToTest(benchmarksPaths.generatedClassesDir, buildSystemTarget.getOutputDirectory().resolve("test-classes"));
+        Log.infof("Copied %d compiled benchmarks to test classes", copyCount);
 
         final Set<String> jmhTestsCompiled = compiled.stream()
             .map(GeneratedClassBuildItem::getName)
@@ -196,43 +196,25 @@ class BenchmarkProcessor
         collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
     }
 
-    // TODO try to do it more neatly
-    private void copyCompiledClassesToTest(Path generatedClassesDir, Path testClassesPath)
+    private int copyCompiledGeneratedClassesToTest(Path generatedClassesDir, Path testClassesPath)
     {
         // This helps with integration testing.
         // It makes the classes are also available in a path that will be used by default when integration testing.
         try (Stream<Path> walk = Files.walk(generatedClassesDir))
         {
+            AtomicInteger copyCount = new AtomicInteger();
             walk.forEach(source ->
             {
                 try
                 {
-                    String targetSubPath = source.toString().substring(generatedClassesDir.toString().length());
-                    if (!targetSubPath.isEmpty())
-                    {
-                        // Remove / at the start of the path
-                        targetSubPath = targetSubPath.substring(1);
-
-                        final Path target = testClassesPath.resolve(targetSubPath);
-                        final File sourceFile = source.toFile();
-                        final File targetFile = target.toFile();
-                        if (sourceFile.isDirectory())
-                        {
-                            if (targetFile.exists())
-                            {
-                                Log.debugf("Skip replacing directory %s because it exists", target);
-                            }
-                            else
-                            {
-                                final boolean mkdirResult = targetFile.mkdirs();
-                                Log.debugf("Make directory %s with success result %s", target, mkdirResult);
-                            }
+                    Path target = testClassesPath.resolve(generatedClassesDir.relativize(source));
+                    if (Files.isDirectory(source)) {
+                        if (Files.notExists(target)) {
+                            Files.createDirectory(target);
                         }
-                        else
-                        {
-                            Log.debugf("Copying %s to %s", source, target);
-                            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-                        }
+                    } else {
+                        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                        copyCount.incrementAndGet();
                     }
                 }
                 catch (IOException e)
@@ -240,6 +222,7 @@ class BenchmarkProcessor
                     throw new UncheckedIOException(e);
                 }
             });
+            return copyCount.get();
         }
         catch (IOException e)
         {
