@@ -17,7 +17,6 @@ import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.pkg.builditem.NativeImageRunnerBuildItem;
 import io.quarkus.deployment.pkg.steps.GraalVM;
 import io.quarkus.deployment.pkg.steps.NativeBuild;
-import io.quarkus.deployment.pkg.steps.NativeOrNativeSourcesBuild;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.MethodCreator;
@@ -51,6 +50,8 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -157,6 +158,9 @@ class BenchmarkProcessor
             , compiled.stream().map(GeneratedClassBuildItem::getName).sorted().collect(Collectors.joining(", "))
         );
 
+        Log.info("Copy compiled benchmarks to test classes");
+        copyCompiledClassesToTest(benchmarksPaths.generatedClassesDir, buildSystemTarget.getOutputDirectory().resolve("test-classes"));
+
         final Set<String> jmhTestsCompiled = compiled.stream()
             .map(GeneratedClassBuildItem::getName)
             .filter(name -> name.endsWith("jmhTest"))
@@ -189,6 +193,56 @@ class BenchmarkProcessor
 
         Log.infof("Collect BenchmarkList metadata from dependencies and project");
         collectBenchmarkList(curateOutcomeBuildItem.getApplicationModel(), buildSystemTarget.getOutputDirectory());
+    }
+
+    private void copyCompiledClassesToTest(Path generatedClassesDir, Path testClassesPath)
+    {
+        // This helps with integration testing.
+        // It makes the classes are also available in a path that will be used by default when integration testing.
+        try (Stream<Path> walk = Files.walk(generatedClassesDir))
+        {
+            walk.forEach(source ->
+            {
+                try
+                {
+                    String targetSubPath = source.toString().substring(generatedClassesDir.toString().length());
+                    if (!targetSubPath.isEmpty())
+                    {
+                        // Remove / at the start of the path
+                        targetSubPath = targetSubPath.substring(1);
+
+                        final Path target = testClassesPath.resolve(targetSubPath);
+                        final File sourceFile = source.toFile();
+                        final File targetFile = target.toFile();
+                        if (sourceFile.isDirectory())
+                        {
+                            if (targetFile.exists())
+                            {
+                                Log.debugf("Skip replacing directory %s because it exists", target);
+                            }
+                            else
+                            {
+                                final boolean mkdirResult = targetFile.mkdirs();
+                                Log.debugf("Make directory %s with success result %s", target, mkdirResult);
+                            }
+                        }
+                        else
+                        {
+                            Log.debugf("Copying %s to %s", source, target);
+                            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
+                }
+                catch (IOException e)
+                {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private BenchmarksPaths generateBenchmarksFromBytecode(Path buildDir)
