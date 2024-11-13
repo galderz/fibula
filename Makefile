@@ -20,7 +20,7 @@ benchmarks_jar = target/benchmarks.jar
 it_jar = fibula-it/target/fibula-it-$(VERSION).jar
 it_runner = fibula-it/target/fibula-it-$(VERSION)-runner
 java = $(JAVA_HOME)/bin/java
-samples_runner = fibula-samples/target/fibula-samples-$(VERSION)-runner
+samples_runner = fibula-samples/target/benchmarks
 
 system_props =
 ifdef LOG_LEVEL
