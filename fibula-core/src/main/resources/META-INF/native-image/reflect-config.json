@@ -1,0 +1,195 @@
+[
+{
+  "name":"java.lang.Object",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.lang.Thread",
+  "fields":[{"name":"threadLocalRandomProbe"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicBoolean",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicReference",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64",
+  "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.BenchmarkParamsL0",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.BenchmarkParamsL1",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.BenchmarkParamsL2",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.BenchmarkParamsL3",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.BenchmarkParamsL4",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.Blackhole",
+  "fields":[{"name":"b1"}, {"name":"b2"}, {"name":"bool1"}, {"name":"bool2"}, {"name":"c1"}, {"name":"c2"}, {"name":"d1"}, {"name":"d2"}, {"name":"f1"}, {"name":"f2"}, {"name":"i1"}, {"name":"i2"}, {"name":"l1"}, {"name":"l2"}, {"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"obj1"}, {"name":"s1"}, {"name":"s2"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.BlackholeL0",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.BlackholeL1",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.BlackholeL2",
+  "allDeclaredFields":true,
+  "fields":[{"name":"b1"}, {"name":"b2"}, {"name":"bool1"}, {"name":"bool2"}, {"name":"c1"}, {"name":"c2"}, {"name":"d1"}, {"name":"d2"}, {"name":"f1"}, {"name":"f2"}, {"name":"i1"}, {"name":"i2"}, {"name":"l1"}, {"name":"l2"}, {"name":"markerBegin"}, {"name":"obj1"}, {"name":"s1"}, {"name":"s2"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.BlackholeL3",
+  "allDeclaredFields":true,
+  "fields":[{"name":"b1"}, {"name":"b2"}, {"name":"bool1"}, {"name":"bool2"}, {"name":"c1"}, {"name":"c2"}, {"name":"d1"}, {"name":"d2"}, {"name":"f1"}, {"name":"f2"}, {"name":"i1"}, {"name":"i2"}, {"name":"l1"}, {"name":"l2"}, {"name":"markerBegin"}, {"name":"obj1"}, {"name":"s1"}, {"name":"s2"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.BlackholeL4",
+  "allDeclaredFields":true,
+  "fields":[{"name":"b1"}, {"name":"b2"}, {"name":"bool1"}, {"name":"bool2"}, {"name":"c1"}, {"name":"c2"}, {"name":"d1"}, {"name":"d2"}, {"name":"f1"}, {"name":"f2"}, {"name":"i1"}, {"name":"i2"}, {"name":"l1"}, {"name":"l2"}, {"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"obj1"}, {"name":"s1"}, {"name":"s2"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.Control",
+  "fields":[{"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"startMeasurement"}, {"name":"stopMeasurement"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ControlL0",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ControlL1",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ControlL2",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}, {"name":"startMeasurement"}, {"name":"stopMeasurement"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ControlL3",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}, {"name":"startMeasurement"}, {"name":"stopMeasurement"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ControlL4",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"startMeasurement"}, {"name":"stopMeasurement"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.IterationParamsL0",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.IterationParamsL1",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.IterationParamsL2",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.IterationParamsL3",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.IterationParamsL4",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.openjdk.jmh.infra.ThreadParams",
+  "fields":[{"name":"groupCount"}, {"name":"groupIdx"}, {"name":"groupThreadCount"}, {"name":"groupThreadIdx"}, {"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"subgroupCount"}, {"name":"subgroupIdx"}, {"name":"subgroupThreadCount"}, {"name":"subgroupThreadIdx"}, {"name":"threadCount"}, {"name":"threadIdx"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ThreadParamsL0",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ThreadParamsL1",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ThreadParamsL2",
+  "allDeclaredFields":true,
+  "fields":[{"name":"groupCount"}, {"name":"groupIdx"}, {"name":"groupThreadCount"}, {"name":"groupThreadIdx"}, {"name":"markerBegin"}, {"name":"subgroupCount"}, {"name":"subgroupIdx"}, {"name":"subgroupThreadCount"}, {"name":"subgroupThreadIdx"}, {"name":"threadCount"}, {"name":"threadIdx"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ThreadParamsL3",
+  "allDeclaredFields":true,
+  "fields":[{"name":"groupCount"}, {"name":"groupIdx"}, {"name":"groupThreadCount"}, {"name":"groupThreadIdx"}, {"name":"markerBegin"}, {"name":"subgroupCount"}, {"name":"subgroupIdx"}, {"name":"subgroupThreadCount"}, {"name":"subgroupThreadIdx"}, {"name":"threadCount"}, {"name":"threadIdx"}]
+},
+{
+  "name":"org.openjdk.jmh.infra.ThreadParamsL4",
+  "allDeclaredFields":true,
+  "fields":[{"name":"groupCount"}, {"name":"groupIdx"}, {"name":"groupThreadCount"}, {"name":"groupThreadIdx"}, {"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"subgroupCount"}, {"name":"subgroupIdx"}, {"name":"subgroupThreadCount"}, {"name":"subgroupThreadIdx"}, {"name":"threadCount"}, {"name":"threadIdx"}]
+},
+{
+  "name":"org.openjdk.jmh.runner.InfraControl",
+  "fields":[{"name":"benchmarkParams"}, {"name":"firstIteration"}, {"name":"isDone"}, {"name":"isFailing"}, {"name":"iterationParams"}, {"name":"lastIteration"}, {"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"preSetup"}, {"name":"preTearDown"}, {"name":"shouldSynchIterations"}, {"name":"shouldYield"}, {"name":"threads"}, {"name":"volatileSpoiler"}, {"name":"warmdownDone"}, {"name":"warmdownShouldWait"}, {"name":"warmdownVisited"}, {"name":"warmupDone"}, {"name":"warmupShouldWait"}, {"name":"warmupVisited"}]
+},
+{
+  "name":"org.openjdk.jmh.runner.InfraControlL0",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.runner.InfraControlL1",
+  "allDeclaredFields":true,
+  "fields":[{"name":"markerBegin"}]
+},
+{
+  "name":"org.openjdk.jmh.runner.InfraControlL2",
+  "allDeclaredFields":true,
+  "fields":[{"name":"benchmarkParams"}, {"name":"firstIteration"}, {"name":"isDone"}, {"name":"isFailing"}, {"name":"iterationParams"}, {"name":"lastIteration"}, {"name":"markerBegin"}, {"name":"preSetup"}, {"name":"preTearDown"}, {"name":"shouldSynchIterations"}, {"name":"shouldYield"}, {"name":"threads"}, {"name":"volatileSpoiler"}, {"name":"warmdownDone"}, {"name":"warmdownShouldWait"}, {"name":"warmdownVisited"}, {"name":"warmupDone"}, {"name":"warmupShouldWait"}, {"name":"warmupVisited"}]
+},
+{
+  "name":"org.openjdk.jmh.runner.InfraControlL3",
+  "allDeclaredFields":true,
+  "fields":[{"name":"benchmarkParams"}, {"name":"firstIteration"}, {"name":"isDone"}, {"name":"isFailing"}, {"name":"iterationParams"}, {"name":"lastIteration"}, {"name":"markerBegin"}, {"name":"preSetup"}, {"name":"preTearDown"}, {"name":"shouldSynchIterations"}, {"name":"shouldYield"}, {"name":"threads"}, {"name":"volatileSpoiler"}, {"name":"warmdownDone"}, {"name":"warmdownShouldWait"}, {"name":"warmdownVisited"}, {"name":"warmupDone"}, {"name":"warmupShouldWait"}, {"name":"warmupVisited"}]
+},
+{
+  "name":"org.openjdk.jmh.runner.InfraControlL4",
+  "allDeclaredFields":true,
+  "fields":[{"name":"benchmarkParams"}, {"name":"firstIteration"}, {"name":"isDone"}, {"name":"isFailing"}, {"name":"iterationParams"}, {"name":"lastIteration"}, {"name":"markerBegin"}, {"name":"markerEnd"}, {"name":"preSetup"}, {"name":"preTearDown"}, {"name":"shouldSynchIterations"}, {"name":"shouldYield"}, {"name":"threads"}, {"name":"volatileSpoiler"}, {"name":"warmdownDone"}, {"name":"warmdownShouldWait"}, {"name":"warmdownVisited"}, {"name":"warmupDone"}, {"name":"warmupShouldWait"}, {"name":"warmupVisited"}]
+},
+{
+  "name":"org.sample.jmh_generated.MyBenchmark_jmhType_B2",
+  "fields":[{"name":"setupInvocationMutex"}, {"name":"setupIterationMutex"}, {"name":"setupTrialMutex"}, {"name":"tearInvocationMutex"}, {"name":"tearIterationMutex"}, {"name":"tearTrialMutex"}]
+},
+{
+  "name":"org.sample.jmh_generated.MyBenchmark_testMethod_jmhTest",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"testMethod_Throughput","parameterTypes":["org.openjdk.jmh.runner.InfraControl","org.openjdk.jmh.infra.ThreadParams"] }]
+},
+{
+  "name":"sun.misc.Unsafe",
+  "fields":[{"name":"theUnsafe"}]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+}
+]
