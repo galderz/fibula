@@ -140,11 +140,11 @@ ifeq ($(MAVEN_DEBUG),test)
   mvnw += -Dmaven.surefire.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
 endif
 
-run: $(it_jar) do-run
-.PHONY: run
-
 run-native: $(samples_runner) do-run
 .PHONY: run-native
+
+run: $(it_jar) do-run
+.PHONY: run
 
 do-run:
 > cd fibula-samples
