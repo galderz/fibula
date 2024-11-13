@@ -4,48 +4,34 @@
         xmlns="http://maven.apache.org/POM/4.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>org.mendrugo.fibula</groupId>
     <artifactId>fibula-parent</artifactId>
     <version>999-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <modules>
-        <module>fibula-extension</module>
-        <module>fibula-runner</module>
-        <module>fibula-bootstrap</module>
+        <module>fibula-core</module>
         <module>fibula-samples</module>
-        <module>fibula-it</module>
     </modules>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <compiler-plugin.version>3.12.1</compiler-plugin.version>
         <surefire-plugin.version>3.2.5</surefire-plugin.version>
-        <maven.compiler.release>21</maven.compiler.release>
-
-        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
 
         <jmh.version>1.37</jmh.version>
-        <quarkus.platform.version>3.14.1</quarkus.platform.version>
+        <compiler.version>${compiler.version}</compiler.version>
+        <compiler.version>1.8</compiler.version>
     </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>${quarkus.platform.artifact-id}</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
-                <version>${jmh.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.openjdk.jmh</groupId>
-                <artifactId>jmh-generator-reflection</artifactId>
                 <version>${jmh.version}</version>
             </dependency>
             <dependency>
@@ -55,6 +41,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -62,12 +49,13 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${compiler-plugin.version}</version>
                     <configuration>
-                        <compilerArgs>
-                            <arg>-parameters</arg>
-                        </compilerArgs>
+                        <compilerVersion>${compiler.version}</compilerVersion>
+                        <source>${compiler.version}</source>
+                        <target>${compiler.version}</target>
                     </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
 </project>
