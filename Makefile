@@ -12,7 +12,7 @@ endif
 
 BENCHMARK ?= JMHSample_01
 GRAALVM_HOME ?= $(HOME)/opt/graal-21
-JAVA_HOME ?= $(GRAALVM_HOME)
+JAVA_HOME ?= $(HOME)/opt/java-21
 VERSION ?= 999-SNAPSHOT
 MAVEN_HOME ?= $(HOME)/opt/maven
 
@@ -75,7 +75,9 @@ endif
 MAVEN_DEBUG ?=
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
+mvnw += GRAALVM_HOME=$(GRAALVM_HOME)
 mvnw_runner += JAVA_HOME=$(JAVA_HOME)
+mvnw_runner += GRAALVM_HOME=$(GRAALVM_HOME)
 ifeq ($(MAVEN_DEBUG),process)
   mvnw_runner += $(MAVEN_HOME)/bin/mvnDebug
 else
