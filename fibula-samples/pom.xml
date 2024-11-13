@@ -4,30 +4,25 @@
         xmlns="http://maven.apache.org/POM/4.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.mendrugo.fibula</groupId>
         <artifactId>fibula-parent</artifactId>
         <version>999-SNAPSHOT</version>
     </parent>
+
     <artifactId>fibula-samples</artifactId>
+
     <properties>
         <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
         <uberjar.name>benchmarks</uberjar.name>
+        <compiler.version>21</compiler.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.mendrugo.fibula</groupId>
-            <artifactId>fibula-extension</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mendrugo.fibula</groupId>
-            <artifactId>fibula-bootstrap</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mendrugo.fibula</groupId>
-            <artifactId>fibula-runner</artifactId>
+            <artifactId>fibula-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -35,50 +30,12 @@
             <artifactId>jmh-samples</artifactId>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>generate-code</goal>
-                            <goal>generate-code-tests</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${compiler-plugin.version}</version>
-                <configuration>
-                    <compilerArgs>
-                        <arg>-parameters</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${failsafe-plugin.version}</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                        <maven.home>${maven.home}</maven.home>
-                        <maven.repo>${settings.localRepository}</maven.repo>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -94,40 +51,11 @@
                             <finalName>${uberjar.name}</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.mendrugo.fibula.bootstrap.BootstrapMain</mainClass>
+                                    <mainClass>org.mendrugo.fibula.SwitchingRunnerMain</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>modify-jar</id>
-                        <phase>package</phase>
-                        <configuration>
-                            <target>
-                                <jar destfile="${project.build.directory}/${uberjar.name}.jar" update="true">
-                                    <fileset dir="${project.build.directory}/classes">
-                                        <include name="META-INF/BenchmarkList"/>
-                                    </fileset>
-                                    <fileset dir="${project.build.directory}/generated-classes">
-                                        <include name="META-INF/CompilerHints"/>
-                                    </fileset>
-                                    <fileset dir="${project.build.directory}/generated-classes">
-                                        <include name="**/*.class"/>
-                                    </fileset>
-                                </jar>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -141,10 +69,30 @@
                     <name>native</name>
                 </property>
             </activation>
-            <properties>
-                <skipITs>false</skipITs>
-                <quarkus.native.enabled>true</quarkus.native.enabled>
-            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.3</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${uberjar.name}</imageName>
+                            <fallback>false</fallback>
+                            <mainClass>org.mendrugo.fibula.SwitchingForkedMain</mainClass>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
