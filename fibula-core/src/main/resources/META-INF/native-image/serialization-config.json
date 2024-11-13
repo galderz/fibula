@@ -7,6 +7,9 @@
       "name":"int[]"
     },
     {
+      "name":"java.lang.Boolean"
+    },
+    {
       "name":"java.lang.ClassNotFoundException"
     },
     {
