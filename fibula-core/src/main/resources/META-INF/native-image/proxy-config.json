@@ -1,0 +1,5 @@
+[
+  {
+    "interfaces":["org.openjdk.jmh.runner.format.OutputFormat"]
+  }
+]
