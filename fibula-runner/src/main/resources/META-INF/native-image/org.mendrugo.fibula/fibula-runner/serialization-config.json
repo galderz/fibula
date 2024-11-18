@@ -151,6 +151,9 @@
       "name":"org.openjdk.jmh.runner.WorkloadParams"
     },
     {
+      "name":"org.openjdk.jmh.runner.WorkloadParams$Value"
+    },
+    {
       "name":"org.openjdk.jmh.runner.link.ActionPlanFrame"
     },
     {
