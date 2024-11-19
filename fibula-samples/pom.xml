@@ -21,17 +21,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.mendrugo.fibula</groupId>
-            <artifactId>fibula-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-samples</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mendrugo.fibula</groupId>
+            <artifactId>fibula-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Dependency order matters, define fibula annotation processor after the JMH one -->
+        <dependency>
+            <groupId>org.mendrugo.fibula</groupId>
+            <artifactId>fibula-generator</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
