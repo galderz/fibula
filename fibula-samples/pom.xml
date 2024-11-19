@@ -117,6 +117,9 @@
                                         <include name="META-INF/BenchmarkList"/>
                                     </fileset>
                                     <fileset dir="${project.build.directory}/generated-classes">
+                                        <include name="META-INF/CompilerHints"/>
+                                    </fileset>
+                                    <fileset dir="${project.build.directory}/generated-classes">
                                         <include name="**/*.class"/>
                                     </fileset>
                                 </jar>
