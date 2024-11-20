@@ -21,6 +21,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -37,26 +39,68 @@ import java.util.stream.Collectors;
 @SupportedAnnotationTypes("*")
 public class NativeConfigurationGenerator extends AbstractProcessor
 {
-    File benchmarkListFile;
+    // todo use a set instead
     final Map<URI, Boolean> benchmarkListInJars = new HashMap<>();
-    final List<String> generatedBenchmarkFQNs = new ArrayList<>();
+    final List<String> generatedBenchmarks = new ArrayList<>();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
     {
         printNote("New annotation process round");
-        processJmhGeneratedInDependencies();
-        final boolean newFound = processJmhGeneratedInProject(roundEnv);
-        if (!newFound)
+        if (!roundEnv.processingOver())
         {
-            printNote("No new generated JMH benchmarks found");
-            if (!generatedBenchmarkFQNs.isEmpty())
-            {
-                printNote("Write reflection configuration");
-                writeReflectionConfiguration();
-            }
+            printNote("Discover generated JMH benchmarks");
+            processJmhGeneratedInDependencies();
+            processJmhGeneratedInProject(roundEnv);
+        }
+        else
+        {
+            printNote("Write reflection configuration");
+            writeReflectionConfiguration();
+            writeBenchmarkList();
         }
         return true;
+    }
+
+    private void writeBenchmarkList()
+    {
+        try
+        {
+            final FileObject ignore = processingEnv.getFiler()
+                .createResource(
+                    StandardLocation.CLASS_OUTPUT
+                    , ""
+                    , "ignore"
+                );
+            // System.out.println(ignore.toUri().getPath());
+            // System.out.println();
+            final Path classOutputPath = Paths.get(ignore.toUri()).getParent();
+
+//            final FileObject benchmarkList = processingEnv.getFiler()
+//                .getResource(
+//                    StandardLocation.CLASS_OUTPUT
+//                    , ""
+//                    , "META-INF/BenchmarkList"
+//                );
+//            Path benchmarkListPath = benchmarkList.toUri().getPath();
+
+            Path benchmarkListPath = classOutputPath.resolve("META-INF/BenchmarkList");
+
+            final List<URI> benchmarkListUrlsToProcess = benchmarkListInJars.entrySet().stream()
+                .filter((entry -> !entry.getValue()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+            for (URI uri : benchmarkListUrlsToProcess)
+            {
+                appendBenchmarkList(uri, benchmarkListPath);
+                // benchmarkListInJars.put(uri, true);
+            }
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void writeReflectionConfiguration()
@@ -78,7 +122,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
                     , "]"
                 );
 
-                generatedBenchmarkFQNs.stream()
+                generatedBenchmarks.stream()
                     .map(NativeConfigurationGenerator::toReflectionConfigEntry)
                     .forEach(joiner::add);
                 writer.write(joiner.toString());
@@ -99,6 +143,8 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             + "}" + System.lineSeparator();
     }
 
+    // todo make the method a find and make it have a sole responsibility
+    // todo move appending generated benchmarks elsewhere
     private void processJmhGeneratedInDependencies()
     {
         try
@@ -110,28 +156,10 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             while (resources.hasMoreElements())
             {
                 final URL url = resources.nextElement();
-                if (benchmarkListFile == null && "file".equals(url.getProtocol()))
+                if (benchmarkListInJars.putIfAbsent(url.toURI(), false) == null)
                 {
-                    System.out.println("Found the BenchmarkList file: " + url);
-                    benchmarkListFile = new File(url.getFile());
-                }
-                else if (benchmarkListInJars.putIfAbsent(url.toURI(), false) == null)
-                {
-                    System.out.println("Found BenchmarkList in dependency: " + url);
-                }
-            }
-
-            if (benchmarkListFile != null)
-            {
-                final List<URI> benchmarkListUrlsToProcess = benchmarkListInJars.entrySet().stream()
-                    .filter((entry -> !entry.getValue()))
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-                for (URI uri : benchmarkListUrlsToProcess)
-                {
-                    appendBenchmarkListTo(uri);
-                    benchmarkListInJars.put(uri, true);
+                    printNote("Found BenchmarkList in dependency: " + url);
+                    appendGeneratedBenchmarks(url.toURI());
                 }
             }
         }
@@ -145,7 +173,29 @@ public class NativeConfigurationGenerator extends AbstractProcessor
         }
     }
 
-    private void appendBenchmarkListTo(URI uri) throws IOException
+    private void appendGeneratedBenchmarks(URI uri) throws IOException
+    {
+        final URL url = uri.toURL();
+        try (final InputStream inputStream = url.openStream();
+             final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
+        )
+        {
+            final int benchmarkFqnIndex = 6;
+            reader.lines()
+                .map(line -> line.split("\\s+"))
+                .filter(items -> items.length > benchmarkFqnIndex)
+                //.peek(items -> System.out.println(items.length))
+                .map(items -> items[benchmarkFqnIndex]) // position of the benchmark FQN
+                //.peek(System.out::println)
+                // todo use peek instead of adding printNote to forEach
+                .forEach(benchmark -> {
+                    printNote("Found JMH generated class: " + benchmark + " in dependency");
+                    generatedBenchmarks.add(benchmark);
+                });
+        }
+    }
+
+    private void appendBenchmarkList(URI uri, Path toPath) throws IOException
     {
         final URL url = uri.toURL();
         try (final InputStream inputStream = url.openStream();
@@ -156,7 +206,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             final byte[] bytes = reader.lines()
                 .reduce("", (contents, line) -> contents + System.lineSeparator() + line)
                 .getBytes(StandardCharsets.UTF_8);
-            Files.write(benchmarkListFile.toPath(), bytes, StandardOpenOption.APPEND);
+            Files.write(toPath, bytes, StandardOpenOption.APPEND);
         }
     }
 
@@ -171,8 +221,8 @@ public class NativeConfigurationGenerator extends AbstractProcessor
                 final String qualifiedName = typeElement.getQualifiedName().toString();
                 if (qualifiedName.contains("jmh_generated"))
                 {
-                    printNote("Found JMH generated class: " + qualifiedName);
-                    generatedBenchmarkFQNs.add(qualifiedName);
+                    printNote("Found JMH generated class: " + qualifiedName + " in project");
+                    generatedBenchmarks.add(qualifiedName);
                     added = true;
                 }
             }
@@ -184,7 +234,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
     private void printNote(String msg)
     {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, msg);
-        System.out.println(msg);
+        // System.out.println(msg);
     }
 
     @Override
