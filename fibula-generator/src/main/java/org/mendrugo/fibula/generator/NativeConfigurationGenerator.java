@@ -11,7 +11,6 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,12 +25,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 /**
  * Generates dynamic native image configuration file based on user defined JMH benchmarks.
@@ -39,8 +36,8 @@ import java.util.stream.Collectors;
 @SupportedAnnotationTypes("*")
 public class NativeConfigurationGenerator extends AbstractProcessor
 {
-    // todo use a set instead
-    final Map<URI, Boolean> benchmarkListInJars = new HashMap<>();
+    // Set of BenchmarkList files in dependencies
+    final Set<URI> benchmarkLists = new HashSet<>();
     final List<String> generatedBenchmarks = new ArrayList<>();
 
     @Override
@@ -86,12 +83,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
 
             Path benchmarkListPath = classOutputPath.resolve("META-INF/BenchmarkList");
 
-            final List<URI> benchmarkListUrlsToProcess = benchmarkListInJars.entrySet().stream()
-                .filter((entry -> !entry.getValue()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-            for (URI uri : benchmarkListUrlsToProcess)
+            for (URI uri : benchmarkLists)
             {
                 appendBenchmarkList(uri, benchmarkListPath);
                 // benchmarkListInJars.put(uri, true);
@@ -156,7 +148,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             while (resources.hasMoreElements())
             {
                 final URL url = resources.nextElement();
-                if (benchmarkListInJars.putIfAbsent(url.toURI(), false) == null)
+                if (benchmarkLists.add(url.toURI()))
                 {
                     printNote("Found BenchmarkList in dependency: " + url);
                     appendGeneratedBenchmarks(url.toURI());
