@@ -38,91 +38,82 @@ public class NativeConfigurationGenerator extends AbstractProcessor
 {
     // Set of BenchmarkList files in dependencies
     final Set<URI> benchmarkLists = new HashSet<>();
-    final List<String> generatedBenchmarks = new ArrayList<>();
+    final List<String> benchmarkQNames = new ArrayList<>();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
     {
-        printNote("New annotation process round");
-        if (!roundEnv.processingOver())
+        try
         {
-            printNote("Discover generated JMH benchmarks");
-            processJmhGeneratedInDependencies();
-            processJmhGeneratedInProject(roundEnv);
+            if (!roundEnv.processingOver())
+            {
+                printNote("Find BenchmarkList files");
+                findBenchmarkLists();
+                printNote("Find generated benchmarks in project");
+                findBenchmarksInProject(roundEnv);
+            }
+            else
+            {
+                printNote("Find generated benchmarks in dependencies");
+                findBenchmarksInDependencies();
+                printNote("Write reflection configuration");
+                writeReflectionConfiguration();
+                printNote("Append to BenchmarkList");
+                appendBenchmarkList();
+            }
         }
-        else
+        catch (IOException e)
         {
-            printNote("Write reflection configuration");
-            writeReflectionConfiguration();
-            writeBenchmarkList();
+            throw new UncheckedIOException(e);
+        }
+        catch (URISyntaxException e)
+        {
+            throw new IllegalArgumentException(e);
         }
         return true;
     }
 
-    private void writeBenchmarkList()
+    private void appendBenchmarkList() throws IOException
     {
-        try
+        final FileObject ignore = processingEnv
+            .getFiler()
+            .createResource(
+                StandardLocation.CLASS_OUTPUT
+                , ""
+                , "ignore"
+            );
+
+        final Path classOutputPath = Paths.get(ignore.toUri()).getParent();
+        final Path benchmarkListPath = classOutputPath.resolve("META-INF/BenchmarkList");
+
+        for (URI uri : benchmarkLists)
         {
-            final FileObject ignore = processingEnv.getFiler()
-                .createResource(
-                    StandardLocation.CLASS_OUTPUT
-                    , ""
-                    , "ignore"
-                );
-            // System.out.println(ignore.toUri().getPath());
-            // System.out.println();
-            final Path classOutputPath = Paths.get(ignore.toUri()).getParent();
-
-//            final FileObject benchmarkList = processingEnv.getFiler()
-//                .getResource(
-//                    StandardLocation.CLASS_OUTPUT
-//                    , ""
-//                    , "META-INF/BenchmarkList"
-//                );
-//            Path benchmarkListPath = benchmarkList.toUri().getPath();
-
-            Path benchmarkListPath = classOutputPath.resolve("META-INF/BenchmarkList");
-
-            for (URI uri : benchmarkLists)
-            {
-                appendBenchmarkList(uri, benchmarkListPath);
-                // benchmarkListInJars.put(uri, true);
-            }
-        }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
+            appendBenchmarkList(uri, benchmarkListPath);
         }
     }
 
-    private void writeReflectionConfiguration()
+    private void writeReflectionConfiguration() throws IOException
     {
-        try
-        {
-            final FileObject reflectionConfig = processingEnv.getFiler()
-                .createResource(
-                    StandardLocation.CLASS_OUTPUT
-                    , ""
-                    , "META-INF/native-image/reflect-config.json"
-                );
+        final FileObject reflectionConfig = processingEnv
+            .getFiler()
+            .createResource(
+                StandardLocation.CLASS_OUTPUT
+                , ""
+                , "META-INF/native-image/reflect-config.json"
+            );
 
-            try (BufferedWriter writer = new BufferedWriter(reflectionConfig.openWriter()))
-            {
-                final StringJoiner joiner = new StringJoiner(
-                    ","
-                    , "[" + System.lineSeparator()
-                    , "]"
-                );
-
-                generatedBenchmarks.stream()
-                    .map(NativeConfigurationGenerator::toReflectionConfigEntry)
-                    .forEach(joiner::add);
-                writer.write(joiner.toString());
-            }
-        }
-        catch (IOException e)
+        try (BufferedWriter writer = new BufferedWriter(reflectionConfig.openWriter()))
         {
-            throw new UncheckedIOException(e);
+            final StringJoiner joiner = new StringJoiner(
+                ","
+                , "[" + System.lineSeparator()
+                , "]"
+            );
+
+            benchmarkQNames.stream()
+                .map(NativeConfigurationGenerator::toReflectionConfigEntry)
+                .forEach(joiner::add);
+            writer.write(joiner.toString());
         }
     }
 
@@ -135,76 +126,35 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             + "}" + System.lineSeparator();
     }
 
-    // todo make the method a find and make it have a sole responsibility
-    // todo move appending generated benchmarks elsewhere
-    private void processJmhGeneratedInDependencies()
+    private void findBenchmarkLists() throws IOException, URISyntaxException
     {
-        try
-        {
-            final Enumeration<URL> resources = getClass()
-                .getClassLoader()
-                .getResources("META-INF/BenchmarkList");
+        final Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/BenchmarkList");
 
-            while (resources.hasMoreElements())
-            {
-                final URL url = resources.nextElement();
-                if (benchmarkLists.add(url.toURI()))
-                {
-                    printNote("Found BenchmarkList in dependency: " + url);
-                    appendGeneratedBenchmarks(url.toURI());
-                }
-            }
-        }
-        catch (IOException e)
+        while (resources.hasMoreElements())
         {
-            throw new UncheckedIOException(e);
-        }
-        catch (URISyntaxException e)
-        {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    private void appendGeneratedBenchmarks(URI uri) throws IOException
-    {
-        final URL url = uri.toURL();
-        try (final InputStream inputStream = url.openStream();
-             final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
-        )
-        {
-            final int benchmarkFqnIndex = 6;
-            reader.lines()
-                .map(line -> line.split("\\s+"))
-                .filter(items -> items.length > benchmarkFqnIndex)
-                //.peek(items -> System.out.println(items.length))
-                .map(items -> items[benchmarkFqnIndex]) // position of the benchmark FQN
-                //.peek(System.out::println)
-                // todo use peek instead of adding printNote to forEach
-                .forEach(benchmark -> {
-                    printNote("Found JMH generated class: " + benchmark + " in dependency");
-                    generatedBenchmarks.add(benchmark);
-                });
+            final URL url = resources.nextElement();
+            benchmarkLists.add(url.toURI());
         }
     }
 
     private void appendBenchmarkList(URI uri, Path toPath) throws IOException
     {
         final URL url = uri.toURL();
-        try (final InputStream inputStream = url.openStream();
-             final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
+        try (final InputStream inputStream = url.openStream()
+             ; final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
         )
         {
             printNote("Append contents of " + url);
-            final byte[] bytes = reader.lines()
+            final byte[] bytes = reader
+                .lines()
                 .reduce("", (contents, line) -> contents + System.lineSeparator() + line)
                 .getBytes(StandardCharsets.UTF_8);
             Files.write(toPath, bytes, StandardOpenOption.APPEND);
         }
     }
 
-    private boolean processJmhGeneratedInProject(RoundEnvironment roundEnv)
+    private void findBenchmarksInProject(RoundEnvironment roundEnv)
     {
-        boolean added = false;
         for (Element element : roundEnv.getRootElements())
         {
             if (element instanceof TypeElement)
@@ -214,19 +164,36 @@ public class NativeConfigurationGenerator extends AbstractProcessor
                 if (qualifiedName.contains("jmh_generated"))
                 {
                     printNote("Found JMH generated class: " + qualifiedName + " in project");
-                    generatedBenchmarks.add(qualifiedName);
-                    added = true;
+                    benchmarkQNames.add(qualifiedName);
                 }
             }
         }
+    }
 
-        return added;
+    private void findBenchmarksInDependencies() throws IOException
+    {
+        for (URI benchmarkList : benchmarkLists)
+        {
+            try (final InputStream inputStream = benchmarkList.toURL().openStream()
+                 ; final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
+            )
+            {
+                final int benchmarkQNameIndex = 6;
+                reader.lines()
+                    .map(line -> line.split("\\s+"))
+                    .filter(items -> items.length > benchmarkQNameIndex)
+                    .map(items -> items[benchmarkQNameIndex]) // position of the benchmark FQN
+                    .peek(benchmarkQName ->
+                        printNote("Found JMH generated class: " + benchmarkQName + " in dependency")
+                    )
+                    .forEach(benchmarkQNames::add);
+            }
+        }
     }
 
     private void printNote(String msg)
     {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, msg);
-        // System.out.println(msg);
     }
 
     @Override
