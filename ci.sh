@@ -11,4 +11,5 @@ test()
 }
 
 make clean
+test "run"
 test "run-native"
