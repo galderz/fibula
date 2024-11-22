@@ -38,11 +38,11 @@ ifdef PROF
   WARMUP_IT ?= 1
   WARMUP_TIME ?= 10
 else
-  MEASURE_FORKS ?= 2
-  MEASURE_IT ?= 2
-  MEASURE_TIME ?= 2
-  WARMUP_IT ?= 2
-  WARMUP_TIME ?= 2
+  MEASURE_FORKS ?= 1
+  MEASURE_IT ?= 1
+  MEASURE_TIME ?= 1
+  WARMUP_IT ?= 1
+  WARMUP_TIME ?= 1
 endif
 
 # Benchmark name
