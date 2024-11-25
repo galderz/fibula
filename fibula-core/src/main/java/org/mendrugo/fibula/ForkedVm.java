@@ -134,7 +134,7 @@ enum ForkedVm
         }
     }
 
-    public String executablePath(String jvm)
+    String executablePath(String jvm)
     {
         switch (this)
         {
@@ -145,6 +145,11 @@ enum ForkedVm
             default:
                 throw new IllegalStateException("Unknown value " + this);
         }
+    }
+
+    boolean isNativeVm()
+    {
+        return this == SUBSTRATE;
     }
 
     static class Info

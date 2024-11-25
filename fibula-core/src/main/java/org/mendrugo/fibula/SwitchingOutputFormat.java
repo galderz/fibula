@@ -102,7 +102,7 @@ final class SwitchingOutputFormat implements OutputFormat
         // amendBenchmarkParamsField("jmhVersion", "fibula:" + new Version().getVersion(), benchmark);
         amendBenchmarkParamsField("jmhVersion", "fibula:999-SNAPSHOT", benchmark);
 
-        if (ForkedVm.SUBSTRATE == forkedVm)
+        if (forkedVm.isNativeVm())
         {
             // Avoid -XX: arguments being passed in to native, because they're not understood in that environment
             System.setProperty("jmh.compilerhints.mode", "FORCE_OFF");

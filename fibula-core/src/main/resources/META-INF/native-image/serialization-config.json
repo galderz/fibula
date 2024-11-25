@@ -13,7 +13,16 @@
       "name":"java.lang.ClassNotFoundException"
     },
     {
+      "name":"java.lang.ClassCastException"
+    },
+    {
       "name":"java.lang.Enum"
+    },
+    {
+      "name":"java.lang.Enum[]"
+    },
+    {
+      "name":"java.util.EnumSet$SerializationProxy"
     },
     {
       "name":"java.lang.Error"
@@ -173,6 +182,9 @@
     },
     {
       "name":"org.openjdk.jmh.runner.options.CommandLineOptions"
+    },
+    {
+      "name":"org.openjdk.jmh.runner.options.OptionsBuilder"
     },
     {
       "name":"org.openjdk.jmh.runner.options.TimeValue"

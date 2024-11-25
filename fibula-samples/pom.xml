@@ -73,6 +73,7 @@
             </plugin>
         </plugins>
     </build>
+
     <profiles>
         <profile>
             <id>native</id>
@@ -101,6 +102,9 @@
                             <imageName>${uberjar.name}</imageName>
                             <fallback>false</fallback>
                             <mainClass>org.mendrugo.fibula.SwitchingForkedMain</mainClass>
+                            <buildArgs>
+                                <buildArg>-H:Log=registerResource:5</buildArg>
+                            </buildArgs>
                         </configuration>
                     </plugin>
                 </plugins>
