@@ -68,7 +68,8 @@ enum ForkedVm
             return SUBSTRATE;
         }
 
-        throw new IllegalStateException("Could not resolve which VM invoker to use");
+        return HOTSPOT;
+        // throw new IllegalStateException("Could not resolve which VM invoker to use");
     }
 
     public Info info()
@@ -134,7 +135,7 @@ enum ForkedVm
         }
     }
 
-    public String executablePath(String jvm)
+    String executablePath(String jvm)
     {
         switch (this)
         {
@@ -145,6 +146,11 @@ enum ForkedVm
             default:
                 throw new IllegalStateException("Unknown value " + this);
         }
+    }
+
+    boolean isNativeVm()
+    {
+        return this == SUBSTRATE;
     }
 
     static class Info

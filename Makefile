@@ -96,7 +96,7 @@ ifdef DEBUG
   benchmark_params += ""
 endif
 
-test_args += test
+#test_args += test
 ifdef TEST
   test_args += -Dtest=$(TEST)
 endif
@@ -180,12 +180,18 @@ $(it_runner): $(shell find fibula-it -type f -name "pom.xml" ! -path "./*/target
 $(it_runner): $(final_jar)
 > $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it -Pnative $(runner_build_args)
 
-test: $(final_jar)
-> $(mvnw) $(test_args) -pl fibula-it $(system_props)
+# TODO make it work without building jars first,
+#      for that it needs to compute -cp when no jar available, e.g.
+#      Forking using command: [/Users/galder/opt/jdk-21.0.2+13/Contents/Home/bin/java, -Djmh.ignoreLock=true, -Xms256m, -Xmx256m, -Djmh.core.it.profile=default, -XX:+UnlockDiagnosticVMOptions, -XX:+UnlockExperimentalVMOptions, -DcompilerBlackholesEnabled=true, -XX:CompileCommandFile=/var/folders/ph/4_sztq2j1f799kcr2fpk9sww0000gn/T/jmh10465339591081614835compilecommand, -cp, /Users/galder/1/jmh/jmh-core-it/target/test-classes:/Users/galder/1/jmh/jmh-core-it/target/classes:/Users/galder/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar:/Users/galder/.m2/repository/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:/Users/galder/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/Users/galder/.m2/repository/junit/junit/4.13.2/junit-4.13.2.jar:/Users/galder/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:/Users/galder/.m2/repository/org/openjdk/jmh/jmh-generator-annprocess/1.37/jmh-generator-annprocess-1.37.jar:, org.openjdk.jmh.runner.ForkedMain, 127.0.0.1, 55299]
+test:
+> $(mvnw) $(test_args) $(system_props) test
 .PHONY: test
 
-test-native: $(it_runner)
-> $(mvnw) $(test_args) $(common_maven_args) -pl fibula-it $(system_props)
+# TODO make it work without building jars first,
+#      for that it needs to compute -cp when no jar available, e.g.
+#      Forking using command: [/Users/galder/opt/jdk-21.0.2+13/Contents/Home/bin/java, -Djmh.ignoreLock=true, -Xms256m, -Xmx256m, -Djmh.core.it.profile=default, -XX:+UnlockDiagnosticVMOptions, -XX:+UnlockExperimentalVMOptions, -DcompilerBlackholesEnabled=true, -XX:CompileCommandFile=/var/folders/ph/4_sztq2j1f799kcr2fpk9sww0000gn/T/jmh10465339591081614835compilecommand, -cp, /Users/galder/1/jmh/jmh-core-it/target/test-classes:/Users/galder/1/jmh/jmh-core-it/target/classes:/Users/galder/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar:/Users/galder/.m2/repository/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:/Users/galder/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/Users/galder/.m2/repository/junit/junit/4.13.2/junit-4.13.2.jar:/Users/galder/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:/Users/galder/.m2/repository/org/openjdk/jmh/jmh-generator-annprocess/1.37/jmh-generator-annprocess-1.37.jar:, org.openjdk.jmh.runner.ForkedMain, 127.0.0.1, 55299]
+test-native:
+> $(mvnw) $(test_args) $(common_maven_args) $(system_props) integration-test -Dnative
 .PHONY: test-native
 
 clean:
