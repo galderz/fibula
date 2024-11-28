@@ -13,6 +13,7 @@
     <modules>
         <module>fibula-core</module>
         <module>fibula-generator</module>
+        <module>fibula-it</module>
         <module>fibula-samples</module>
     </modules>
 

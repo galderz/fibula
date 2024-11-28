@@ -16,13 +16,14 @@ import java.util.stream.Stream;
 
 enum ForkedVm
 {
-    HOTSPOT, SUBSTRATE;
+    HOTSPOT, NATIVE_RUN, NATIVE_TESTS;
 
     private static final File NOT_FOUND = new File("NOT_FOUND");
     private static final File RUN_JAR = Paths.get("target/benchmarks.jar").toFile();
-    private static final File RUN_BINARY = findRunBinary();
+    private static final File RUN_BINARY = findBinary("benchmarks");
+    private static final File TEST_BINARY = findBinary("native-tests");
 
-    private static File findRunBinary()
+    private static File findBinary(String binaryName)
     {
         final Path targetDir = Paths.get("target");
         if (!targetDir.toFile().exists())
@@ -35,7 +36,7 @@ enum ForkedVm
             return walk
                 .filter(p -> !Files.isDirectory(p))
                 .map(Path::toString)
-                .filter(f -> f.endsWith("benchmarks"))
+                .filter(f -> f.endsWith(binaryName))
                 .findFirst()
                 .map(File::new)
                 .orElse(NOT_FOUND);
@@ -55,7 +56,7 @@ enum ForkedVm
                 return HOTSPOT;
             }
 
-            return SUBSTRATE;
+            return NATIVE_RUN;
         }
 
         if (RUN_JAR.exists())
@@ -65,10 +66,15 @@ enum ForkedVm
 
         if (RUN_BINARY.exists())
         {
-            return SUBSTRATE;
+            return NATIVE_RUN;
         }
 
-        throw new IllegalStateException("Could not resolve which VM invoker to use");
+        if (TEST_BINARY.exists())
+        {
+            return NATIVE_TESTS;
+        }
+
+        return HOTSPOT;
     }
 
     public Info info()
@@ -81,18 +87,24 @@ enum ForkedVm
                     , System.getProperty("java.vm.name")
                     , System.getProperty("java.vm.version")
                 );
-            case SUBSTRATE:
+            case NATIVE_RUN:
                 return new Info(
-                    binaryReadString("com.oracle.svm.core.VM.Java.Version=")
+                    binaryReadString("com.oracle.svm.core.VM.Java.Version=", RUN_BINARY)
                     , "Substrate VM"
-                    , binaryReadString("com.oracle.svm.core.VM=")
+                    , binaryReadString("com.oracle.svm.core.VM=", RUN_BINARY)
+                );
+            case NATIVE_TESTS:
+                return new Info(
+                    binaryReadString("com.oracle.svm.core.VM.Java.Version=", TEST_BINARY)
+                    , "Substrate VM"
+                    , binaryReadString("com.oracle.svm.core.VM=", TEST_BINARY)
                 );
             default:
                 throw new IllegalStateException("Unknown value " + this);
         }
     }
 
-    private String binaryReadString(String key)
+    private String binaryReadString(String key, File binary)
     {
         // todo support windows
         final List<String> args = Arrays.asList(
@@ -100,7 +112,7 @@ enum ForkedVm
             , "-c"
             , String.format(
                 "strings %s| grep %s"
-                , RUN_BINARY.getPath()
+                , binary.getPath()
                 , key
             )
         );
@@ -134,17 +146,24 @@ enum ForkedVm
         }
     }
 
-    public String executablePath(String jvm)
+    String executablePath(String jvm)
     {
         switch (this)
         {
             case HOTSPOT:
                 return new File(jvm).getPath();
-            case SUBSTRATE:
+            case NATIVE_RUN:
                 return RUN_BINARY.getPath();
+            case NATIVE_TESTS:
+                return TEST_BINARY.getPath();
             default:
                 throw new IllegalStateException("Unknown value " + this);
         }
+    }
+
+    boolean isNativeVm()
+    {
+        return this == NATIVE_RUN;
     }
 
     static class Info
