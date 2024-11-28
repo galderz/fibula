@@ -2,7 +2,7 @@ package org.mendrugo.fibula;
 
 import java.lang.reflect.Method;
 
-public class SwitchingForkedMain
+public class NativeForkedMain
 {
     public static void main(String[] args) throws Exception
     {

@@ -27,11 +27,11 @@ import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-final class SwitchingOutputFormat implements OutputFormat
+final class MultiVmOutputFormat implements OutputFormat
 {
     private final OutputFormat out;
 
-    SwitchingOutputFormat(Options options)
+    MultiVmOutputFormat(Options options)
     {
         this.out = createOutputFormat(options);
     }
@@ -102,7 +102,7 @@ final class SwitchingOutputFormat implements OutputFormat
         // amendBenchmarkParamsField("jmhVersion", "fibula:" + new Version().getVersion(), benchmark);
         amendBenchmarkParamsField("jmhVersion", "fibula:999-SNAPSHOT", benchmark);
 
-        if (ForkedVm.SUBSTRATE == forkedVm)
+        if (forkedVm.isNativeVm())
         {
             // Avoid -XX: arguments being passed in to native, because they're not understood in that environment
             System.setProperty("jmh.compilerhints.mode", "FORCE_OFF");

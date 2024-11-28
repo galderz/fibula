@@ -17,8 +17,7 @@ VERSION ?= 999-SNAPSHOT
 MAVEN_HOME ?= $(HOME)/opt/maven
 
 benchmarks_jar = target/benchmarks.jar
-final_jar = fibula-generator/target/fibula-generator-$(VERSION).jar
-it_runner = fibula-it/target/fibula-it-$(VERSION)-runner
+final_jar = fibula-samples/target/fibula-samples-$(VERSION).jar
 java = $(JAVA_HOME)/bin/java
 samples_runner = fibula-samples/target/benchmarks
 
@@ -96,7 +95,7 @@ ifdef DEBUG
   benchmark_params += ""
 endif
 
-test_args += test
+test_args =
 ifdef TEST
   test_args += -Dtest=$(TEST)
 endif
@@ -145,8 +144,16 @@ endif
 run-native: $(samples_runner) do-run
 .PHONY: run-native
 
+test-native:
+> $(mvnw) verify $(test_args) $(common_maven_args) $(system_props) -pl fibula-it -am -Dnative
+.PHONY: test-native
+
 run: $(final_jar) do-run
 .PHONY: run
+
+test:
+> $(mvnw) test $(test_args) $(system_props) -pl fibula-it -am
+.PHONY: test
 
 do-run:
 > cd fibula-samples
@@ -165,28 +172,7 @@ $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path ".
 $(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
 $(samples_runner): $(final_jar)
-> $(mvnw_runner) package -DskipTests -pl fibula-samples -Pnative $(runner_build_args)
-
-samples: $(final_jar)
-> $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
-.PHONY: samples
-
-samples-native: $(samples_runner)
-> $(mvnw) $(test_args) -pl fibula-samples -Dfibula.test.quick
-.PHONY: samples-native
-
-$(it_runner): $(shell find fibula-it/src -type f -name "*.java" ! -path "./*/target/*")
-$(it_runner): $(shell find fibula-it -type f -name "pom.xml" ! -path "./*/target/*")
-$(it_runner): $(final_jar)
-> $(mvnw_runner) package $(common_maven_args) -DskipTests -pl fibula-it -Pnative $(runner_build_args)
-
-test: $(final_jar)
-> $(mvnw) $(test_args) -pl fibula-it $(system_props)
-.PHONY: test
-
-test-native: $(it_runner)
-> $(mvnw) $(test_args) $(common_maven_args) -pl fibula-it $(system_props)
-.PHONY: test-native
+> $(mvnw_runner) package -pl fibula-samples -Dnative $(runner_build_args)
 
 clean:
 > $(mvnw) clean

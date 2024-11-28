@@ -2,7 +2,7 @@
 
 set -e -x
 
-test()
+sample()
 {
     local run_target=$1
 
@@ -11,5 +11,7 @@ test()
 }
 
 make clean
-test "run"
-test "run-native"
+# native tests already run jvm mode tests before
+make test-native
+sample "run"
+sample "run-native"
