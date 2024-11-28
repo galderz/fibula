@@ -9,9 +9,4 @@ public final class MultiVmRunner extends Runner
     {
         super(options, new MultiVmOutputFormat(options));
     }
-
-    public boolean isNativeVm()
-    {
-        return ForkedVm.instance().isNativeVm();
-    }
 }

@@ -1,4 +1,4 @@
-package org.mendrugo.fibula.it;
+package org.mendrugo.fibula;
 
 public class CustomException extends RuntimeException
 {

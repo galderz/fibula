@@ -1,17 +1,18 @@
-package org.mendrugo.fibula.it;
+package org.mendrugo.fibula;
 
 import org.junit.jupiter.api.Test;
-import org.mendrugo.fibula.MultiVmRunner;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,22 +57,21 @@ public class FailureModesTest
     @Test
     public void shouldNotFailOnErrorByDefault() throws RunnerException
     {
-        final Options opts = new OptionsBuilder()
+        final Consumer<ChainedOptionsBuilder> builder = opts -> opts
             .include(this.getClass().getCanonicalName() + ".avoidFailure")
             .forks(1)
             .measurementIterations(1)
             .measurementTime(TimeValue.milliseconds(100))
-            .warmupIterations(0)
-            .build();
+            .warmupIterations(0);
 
-        final Collection<RunResult> results = new MultiVmRunner(opts).run();
+        final Collection<RunResult> results = CapturingRunner.run(builder);
         assertTrue(results.isEmpty());
     }
 
     @Test
     public void shouldFailOnSingleExceptionAtBenchmark()
     {
-        final Options opts = new OptionsBuilder()
+        final Consumer<ChainedOptionsBuilder> builder = opts -> opts
             .include(this.getClass().getCanonicalName() + ".singleException")
             .shouldFailOnError(true)
             .forks(1)
@@ -83,7 +83,7 @@ public class FailureModesTest
 
         try
         {
-            new MultiVmRunner(opts).run();
+            CapturingRunner.run(builder);
             throw new AssertionError("Expected exception to be thrown");
         }
         catch (RunnerException e)
@@ -98,7 +98,7 @@ public class FailureModesTest
     @Test
     public void shouldFailOnChainedExceptionAtBenchmark()
     {
-        final Options opts = new OptionsBuilder()
+        final Consumer<ChainedOptionsBuilder> builder = opts -> opts
             .include(this.getClass().getCanonicalName() + ".chainedException")
             .shouldFailOnError(true)
             .forks(1)
@@ -109,7 +109,7 @@ public class FailureModesTest
 
         try
         {
-            new MultiVmRunner(opts).run();
+            CapturingRunner.run(builder);
             throw new AssertionError("Expected exception to be thrown");
         }
         catch (RunnerException e)
@@ -126,7 +126,7 @@ public class FailureModesTest
     @Test
     public void shouldFailOnCustomExceptionAtBenchmark()
     {
-        final Options opts = new OptionsBuilder()
+        final Consumer<ChainedOptionsBuilder> builder = opts -> opts
             .include(this.getClass().getCanonicalName() + ".customException")
             .shouldFailOnError(true)
             .forks(1)
@@ -135,17 +135,16 @@ public class FailureModesTest
             .warmupIterations(0)
             .build();
 
-        final MultiVmRunner runner = new MultiVmRunner(opts);
         try
         {
-            runner.run();
+            CapturingRunner.run(builder);
             throw new AssertionError("Expected exception to be thrown");
         }
         catch (RunnerException e)
         {
             final BenchmarkException cause = (BenchmarkException) e.getCause();
             final Throwable suppressed = cause.getSuppressed()[0];
-            if (runner.isNativeVm())
+            if (ForkedVm.instance().isNativeVm())
             {
                 assertInstanceOf(IllegalStateException.class, suppressed);
             }
@@ -159,9 +158,4 @@ public class FailureModesTest
 
     // todo add test to fail from @Setup
     // todo add test to fail from @Teardown
-
-    private static boolean isNativeRun()
-    {
-        return "runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"));
-    }
 }
