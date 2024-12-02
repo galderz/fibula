@@ -21,13 +21,6 @@ final_jar = fibula-samples/target/fibula-samples-$(VERSION).jar
 java = $(JAVA_HOME)/bin/java
 samples_runner = fibula-samples/target/benchmarks
 
-system_props =
-ifdef LOG_LEVEL
-  ifeq ($(LOG_LEVEL),DEBUG)
-    system_props += -Dquarkus.log.category.\"org.mendrugo.fibula\".level=DEBUG
-  endif
-endif
-
 PROF ?=
 
 ifdef PROF
@@ -145,19 +138,19 @@ run-native: $(samples_runner) do-run
 .PHONY: run-native
 
 test-native:
-> $(mvnw) verify $(test_args) $(common_maven_args) $(system_props) -pl fibula-it -am -Dnative
+> $(mvnw) verify $(test_args) $(common_maven_args) -pl fibula-it -am -Dnative
 .PHONY: test-native
 
 run: $(final_jar) do-run
 .PHONY: run
 
 test:
-> $(mvnw) test $(test_args) $(system_props) -pl fibula-it -am
+> $(mvnw) test $(test_args) -pl fibula-it -am
 .PHONY: test
 
 do-run:
 > cd fibula-samples
-> $(java) $(system_props) -jar $(benchmarks_jar) $(benchmark_params)
+> $(java) -jar $(benchmarks_jar) $(benchmark_params)
 .PHONY: do-run
 
 $(final_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
