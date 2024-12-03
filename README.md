@@ -4,34 +4,7 @@ Fibula allows you to run JMH benchmarks as GraalVM native executables.
 
 # Pre-requisites
 
-Build JMH
-[`1.38-patches` branch](https://github.com/galderz/jmh/tree/1.38-patches)
-locally to include the following patches:
-
-* Install `jmh-core-it` tests jar locally.
-This enables JMH integration tests to be run with Fibula.
-* Fix for [Perf event validation not working with skid options](https://bugs.openjdk.org/browse/CODETOOLS-7903740) bug.
-* Print exception in case the exception truncates the stream (e.g. serialization error).
-
-```shell
-git clone https://github.com/galderz/jmh && cd jmh
-git checkout 1.38-patches
-mvn install -DskipTests
-```
-
-> **IMPORTANT**:
-> Do not use GraalVM to build JMH because annotation processor does not work as expected,
-> and therefore no JMH benchmark source will be generated.
-> Instead we recommend you use standard JDK releases,
-> e.g. Adoptium Eclipse Temurin.
-
-Build Fibula with JDK 21 or newer:
-
-```shell
-mvn install -DskipTests
-```
-
-Install GraalVM or Mandrel for JDK 21.
+Install GraalVM for JDK 21 or JDK 23. Mandrel does not currently work with benchmarks relying on blackholes.
 
 ## Getting Started
 
@@ -42,7 +15,7 @@ and navigate to the Fibula sample project:
 
 ```shell
 git clone https://github.com/galderz/fibula-show
-cd fibula-show/2408-jvmls/fibula
+cd fibula-show/2411-strings
 ```
 
 Set the `JAVA_HOME` to GraalVM or Mandrel for JDK 21,
@@ -54,7 +27,7 @@ mvn package -Dnative
 
 Run the benchmark:
 ```shell
-java -jar target/benchmarks.jar MyFirst
+java -jar target/benchmarks.jar
 ```
 
 ## Profiling
@@ -74,6 +47,14 @@ mvn package -Dnative -Dquarkus.native.debug.enabled \
     -Dquarkus.native.additional-build-args=-H:-DeleteLocalSymbols
 ```
 
+You can obtain more detailed profiling by using the following command instead.
+The downside is that the performance degrades:
+
+```shell
+mvn package -Dnative -Dquarkus.native.debug.enabled \
+    -Dquarkus.native.additional-build-args=-H:-DeleteLocalSymbols,-H:+SourceLevelDebug,-H:+TrackNodeSourcePosition,-H:+DebugCodeInfoUseSourceMappings
+```
+
 Finally, you can run the benchmark passing in `-prof org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler`
 and when the benchmark finishes a `.perfbin` file will be generated in the working folder.
 Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
@@ -91,7 +72,8 @@ Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
 ```
 
 > **TIP**: Pass in `:P` event modifier to avoid performance events skid.
-> For example: `-prof org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:events=cycles:P`
+> For example: `-prof org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:events=cycles:P`.
+> This option is only available when Fibula is built with a JMH snapshot version from the master branch.
 
 ## Blackholes
 
@@ -126,14 +108,14 @@ The benchmark(s) run the same way,
 no matter if built for native or JVM:
 
 ```shell
-java -jar target/benchmarks.jar MyFirst
+java -jar target/benchmarks.jar
 ```
 
 > **IMPORTANT**:
 > There are no flags in Fibula to decide whether ro run a native or JVM runner application.
 > Instead, the bootstrap makes the decision based on whether the native or JVM runner applications have been previously built.
 > If it finds both the native and JVM runner applications,
-> it will run the JVM application.
+> it will run whichever is newer.
 
 ## Architecture
 
@@ -254,36 +236,6 @@ The extension has a few additional notable responsibilities:
   as well as the metadata for the user benchmarks,
   are stored into a single `BenchmarkList` file.
   This enables benchmarks in the current project and in any of its dependencies to be located successfully.
-
-## JMH Wishlist
-
-aka "The shopping list for Shipilev".
-
-The patches in the JMH [`1.38-patches` branch](https://github.com/galderz/jmh/tree/1.38-patches).
-
-Make `org.openjdk.jmh.runner.ForkedMain` public.
-This is the entry point for the runner process.
-Fibula currently uses reflection to access and instantiate it.
-
-Switch `org.openjdk.jmh.runner.Runner.getForkedMainCommand`
-from package private to protected.
-That way it can be extended without the need to create a split package situation.
-
-A cleaner way to adjust the target runner specific benchmark parameters.
-`jvm` and `jvmArgs` could be adjusted by wrapping `Options` around,
-and returning the correct values based on the target runner.
-`jdkVersion`, `vmName`, `vmVersion` and `jmhVersion` are trickier to easily adjust.
-Although `PrintPropertiesMain` can help when the target jvm and the bootstrap jvm are different,
-it falls short to cover scenarios like this.
-An alternative way would be to extend `AbstractOutputFormat`,
-wrap the original `OutputFormat` instance,
-and reimplement the `startBenchmark` logic.
-The issue with this approach is that `startBenchmark` is a lengthy method,
-but the benefit is that no reflection is needed.
-
-More of the `jmh-core-it` code could be reused by Fibula if the way the `Runner` instance is constructed would be abstracted away.
-Doing so would enable not only benchmark annotated code to be reused,
-but the code that starts the runner and asserts expectations as well.
 
 ## Makefile Guide
 
