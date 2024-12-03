@@ -85,22 +85,30 @@ class BenchmarkProcessor
     @BuildStep
     void reflection(BuildProducer<ReflectiveClassBuildItem> reflection)
     {
-        // Register org.openjdk.jmh.runner.InfraControl fields for reflection
-        // so that field offset calculations that rely on getting declared fields with reflection,
-        // work as expected.
-        // All classes in the InfraControl hierarchy need to be registered for reflection
+        // Register for reflection so that field offset calculations
+        // that rely on getting declared fields with reflection work as expected.
+        // All classes in the hierarchy need to be registered for reflection
         // so that the gaps between the fields are maintained.
-        reflection.produce(ReflectiveClassBuildItem
+        List<ReflectiveClassBuildItem> items = List.of(
+            reflectiveJmhClass("org.openjdk.jmh.infra.BenchmarkParams")
+            , reflectiveJmhClass("org.openjdk.jmh.infra.IterationParams")
+            , reflectiveJmhClass("org.openjdk.jmh.runner.InfraControl")
+        );
+        reflection.produce(items);
+    }
+
+    private ReflectiveClassBuildItem reflectiveJmhClass(String className)
+    {
+        return ReflectiveClassBuildItem
             .builder(
-                "org.openjdk.jmh.runner.InfraControlL0"
-                , "org.openjdk.jmh.runner.InfraControlL1"
-                , "org.openjdk.jmh.runner.InfraControlL2"
-                , "org.openjdk.jmh.runner.InfraControlL3"
-                , "org.openjdk.jmh.runner.InfraControlL4"
+                className + "L0"
+                , className + "L1"
+                , className + "L2"
+                , className + "L3"
+                , className + "L4"
             )
             .fields()
-            .build()
-        );
+            .build();
     }
 
     @BuildStep
