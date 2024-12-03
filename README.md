@@ -294,7 +294,7 @@ make run-native BENCHMARK=JMHSample_01 PROF=perf
 make run-native BENCHMARK=JMHSample_01 PROF=perfnorm
 ```
 Running a benchmark sample in Native mode with perf stat or perf norm profiler with only branches and instructions
-(needs https://github.com/galderz/jmh/commit/4000d778664e5a138fef8b8b79d3a823fa843527 to avoid multiplexing):
+(needs JMH master build to avoid multiplexing):
 ```shell script
 make run-native BENCHMARK=JMHSample_01 PROF=perf:events=branches,instructions,cycles
 make run-native BENCHMARK=JMHSample_01 PROF=perfnorm:events=branches,instructions,cycles
@@ -305,7 +305,7 @@ make run BENCHMARK=JMHSample_01 PROF=perf
 make run BENCHMARK=JMHSample_01 PROF=perfnorm
 ```
 Running a benchmark sample in Native mode with perfasm that uses DWARF call graph and saving the perf bin data
-(needs https://github.com/galderz/jmh/commit/e623b6a93263fa24d5ec11076b59b3ea3b8dd0fc to enable modifiers):
+(needs JMH master build to enable modifiers):
 ```shell script
 make run-native BENCHMARK=JMHSample_01 PROF=org.mendrugo.fibula.bootstrap.DwarfPerfAsmProfiler:events=cycles:P DEBUG_INFO=true MEASURE_TIME=1 WARMUP_TIME=1
 ```
