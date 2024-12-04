@@ -17,11 +17,13 @@ import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.pkg.builditem.NativeImageRunnerBuildItem;
 import io.quarkus.deployment.pkg.steps.GraalVM;
 import io.quarkus.deployment.pkg.steps.NativeBuild;
+import io.quarkus.gizmo.CatchBlockCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
+import io.quarkus.gizmo.TryBlock;
 import io.quarkus.logging.Log;
 import io.quarkus.maven.dependency.ResolvedDependency;
 import io.quarkus.paths.OpenPathTree;
@@ -112,26 +114,16 @@ class BenchmarkProcessor
     }
 
     @BuildStep
-    void exportGraalCompilerApi(
-        BuildProducer<JPMSExportBuildItem> jpmsExports
-        , NativeImageRunnerBuildItem nativeImageRunnerBuildItem
-    )
+    void exportGraalCompilerApi(BuildProducer<JPMSExportBuildItem> jpmsExports)
     {
-        final GraalVM.Version graalVMVersion = nativeImageRunnerBuildItem.getBuildRunner().getGraalVMVersion();
-        if (graalVMVersion.compareTo(GraalVM.Version.VERSION_23_1_0) <= 0)
-        {
-            jpmsExports.produce(new JPMSExportBuildItem(
-                "jdk.internal.vm.compiler"
-                , "org.graalvm.compiler.api.directives")
-            );
-        }
-        else
-        {
-            jpmsExports.produce(new JPMSExportBuildItem(
-                "jdk.graal.compiler"
-                , "jdk.graal.compiler.api.directives")
-            );
-        }
+        jpmsExports.produce(new JPMSExportBuildItem(
+            "jdk.internal.vm.compiler"
+            , "org.graalvm.compiler.api.directives")
+        );
+        jpmsExports.produce(new JPMSExportBuildItem(
+            "jdk.graal.compiler"
+            , "jdk.graal.compiler.api.directives")
+        );
     }
 
     @BuildStep(onlyIf = NativeBuild.class)
