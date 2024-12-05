@@ -142,7 +142,7 @@ run-native: $(samples_runner) do-run
 
 # Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
 test-native:
-> touch fibula-it/target/benchmarks.jar
+> touch fibula-it/target/benchmarks.jar || true
 > $(mvnw) verify $(test_args) $(common_maven_args) -pl fibula-it -am -Dnative
 .PHONY: test-native
 
