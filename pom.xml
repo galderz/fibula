@@ -26,7 +26,7 @@
 
         <jmh.version>1.37</jmh.version>
         <compiler.version>${compiler.version}</compiler.version>
-        <compiler.version>1.8</compiler.version>
+        <compiler.version>21</compiler.version>
     </properties>
 
     <dependencyManagement>

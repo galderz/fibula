@@ -1,5 +1,7 @@
 package org.mendrugo.fibula.generator;
 
+import org.mendrugo.fibula.GraalBlackhole;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -47,19 +49,16 @@ public class NativeConfigurationGenerator extends AbstractProcessor
         {
             if (!roundEnv.processingOver())
             {
-                printNote("Find BenchmarkList files");
                 findBenchmarkLists();
-                printNote("Find generated benchmarks in project");
                 findBenchmarksInProject(roundEnv);
             }
             else
             {
-                printNote("Find generated benchmarks in dependencies");
                 findBenchmarksInDependencies();
-                printNote("Write reflection configuration");
                 writeReflectionConfiguration();
-                printNote("Append to BenchmarkList");
-                appendBenchmarkList();
+                final Path classOutputPath = getClassOutputPath();
+                appendBenchmarkList(classOutputPath);
+                generateBlackholeSubstitutions(classOutputPath);
             }
         }
         catch (IOException e)
@@ -73,7 +72,29 @@ public class NativeConfigurationGenerator extends AbstractProcessor
         return true;
     }
 
-    private void appendBenchmarkList() throws IOException
+    private void generateBlackholeSubstitutions(Path classOutputPath)
+    {
+        final GraalBlackhole graalBlackhole = GraalBlackhole.instance();
+        printNote("GraalVM blackhole mode resolved: " + graalBlackhole);
+        if (graalBlackhole.isEnabled())
+        {
+            BlackholeSubstitution.generate(graalBlackhole, classOutputPath);
+        }
+    }
+
+    private void appendBenchmarkList(Path classOutputPath) throws IOException
+    {
+        printNote("Append to BenchmarkList");
+
+        final Path benchmarkListPath = classOutputPath.resolve("META-INF/BenchmarkList");
+
+        for (URI uri : benchmarkLists)
+        {
+            appendBenchmarkList(uri, benchmarkListPath);
+        }
+    }
+
+    private Path getClassOutputPath() throws IOException
     {
         final FileObject ignore = processingEnv
             .getFiler()
@@ -84,16 +105,12 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             );
 
         final Path classOutputPath = Paths.get(ignore.toUri()).getParent();
-        final Path benchmarkListPath = classOutputPath.resolve("META-INF/BenchmarkList");
-
-        for (URI uri : benchmarkLists)
-        {
-            appendBenchmarkList(uri, benchmarkListPath);
-        }
+        return classOutputPath;
     }
 
     private void writeReflectionConfiguration() throws IOException
     {
+        printNote("Write reflection configuration");
         final FileObject reflectionConfig = processingEnv
             .getFiler()
             .createResource(
@@ -128,6 +145,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
 
     private void findBenchmarkLists() throws IOException, URISyntaxException
     {
+        printNote("Find BenchmarkList files");
         final Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/BenchmarkList");
 
         while (resources.hasMoreElements())
@@ -155,6 +173,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
 
     private void findBenchmarksInProject(RoundEnvironment roundEnv)
     {
+        printNote("Find generated benchmarks in project");
         for (Element element : roundEnv.getRootElements())
         {
             if (element instanceof TypeElement)
@@ -172,6 +191,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
 
     private void findBenchmarksInDependencies() throws IOException
     {
+        printNote("Find generated benchmarks in dependencies");
         for (URI benchmarkList : benchmarkLists)
         {
             try (final InputStream inputStream = benchmarkList.toURL().openStream()

@@ -34,8 +34,7 @@ public class CapturingRunner
             block.accept(builder);
 
             final Options opts = builder.build();
-            final Collection<RunResult> result = new MultiVmRunner(opts).run();
-            return result;
+            return new MultiVmRunner(opts).run();
         }
         catch (IOException e)
         {

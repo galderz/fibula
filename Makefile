@@ -80,6 +80,7 @@ mvnw += $(MAVEN_HOME)/bin/mvn
 
 ifdef MAVEN_VERBOSE
   mvnw_runner += -X
+  mvnw += -X
 endif
 
 ifdef DEBUG
@@ -132,12 +133,16 @@ endif
 
 ifeq ($(MAVEN_DEBUG),test)
   mvnw += -Dmaven.surefire.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+else ifeq ($(MAVEN_DEBUG),test-native)
+  mvnw += -Dmaven.failsafe.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
 endif
 
 run-native: $(samples_runner) do-run
 .PHONY: run-native
 
+# Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
 test-native:
+> touch fibula-it/target/benchmarks.jar
 > $(mvnw) verify $(test_args) $(common_maven_args) -pl fibula-it -am -Dnative
 .PHONY: test-native
 

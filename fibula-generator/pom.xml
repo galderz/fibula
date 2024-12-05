@@ -11,6 +11,19 @@
 
     <artifactId>fibula-generator</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.mendrugo.fibula</groupId>
+            <artifactId>fibula-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus.gizmo</groupId>
+            <artifactId>gizmo</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
