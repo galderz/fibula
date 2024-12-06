@@ -117,7 +117,7 @@ java -jar target/benchmarks.jar
 
 > **IMPORTANT**:
 > There are no flags in Fibula to decide whether ro run a native or JVM runner application.
-> Instead, the bootstrap makes the decision based on whether the native or JVM runner applications have been previously built.
+> Instead, the code decides based on whether the native or JVM runner applications have been previously built.
 > If it finds both the native and JVM runner applications,
 > it will run whichever is newer.
 
