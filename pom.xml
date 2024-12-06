@@ -25,7 +25,6 @@
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
 
         <jmh.version>1.37</jmh.version>
-        <compiler.version>${compiler.version}</compiler.version>
         <compiler.version>21</compiler.version>
     </properties>
 

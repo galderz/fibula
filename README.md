@@ -4,13 +4,18 @@ Fibula allows you to run JMH benchmarks as GraalVM native executables.
 
 # Pre-requisites
 
-There are no Fibula releases yet so you need to build Fibula first, e.g.
+There are no Fibula releases yet so you need to build Fibula first.
+Building Fibula requires JDK 21.
+Set `JAVA_HOME` to that JDK version and then execute:
 
 ```
 ./mvnw install -DskipTests
 ```
 
-Install GraalVM for JDK 21 or JDK 23. Mandrel does not currently work with benchmarks relying on blackholes.
+Install GraalVM for JDK 21 or JDK 23, you will need it to build GraalVM native executables.
+The set `GRAALVM_HOME` environment variable to point to that.
+
+> **NOTE**: Mandrel does not currently work with benchmarks relying on blackholes.
 
 ## Getting Started
 
@@ -21,7 +26,7 @@ and navigate to the Fibula sample project:
 
 ```shell
 git clone https://github.com/galderz/fibula-show
-cd fibula-show/2411-strings
+cd fibula-show/2412-strings
 ```
 
 Set the `JAVA_HOME` to GraalVM or Mandrel for JDK 21,

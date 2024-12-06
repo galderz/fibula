@@ -1,8 +1,10 @@
 package org.mendrugo.fibula.generator;
 
 import org.mendrugo.fibula.GraalBlackhole;
+import org.openjdk.jmh.generators.BenchmarkProcessor;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
@@ -33,20 +35,43 @@ import java.util.Set;
 import java.util.StringJoiner;
 
 /**
- * Generates dynamic native image configuration file based on user defined JMH benchmarks.
+ * An annotation processor that combines the benchmark source code and BenchmarkList metadata generation in JMH,
+ * with the need to generate GraalVM configuration and bytecode for JMH benchmarks as native executables.
+ * Running both processors independently won't work because the JMH processor needs to run first
+ * in order for the native configuration generator to pick up the names of the JMH generated classes.
+ * Running processors independently with the JMH one running first will only work if there are unmatched annotations.
+ * This is difficult to guarantee which is we use a single processor that combines functionalities from both.
  */
-@SupportedAnnotationTypes("*")
-public class NativeConfigurationGenerator extends AbstractProcessor
+@SupportedAnnotationTypes("org.openjdk.jmh.annotations.*")
+public class NativeAssetsGenerator extends AbstractProcessor
 {
+    final BenchmarkProcessor jmhBenchmarkProcessor;
     // Set of BenchmarkList files in dependencies
     final Set<URI> benchmarkLists = new HashSet<>();
     final List<String> benchmarkQNames = new ArrayList<>();
+
+    public NativeAssetsGenerator()
+    {
+        this.jmhBenchmarkProcessor = new BenchmarkProcessor();
+    }
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv)
+    {
+        super.init(processingEnv);
+        jmhBenchmarkProcessor.init(processingEnv);
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
     {
         try
         {
+             // Order of processor invocation is important here.
+             // The JMH processor has to run first, then the native assets generator
+             // so that it picks up the JMH generated classes.
+            jmhBenchmarkProcessor.process(annotations, roundEnv);
+
             if (!roundEnv.processingOver())
             {
                 findBenchmarkLists();
@@ -104,8 +129,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
                 , "ignore"
             );
 
-        final Path classOutputPath = Paths.get(ignore.toUri()).getParent();
-        return classOutputPath;
+        return Paths.get(ignore.toUri()).getParent();
     }
 
     private void writeReflectionConfiguration() throws IOException
@@ -128,7 +152,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
             );
 
             benchmarkQNames.stream()
-                .map(NativeConfigurationGenerator::toReflectionConfigEntry)
+                .map(NativeAssetsGenerator::toReflectionConfigEntry)
                 .forEach(joiner::add);
             writer.write(joiner.toString());
         }
@@ -167,7 +191,7 @@ public class NativeConfigurationGenerator extends AbstractProcessor
                 .lines()
                 .reduce("", (contents, line) -> contents + System.lineSeparator() + line)
                 .getBytes(StandardCharsets.UTF_8);
-            Files.write(toPath, bytes, StandardOpenOption.APPEND);
+            Files.write(toPath, bytes, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         }
     }
 

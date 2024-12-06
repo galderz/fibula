@@ -16,7 +16,6 @@
     <properties>
         <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
         <uberjar.name>benchmarks</uberjar.name>
-        <compiler.version>21</compiler.version>
     </properties>
 
     <dependencies>
@@ -34,7 +33,6 @@
             <artifactId>fibula-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- Dependency order matters, define fibula annotation processor after the JMH one -->
         <dependency>
             <groupId>org.mendrugo.fibula</groupId>
             <artifactId>fibula-generator</artifactId>
@@ -48,6 +46,12 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${compiler-plugin.version}</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-processor</arg>
+                        <arg>org.mendrugo.fibula.generator.NativeAssetsGenerator</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
