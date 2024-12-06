@@ -23,10 +23,13 @@
 
         <maven.compiler.release>21</maven.compiler.release>
 
-        <compiler-plugin.version>3.12.1</compiler-plugin.version>
-        <surefire-plugin.version>3.5.2</surefire-plugin.version>
-
         <jmh.version>1.37</jmh.version>
+
+        <compiler-plugin.version>3.12.1</compiler-plugin.version>
+        <jar-plugin.version>3.4.2</jar-plugin.version>
+        <native-maven-plugin.version>0.10.3</native-maven-plugin.version>
+        <shade-plugin.version>3.6.0</shade-plugin.version>
+        <surefire-plugin.version>3.5.2</surefire-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -55,6 +58,24 @@
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.graalvm.buildtools</groupId>
+                    <artifactId>native-maven-plugin</artifactId>
+                    <version>${native-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>${shade-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
