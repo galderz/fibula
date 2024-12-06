@@ -8,7 +8,6 @@ on:
 
 env:
   ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
-  JMH_BRANCH: 1.38-patches
 
 jobs:
   test-native:
@@ -16,18 +15,6 @@ jobs:
     steps:
       - name: Checkout Fibula
         uses: actions/checkout@v4
-        with:
-          path: fibula
-      - name: Checkout JMH
-        uses: actions/checkout@v4
-        with:
-          repository: galderz/jmh
-          ref: ${{ env.JMH_BRANCH }}
-          path: jmh
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: '21'
@@ -36,73 +23,23 @@ jobs:
       - name: Show versions
         run: |
           echo "GRAALVM_HOME: $GRAALVM_HOME"
-          echo "JAVA_HOME: $JAVA_HOME"
-          echo "JAVA_HOME_21_X64: $JAVA_HOME_21_X64"
           java --version
           native-image --version
-      - name: Build JMH
-        working-directory: jmh
-        # Needs to be built with HotSpot,
-        # otherwise benchmarks not generated.
-        # Examples relying on JMH samples,
-        # or test relying on core-it tests,
-        # would fail otherwise.
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
-        run: mvn install -DskipTests
-      - name: Build Fibula
-        working-directory: fibula
-        run: mvn install -DskipTests
-      # Building Fibula runner first because integration tests don't run as Quarkus integration tests.
-      # Running them as normal Quarkus tests makes it easy to run them via API.
-      - name: Build native runner
-        working-directory: fibula
-        run: mvn package -DskipTests -pl fibula-it -Pnative
       - name: Run integration tests
-        working-directory: fibula
-        run: mvn test -pl fibula-it
+        run: mvn verify  -pl fibula-it -am
 
   test-jvm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
         uses: actions/checkout@v4
-        with:
-          path: fibula
-      - name: Checkout JMH
-        uses: actions/checkout@v4
-        with:
-          repository: galderz/jmh
-          ref: ${{ env.JMH_BRANCH }}
-          path: jmh
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm-community'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Show versions
         run: |
-          echo "GRAALVM_HOME: $GRAALVM_HOME"
           echo "JAVA_HOME: $JAVA_HOME"
-          echo "JAVA_HOME_21_X64: $JAVA_HOME_21_X64"
           java --version
-      - name: Build JMH
-        env:
-          # Needs to be built with HotSpot,
-          # otherwise benchmarks not generated.
-          # Examples relying on JMH samples,
-          # or test relying on core-it tests,
-          # would fail otherwise.
-          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
-        working-directory: jmh
-        run: mvn install -DskipTests
-      - name: Build Fibula
-        working-directory: fibula
-        run: mvn install -DskipTests
-      - name: Test Fibula
-        working-directory: fibula
-        run: mvn test -pl fibula-it
+      - name: Run tests
+        run: mvn test  -pl fibula-it -am -Djvm.mode
