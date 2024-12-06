@@ -12,6 +12,6 @@ sample()
 
 make clean
 # native tests already run jvm mode tests before
-make test-native
+make test
+sample "run-jvm"
 sample "run"
-sample "run-native"
