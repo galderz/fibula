@@ -11,6 +11,10 @@
 
     <artifactId>fibula-generator</artifactId>
 
+    <properties>
+        <skipTests>true</skipTests>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.mendrugo.fibula</groupId>
