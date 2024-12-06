@@ -102,6 +102,7 @@ final class MultiVmOutputFormat implements OutputFormat
         // amendBenchmarkParamsField("jmhVersion", "fibula:" + new Version().getVersion(), benchmark);
         amendBenchmarkParamsField("jmhVersion", "fibula:999-SNAPSHOT", benchmark);
 
+        final Collection<String> jvmArgs = benchmark.getJvmArgs();
         if (forkedVm.isNativeVm())
         {
             // Avoid -XX: arguments being passed in to native, because they're not understood in that environment
@@ -109,10 +110,19 @@ final class MultiVmOutputFormat implements OutputFormat
 
             // Skip jvm arguments that are invalid in native
             final Pattern skip = skipNativeInvalidJvmArgs();
-            final ArrayList<String> nativeValidJvmArgs = benchmark.getJvmArgs().stream()
+            final List<String> nativeValidJvmArgs = jvmArgs.stream()
                 .filter(arg -> !skip.matcher(arg).matches())
                 .collect(Collectors.toCollection(ArrayList::new));
             amendBenchmarkParamsField("jvmArgs", nativeValidJvmArgs, benchmark);
+        }
+        else
+        {
+            final List<String> hotspotJvmArgs = new ArrayList<>(jvmArgs);
+            if (Boolean.getBoolean("fibula.native.agent"))
+            {
+                hotspotJvmArgs.add("-agentlib:native-image-agent=config-output-dir=target/native-agent-config");
+            }
+            amendBenchmarkParamsField("jvmArgs", hotspotJvmArgs, benchmark);
         }
     }
 
