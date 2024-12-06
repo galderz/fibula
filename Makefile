@@ -137,21 +137,21 @@ else ifeq ($(MAVEN_DEBUG),test-native)
   mvnw += -Dmaven.failsafe.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
 endif
 
-run-native: $(samples_runner) do-run
-.PHONY: run-native
-
-# Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
-test-native:
-> touch fibula-it/target/benchmarks.jar || true
-> $(mvnw) verify $(test_args) $(common_maven_args) -pl fibula-it -am -Dnative
-.PHONY: test-native
-
-run: $(final_jar) do-run
+run: $(samples_runner) do-run
 .PHONY: run
 
+# Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
 test:
-> $(mvnw) test $(test_args) -pl fibula-it -am
+> touch fibula-it/target/benchmarks.jar || true
+> $(mvnw) verify $(test_args) $(common_maven_args) -pl fibula-it -am
 .PHONY: test
+
+run-jvm: $(final_jar) do-run
+.PHONY: run
+
+test-jvm:
+> $(mvnw) test $(test_args) -pl fibula-it -am -Djvm.mode
+.PHONY: test-jvm
 
 do-run:
 > cd fibula-samples
@@ -163,14 +163,14 @@ $(final_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "pom.xml" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(final_jar):
-> $(mvnw_runner) install $(common_maven_args) -DskipTests -e
+> $(mvnw_runner) install $(common_maven_args) -DskipTests -e -Djvm.mode
 > touch $@
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
 $(samples_runner): $(final_jar)
-> $(mvnw_runner) package -pl fibula-samples -Dnative $(runner_build_args)
+> $(mvnw_runner) package -pl fibula-samples $(runner_build_args)
 
 clean:
 > $(mvnw) clean
