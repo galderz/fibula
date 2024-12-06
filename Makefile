@@ -105,30 +105,16 @@ ifdef RUNNER_DEBUG
 endif
 
 runner_build_args =
-ifdef DECOMPILE
-  runner_build_args += -Dquarkus.package.jar.decompiler.enabled
-endif
-ifdef REPORTS
-  runner_build_args += -Dquarkus.native.enable-reports
-endif
-ifdef GEN
-  runner_build_args += -Dfibula.generate=$(GEN)
-  test_args += -Dtest=$(GEN)
+ifdef TEST
+  test_args += -Dtest=$(TEST)
 endif
 ifdef DEBUG_INFO
-  runner_build_args += -Dquarkus.native.debug.enabled
+  runner_build_args += -Ddebug
   # todo add option to add -H:+SourceLevelDebug
-  runner_build_args += -Dfibula.native.additional-build-args=-H:-DeleteLocalSymbols
+  runner_build_args += -DbuildArgs=-H:-DeleteLocalSymbols
 endif
 ifdef NATIVE_ARGS
-  runner_build_args += -Dquarkus.native.additional-build-args=$(NATIVE_ARGS)
-endif
-
-common_maven_args =
-ifdef QUARKUS_SNAPSHOT
-  common_maven_args += -Dquarkus.platform.group-id=io.quarkus
-  common_maven_args += -Dquarkus.platform.version=999-SNAPSHOT
-  common_maven_args += -Dquarkus-plugin.version=999-SNAPSHOT
+  runner_build_args += -DbuildArgs=$(NATIVE_ARGS)
 endif
 
 ifeq ($(MAVEN_DEBUG),test)
@@ -143,7 +129,7 @@ run: $(samples_runner) do-run
 # Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
 test:
 > touch fibula-it/target/benchmarks.jar || true
-> $(mvnw) verify $(test_args) $(common_maven_args) -pl fibula-it -am
+> $(mvnw) verify $(test_args) -pl fibula-it -am
 .PHONY: test
 
 run-jvm: $(final_jar) do-run
@@ -163,7 +149,7 @@ $(final_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "pom.xml" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(final_jar):
-> $(mvnw_runner) install $(common_maven_args) -DskipTests -e -Djvm.mode
+> $(mvnw_runner) install -DskipTests -e -Djvm.mode
 > touch $@
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
