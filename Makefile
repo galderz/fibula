@@ -66,17 +66,13 @@ endif
 MAVEN_DEBUG ?=
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
-mvnw_runner += JAVA_HOME=$(JAVA_HOME)
 ifeq ($(MAVEN_DEBUG),process)
-  mvnw_runner += $(MAVEN_HOME)/bin/mvnDebug
+  mvnw += $(MAVEN_HOME)/bin/mvnDebug
 else
-  mvnw_runner += $(MAVEN_HOME)/bin/mvn
+  mvnw += $(MAVEN_HOME)/bin/mvn
 endif
 
-mvnw += $(MAVEN_HOME)/bin/mvn
-
 ifdef MAVEN_VERBOSE
-  mvnw_runner += -X
   mvnw += -X
 endif
 
@@ -89,6 +85,7 @@ endif
 test_args =
 ifdef TEST
   test_args += -Dtest=$(TEST)
+  test_args += -Dit.test=$(TEST)
 endif
 
 ifdef NATIVE_AGENT
@@ -102,9 +99,6 @@ ifdef RUNNER_DEBUG
 endif
 
 runner_build_args =
-ifdef TEST
-  test_args += -Dtest=$(TEST)
-endif
 ifdef DEBUG_INFO
   runner_build_args += -Ddebug
   # todo add option to add -H:+SourceLevelDebug
@@ -133,6 +127,7 @@ run-jvm: $(final_jar) do-run
 .PHONY: run
 
 test-jvm:
+> touch fibula-it/target/benchmarks.jar || true
 > $(mvnw) test $(test_args) -pl fibula-it -am -Djvm.mode
 .PHONY: test-jvm
 
@@ -146,14 +141,14 @@ $(final_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "pom.xml" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(final_jar):
-> $(mvnw_runner) install -DskipTests -e -Djvm.mode
+> $(mvnw) install -DskipTests -e
 > touch $@
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
 $(samples_runner): $(final_jar)
-> $(mvnw_runner) package -pl fibula-samples $(runner_build_args)
+> $(mvnw) package -pl fibula-samples $(runner_build_args)
 
 clean:
 > $(mvnw) clean
