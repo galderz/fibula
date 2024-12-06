@@ -141,7 +141,7 @@ $(final_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "pom.xml" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(final_jar):
-> $(mvnw) install -DskipTests -e
+> $(mvnw) install -DskipTests -e -pl !fibula-it
 > touch $@
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
