@@ -175,15 +175,3 @@ $(samples_runner): $(final_jar)
 clean:
 > $(mvnw) clean
 .PHONY: clean
-
-QUARKUS_HOME ?= $(HOME)/1/quarkus-quarkus
-
-build-quarkus:
-> cd $(QUARKUS_HOME)
-> GRADLE_JAVA_HOME=$(HOME)/opt/java-17u-dev JAVA_HOME=$(JAVA_HOME) ./mvnw -Dquickly
-.PHONY: build-quarkus
-
-clean-quarkus:
-> cd $(QUARKUS_HOME)
-> JAVA_HOME=$(JAVA_HOME) ./mvnw clean
-.PHONY: clean-quarkus
