@@ -16,8 +16,9 @@ VERSION ?= 999-SNAPSHOT
 MAVEN_HOME ?= $(HOME)/opt/maven
 
 benchmarks_jar = target/benchmarks.jar
-final_jar = fibula-samples/target/fibula-samples-$(VERSION).jar
+final_jar = fibula-generator/target/fibula-generator-$(VERSION).jar
 java = $(JAVA_HOME)/bin/java
+samples_jar = fibula-samples/target/benchmarks.jar
 samples_runner = fibula-samples/target/benchmarks
 
 PROF ?=
@@ -123,7 +124,7 @@ test:
 > $(mvnw) verify $(test_args) -pl fibula-it -am
 .PHONY: test
 
-run-jvm: $(final_jar) do-run
+run-jvm: $(samples_jar) do-run
 .PHONY: run
 
 test-jvm:
@@ -141,8 +142,14 @@ $(final_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "pom.xml" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "application.properties" ! -path "./*/target/*")
 $(final_jar):
-> $(mvnw) install -DskipTests -e -pl !fibula-it
+> $(mvnw) install -DskipTests -e -pl !fibula-it,!fibula-samples
 > touch $@
+
+$(samples_jar): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
+$(samples_jar): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
+$(samples_jar): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
+$(samples_jar): $(final_jar)
+> $(mvnw) package -pl fibula-samples $(runner_build_args)
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
