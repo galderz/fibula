@@ -63,10 +63,7 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <compilerArgs>
-                        <arg>-processor</arg>
-                        <arg>org.mendrugo.fibula.generator.NativeAssetsGenerator</arg>
-                    </compilerArgs>
+                    <annotationProcessors>org.mendrugo.fibula.generator.NativeAssetsGenerator</annotationProcessors>
                 </configuration>
             </plugin>
             <plugin>
