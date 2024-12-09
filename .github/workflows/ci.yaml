@@ -11,9 +11,10 @@ env:
 
 jobs:
   test-native:
-    matrix:
-      java-version: [21, 23]
-      distribution: [graalvm-community, mandrel]
+    strategy:
+      matrix:
+        java-version: [21, 23]
+        distribution: [graalvm-community, mandrel]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
@@ -32,8 +33,9 @@ jobs:
         run: mvn verify  -pl fibula-it -am
 
   test-jvm:
-    matrix:
-      java-version: [21, 23]
+    strategy:
+      matrix:
+        java-version: [21, 23]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
