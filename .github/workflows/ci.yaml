@@ -11,14 +11,17 @@ env:
 
 jobs:
   test-native:
+    matrix:
+      java-version: [21, 23]
+      distribution: [graalvm-community, mandrel]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
         uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '21'
-          distribution: 'graalvm-community'
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Show versions
         run: |
@@ -29,6 +32,8 @@ jobs:
         run: mvn verify  -pl fibula-it -am
 
   test-jvm:
+    matrix:
+      java-version: [21, 23]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
@@ -36,7 +41,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: ${{ matrix.java-version }}
       - name: Show versions
         run: |
           echo "JAVA_HOME: $JAVA_HOME"
