@@ -80,8 +80,8 @@ ifdef MAVEN_VERBOSE
   mvnw += -X
 endif
 
-ifeq ($(DEBUG),sample)
-  java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
+ifeq ($(DEBUG),runner)
+  java += $(jdwp)
   benchmark_params += -jvmArgs
   benchmark_params += ""
 endif
@@ -148,7 +148,7 @@ $(samples_jar): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/
 $(samples_jar): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
 $(samples_jar): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
 $(samples_jar): $(final_jar)
-> $(mvnw) package -pl fibula-samples $(runner_build_args)
+> $(mvnw) package -pl fibula-samples $(runner_build_args) -Djvm.mode
 
 $(samples_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
 $(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")

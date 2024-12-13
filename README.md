@@ -132,11 +132,11 @@ BENCHMARK=JMHSample_01 make run-jvm
 ```
 Run individual benchmarks in native mode and remote debug the runner JVM process on port 5005:
 ```shell script
-DEBUG=sample BENCHMARK=JMHSample_01 make run
+DEBUG=runner BENCHMARK=JMHSample_01 make run
 ```
 Run individual benchmarks in JVM mode and remote debug the runner JVM process on port 5005:
 ```shell script
-DEBUG=sample BENCHMARK=JMHSample_01 make run-jvm
+DEBUG=runner BENCHMARK=JMHSample_01 make run-jvm
 ```
 Run tests in JVM mode with native agent:
 ```shell script
