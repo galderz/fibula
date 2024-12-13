@@ -57,7 +57,7 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
           java --version
       - name: Run tests
-        run: mvn test  -pl fibula-it -am -Djvm.mode
+        run: mvn install -pl fibula-it -am -Djvm.mode
       - name: Build samples
         run: mvn package -pl fibula-samples -Djvm.mode
       - name: Run a JMH sample
