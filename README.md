@@ -13,8 +13,6 @@ Set `JAVA_HOME` to GraalVM for JDK 21 and execute:
 ./mvnw install
 ```
 
-> **NOTE**: Mandrel does not currently work with benchmarks relying on blackholes.
-
 ## Getting Started
 
 To run the first JMH benchmark using Fibula,
@@ -84,9 +82,7 @@ Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
 
 ## Blackholes
 
-Both implicit and explicit blackholes are supported,
-but additional configuration might be required when building the benchmarks depending on the GraalVM version.
-
+Both implicit and explicit blackholes are supported.
 Fibula generates bytecode to invoke one of the available `GraalDirectives.blackhole` methods,
 which works with the GraalVM compiler to make sure values sent to the blackhole are not optimized away.
 
