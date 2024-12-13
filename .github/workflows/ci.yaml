@@ -31,6 +31,14 @@ jobs:
           native-image --version
       - name: Run integration tests
         run: mvn verify  -pl fibula-it -am
+      - name: Build samples
+        run: mvn package -pl fibula-samples
+      - name: Run a JMH sample
+        run: java -jar target/benchmarks.jar JMHSample_09_Blackholes -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
+        working-directory: fibula-samples
+      - name: Run a Fibula sample
+        run: java -jar target/benchmarks.jar FibulaSample_06_Records -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
+        working-directory: fibula-samples
 
   test-jvm:
     strategy:
@@ -50,3 +58,11 @@ jobs:
           java --version
       - name: Run tests
         run: mvn test  -pl fibula-it -am -Djvm.mode
+      - name: Build samples
+        run: mvn package -pl fibula-samples -Djvm.mode
+      - name: Run a JMH sample
+        run: java -jar target/benchmarks.jar JMHSample_09_Blackholes -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
+        working-directory: fibula-samples
+      - name: Run a Fibula sample
+        run: java -jar target/benchmarks.jar FibulaSample_06_Records -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
+        working-directory: fibula-samples
