@@ -31,6 +31,14 @@ public class CapturingRunner
 
             final ChainedOptionsBuilder builder = new OptionsBuilder()
                 .output(output.getAbsolutePath());
+
+            // Clear up jvm arguments for the forked process when debugging runner,
+            // otherwise forked process also starts with debugging parameters
+            if ("runner".equals(System.getenv("DEBUG")))
+            {
+                builder.jvmArgs();
+            }
+
             block.accept(builder);
 
             final Options opts = builder.build();

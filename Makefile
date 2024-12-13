@@ -18,6 +18,9 @@ MAVEN_HOME ?= $(HOME)/opt/maven
 benchmarks_jar = target/benchmarks.jar
 final_jar = fibula-generator/target/fibula-generator-$(VERSION).jar
 java = $(JAVA_HOME)/bin/java
+jdwp = -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
+maven_surefire_debug = -Dmaven.surefire.debug="$(jdwp)"
+maven_failsafe_debug = -Dmaven.failsafe.debug="$(jdwp)"
 samples_jar = fibula-samples/target/benchmarks.jar
 samples_runner = fibula-samples/target/benchmarks
 
@@ -64,10 +67,10 @@ ifdef PROF
   benchmark_params += $(PROF)
 endif
 
-MAVEN_DEBUG ?=
+DEBUG ?=
 
 mvnw += JAVA_HOME=$(JAVA_HOME)
-ifeq ($(MAVEN_DEBUG),process)
+ifeq ($(DEBUG),maven)
   mvnw += $(MAVEN_HOME)/bin/mvnDebug
 else
   mvnw += $(MAVEN_HOME)/bin/mvn
@@ -77,8 +80,8 @@ ifdef MAVEN_VERBOSE
   mvnw += -X
 endif
 
-ifdef DEBUG
-  java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
+ifeq ($(DEBUG),sample)
+  java += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
   benchmark_params += -jvmArgs
   benchmark_params += ""
 endif
@@ -94,11 +97,6 @@ ifdef NATIVE_AGENT
   test_args += -Dfibula.native.agent=true
 endif
 
-ifdef RUNNER_DEBUG
-  java += -Dfibula.runner.debug=true
-  test_args += -Dfibula.runner.debug=true
-endif
-
 runner_build_args =
 ifdef DEBUG_INFO
   runner_build_args += -Ddebug
@@ -109,19 +107,17 @@ ifdef NATIVE_ARGS
   runner_build_args += -DbuildArgs=$(NATIVE_ARGS)
 endif
 
-ifeq ($(MAVEN_DEBUG),test)
-  mvnw += -Dmaven.surefire.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
-else ifeq ($(MAVEN_DEBUG),test-native)
-  mvnw += -Dmaven.failsafe.debug="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
-endif
-
 run: $(samples_runner) do-run
 .PHONY: run
 
 # Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
 test:
 > touch fibula-it/target/benchmarks.jar || true
+ifeq ($(DEBUG),runner)
+> $(mvnw) $(maven_failsafe_debug) verify $(test_args) -pl fibula-it -am
+else
 > $(mvnw) verify $(test_args) -pl fibula-it -am
+endif
 .PHONY: test
 
 run-jvm: $(samples_jar) do-run
@@ -129,6 +125,9 @@ run-jvm: $(samples_jar) do-run
 
 test-jvm:
 > touch fibula-it/target/benchmarks.jar || true
+ifeq ($(DEBUG),runner)
+> $(mvnw) $(maven_surefire_debug) test $(test_args) -pl fibula-it -am -Djvm.mode
+endif
 > $(mvnw) test $(test_args) -pl fibula-it -am -Djvm.mode
 .PHONY: test-jvm
 

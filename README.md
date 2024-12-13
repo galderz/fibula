@@ -124,57 +124,65 @@ Here's a short guide on how to use it:
 
 Run individual benchmarks in native mode:
 ```shell script
-make run BENCHMARK=JMHSample_01
+BENCHMARK=JMHSample_01 make run
 ```
 Run individual benchmarks in JVM mode:
 ```shell script
-make run-jvm BENCHMARK=JMHSample_01
+BENCHMARK=JMHSample_01 make run-jvm
 ```
-Run individual benchmarks in JVM mode and remote debug the runner JVM process on port 8000:
+Run individual benchmarks in native mode and remote debug the runner JVM process on port 5005:
 ```shell script
-make run BENCHMARK=JMHSample_01 DEBUG=true
+DEBUG=sample BENCHMARK=JMHSample_01 make run
+```
+Run individual benchmarks in JVM mode and remote debug the runner JVM process on port 5005:
+```shell script
+DEBUG=sample BENCHMARK=JMHSample_01 make run-jvm
 ```
 Run tests in JVM mode with native agent:
 ```shell script
-make test-jvm NATIVE_AGENT=true
+NATIVE_AGENT=true make test-jvm
 ```
 Run individual test in native mode:
 ```shell
-make test TEST=BlackholesTest
+TEST=BlackholesTest make test
 ```
 Run individual JVM mode test:
 ```shell
-make test-jvm TEST=BlackholesTest
-```
-Debugging benchmark generation for one of the tests with the IDE:
-```shell script
-make test MAVEN_DEBUG=process TEST=BlackholesTest
-```
-Debugging benchmark test execution for one of the tests:
-```shell script
-make test MAVEN_DEBUG=test TEST=FailureModesTest
+TEST=BlackholesTest make test-jvm
 ```
 Running individual test method in native:
 ```shell script
-make test TEST="FailureModesTest#shouldFailOnCustomExceptionAtBenchmark"
+TEST="FailureModesTest#shouldFailOnCustomExceptionAtBenchmark" make test
+```
+Debugging annotation processor code one of the tests with the IDE on port 8000:
+```shell script
+DEBUG=maven TEST=BlackholesTest make test
+```
+Debugging the runner for a test on native mode on port 5005:
+```shell script
+DEBUG=runner TEST=FailureModesTest make test
+```
+Debugging the runner for a test on jvm mode on port 5005:
+```shell script
+DEBUG=runner TEST=FailureModesTest make test-jvm
 ```
 Running a benchmark with Linux perf or perfnorm stat profiler:
 ```shell script
-make run BENCHMARK=JMHSample_01 PROF=perf
-make run BENCHMARK=JMHSample_01 PROF=perfnormc
+PROF=perf BENCHMARK=JMHSample_01 make run
+PROF=perfnorm BENCHMARK=JMHSample_01 make run
 ```
 Running a benchmark sample in Native mode with perf stat or perf norm profiler with only branches and instructions
 (needs JMH master build to avoid multiplexing):
 ```shell script
-make run BENCHMARK=JMHSample_01 PROF=perf:events=branches,instructions,cycles
-make run BENCHMARK=JMHSample_01 PROF=perfnorm:events=branches,instructions,cycles
+PROF=perf:events=branches,instructions,cycles BENCHMARK=JMHSample_01 make run
+PROF=perfnorm:events=branches,instructions,cycles BENCHMARK=JMHSample_01 make run
 ```
 Running a benchmark sample in JVM mode with `perf` or `perfnorm` profiler:
 ```shell script
-make run-jvm BENCHMARK=JMHSample_01 PROF=perf
-make run-jvm BENCHMARK=JMHSample_01 PROF=perfnorm
+PROF=perf BENCHMARK=JMHSample_01 make run-jvm
+PROF=perfnorm BENCHMARK=JMHSample_01 make run-jvm
 ```
 Running a benchmark sample in Native mode with perfasm that uses DWARF call graph and saving the perf bin data:
 ```shell script
-make run BENCHMARK=JMHSample_01 PROF=org.mendrugo.fibula.DwarfPerfAsmProfiler:events=cycles:P DEBUG_INFO=true MEASURE_TIME=1 WARMUP_TIME=1
+PROF=org.mendrugo.fibula.DwarfPerfAsmProfiler:events=cycles:P BENCHMARK=JMHSample_01 DEBUG_INFO=true MEASURE_TIME=1 WARMUP_TIME=1 make run
 ```
