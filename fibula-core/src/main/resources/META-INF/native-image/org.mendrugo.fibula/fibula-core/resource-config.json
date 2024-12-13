@@ -6,6 +6,8 @@
     "pattern":"\\QMETA-INF/services/java.net.spi.InetAddressResolverProvider\\E"
   }, {
     "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+  }, {
+    "pattern": "\\QMETA-INF/BenchmarkList\\E"
   }]},
   "bundles":[]
 }
