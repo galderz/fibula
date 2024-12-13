@@ -30,7 +30,7 @@ jobs:
           java --version
           native-image --version
       - name: Run integration tests
-        run: mvn verify  -pl fibula-it -am
+        run: mvn install -pl fibula-it -am
       - name: Build samples
         run: mvn package -pl fibula-samples
       - name: Run a JMH sample
