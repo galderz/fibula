@@ -37,6 +37,9 @@ public class CapturingRunner
             if ("runner".equals(System.getenv("DEBUG")))
             {
                 builder.jvmArgs();
+            } else if ("fork".equals(System.getenv("DEBUG")))
+            {
+                builder.jvmArgsPrepend("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:6006");
             }
 
             block.accept(builder);

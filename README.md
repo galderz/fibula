@@ -138,6 +138,10 @@ Run individual benchmarks in JVM mode and remote debug the runner JVM process on
 ```shell script
 DEBUG=runner BENCHMARK=JMHSample_01 make run-jvm
 ```
+Run individual benchmarks in JVM mode and remote debug the forked JVM process on port 6006:
+```shell script
+DEBUG=fork BENCHMARK=JMHSample_01 make run-jvm
+```
 Run tests in JVM mode with native agent:
 ```shell script
 NATIVE_AGENT=true make test-jvm
@@ -165,6 +169,10 @@ DEBUG=runner TEST=FailureModesTest make test
 Debugging the runner for a test on jvm mode on port 5005:
 ```shell script
 DEBUG=runner TEST=FailureModesTest make test-jvm
+```
+Debugging the forked benchmark for a test on jvm mode on port 6006:
+```shell script
+DEBUG=fork TEST=FailureModesTest make test-jvm
 ```
 Running a benchmark with Linux perf or perfnorm stat profiler:
 ```shell script

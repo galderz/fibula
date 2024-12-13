@@ -18,9 +18,11 @@ MAVEN_HOME ?= $(HOME)/opt/maven
 benchmarks_jar = target/benchmarks.jar
 final_jar = fibula-generator/target/fibula-generator-$(VERSION).jar
 java = $(JAVA_HOME)/bin/java
-jdwp = -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
-maven_surefire_debug = -Dmaven.surefire.debug="$(jdwp)"
-maven_failsafe_debug = -Dmaven.failsafe.debug="$(jdwp)"
+jdwp = -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*
+jdwp_fork_port = 6006
+jdwp_runner_port = 5005
+maven_surefire_debug = -Dmaven.surefire.debug="$(jdwp):$(jdwp_runner_port)"
+maven_failsafe_debug = -Dmaven.failsafe.debug="$(jdwp):$(jdwp_runner_port)"
 samples_jar = fibula-samples/target/benchmarks.jar
 samples_runner = fibula-samples/target/benchmarks
 
@@ -81,9 +83,12 @@ ifdef MAVEN_VERBOSE
 endif
 
 ifeq ($(DEBUG),runner)
-  java += $(jdwp)
+  java += $(jdwp):$(jdwp_runner_port)
   benchmark_params += -jvmArgs
   benchmark_params += ""
+else ifeq ($(DEBUG),fork)
+  benchmark_params += -jvmArgs
+  benchmark_params += "$(jdwp):$(jdwp_fork_port)"
 endif
 
 test_args =
