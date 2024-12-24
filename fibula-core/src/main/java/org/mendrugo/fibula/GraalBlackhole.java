@@ -1,10 +1,5 @@
 package org.mendrugo.fibula;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-
 public enum GraalBlackhole
 {
     DISABLED("")
@@ -49,7 +44,8 @@ public enum GraalBlackhole
 
     public static GraalBlackhole instance()
     {
-        final int graalVMJavaVersion = getGraalVMJavaVersion();
+        final NativeImage nativeImage = new NativeImage(Execute.from(false, System.out));
+        final int graalVMJavaVersion = nativeImage.getJavaVersion();
         if (0 == graalVMJavaVersion)
         {
             return DISABLED;
@@ -61,38 +57,5 @@ public enum GraalBlackhole
         }
 
         return POST_JDK_21;
-    }
-
-    private static int getGraalVMJavaVersion()
-    {
-        final File nativeImageExecutable = NativeImage.EXECUTABLE;
-        if (!nativeImageExecutable.exists())
-        {
-            return 0;
-        }
-
-        final String[] versionCommand = {
-            nativeImageExecutable.getAbsolutePath()
-            , "--version"
-        };
-
-        try
-        {
-            final Process versionProcess = new ProcessBuilder(versionCommand)
-                .redirectErrorStream(true)
-                .start();
-            versionProcess.waitFor();
-
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(versionProcess.getInputStream(), StandardCharsets.UTF_8)
-            ))
-            {
-                return GraalVersionParser.parse(reader.lines());
-            }
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("Failed to get GraalVM version", e);
-        }
     }
 }

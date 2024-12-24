@@ -20,7 +20,7 @@ final class MultiVmPgoRunner extends Runner
             .orElse(Defaults.VERBOSITY)
             .equalsOrHigherThan(VerboseMode.EXTRA);
 
-        this.nativeImage = new NativeImage(new Execute(forcePrint, this.out));
+        this.nativeImage = new NativeImage(Execute.from(forcePrint, this.out));
     }
 
     @Override

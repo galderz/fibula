@@ -9,14 +9,26 @@ import java.util.List;
 
 class NativeImage
 {
-    // todo temporarily default access until Execute can be used for version information
-    static final File EXECUTABLE = findExecutable();
+    private static final File EXECUTABLE = findExecutable();
 
     private final Execute execute;
 
     public NativeImage(Execute execute)
     {
         this.execute = execute;
+    }
+
+    int getJavaVersion()
+    {
+        if (!EXECUTABLE.exists())
+        {
+            return 0;
+        }
+
+        final List<String> commandString = new ArrayList<>();
+        commandString.add(EXECUTABLE.getAbsolutePath());
+        commandString.add("--version");
+        return GraalVersionParser.parse(execute.execute(commandString).stream());
     }
 
     void execute(String... args)

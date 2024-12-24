@@ -8,22 +8,60 @@ import org.openjdk.jmh.util.TempFile;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 final class Execute
 {
     private static final int TAIL_LINES_ON_ERROR = Integer.getInteger("jmh.tailLines", 20);
 
     private final boolean print;
-    private final OutputFormat out;
+    private final Consumer<String> println;
+    private final Consumer<Integer> writeInt;
+    private final Consumer<byte[]> writeBytes;
 
-    Execute(boolean print, OutputFormat out) {
+    private Execute(boolean print, Consumer<String> println, Consumer<Integer> writeInt, Consumer<byte[]> writeBytes) {
         this.print = print;
-        this.out = out;
+        this.println = println;
+        this.writeInt = writeInt;
+        this.writeBytes = writeBytes;
     }
 
-    void execute(List<String> commandString)
+    static Execute from(boolean print, PrintStream out)
+    {
+        final Consumer<byte[]> writeBytes = bytes -> {
+            try
+            {
+                out.write(bytes);
+            }
+            catch (IOException e)
+            {
+                throw new UncheckedIOException(e);
+            }
+        };
+        return new Execute(print, out::println, out::write, writeBytes);
+    }
+
+    static Execute from(boolean print, OutputFormat out)
+    {
+        final Consumer<byte[]> writeBytes = bytes -> {
+            try
+            {
+                out.write(bytes);
+            }
+            catch (IOException e)
+            {
+                throw new UncheckedIOException(e);
+            }
+        };
+        return new Execute(print, out::println, out::write, writeBytes);
+    }
+
+    Collection<String> execute(List<String> commandString)
     {
         try
         {
@@ -43,8 +81,8 @@ final class Execute
 
                 if (print)
                 {
-                    errDrainer.addOutputStream(new OutputFormatAdapter(out));
-                    outDrainer.addOutputStream(new OutputFormatAdapter(out));
+                    errDrainer.addOutputStream(new OutputFormatAdapter(writeInt, writeBytes));
+                    outDrainer.addOutputStream(new OutputFormatAdapter(writeInt, writeBytes));
                 }
 
                 errDrainer.start();
@@ -57,36 +95,37 @@ final class Execute
 
                 if (ecode != 0)
                 {
-                    out.println("<native image rebuild failed with exit code " + ecode + ">");
-                    out.println("<stdout last='" + TAIL_LINES_ON_ERROR + " lines'>");
+                    println.accept("<native image rebuild failed with exit code " + ecode + ">");
+                    println.accept("<stdout last='" + TAIL_LINES_ON_ERROR + " lines'>");
                     for (String l : FileUtils.tail(stdOut.file(), TAIL_LINES_ON_ERROR))
                     {
-                        out.println(l);
+                        println.accept(l);
                     }
-                    out.println("</stdout>");
-                    out.println("<stderr last='" + TAIL_LINES_ON_ERROR + " lines'>");
+                    println.accept("</stdout>");
+                    println.accept("<stderr last='" + TAIL_LINES_ON_ERROR + " lines'>");
                     for (String l : FileUtils.tail(stdErr.file(), TAIL_LINES_ON_ERROR))
                     {
-                        out.println(l);
+                        println.accept(l);
                     }
-                    out.println("</stderr>");
+                    println.accept("</stderr>");
 
-                    out.println("");
+                    println.accept("");
 
                     throw new IllegalStateException("Native image rebuild failed with exit code " + ecode);
                 }
 
+                return Files.readAllLines(stdOut.file().toPath());
             }
             catch (IOException ex)
             {
-                out.println("<failed to invoke native-image, caught IOException: " + ex.getMessage() + ">");
-                out.println("");
+                println.accept("<failed to invoke native-image, caught IOException: " + ex.getMessage() + ">");
+                println.accept("");
                 throw new UncheckedIOException(ex);
             }
             catch (InterruptedException ex)
             {
-                out.println("<interrupted waiting for native image: " + ex.getMessage() + ">");
-                out.println("");
+                println.accept("<interrupted waiting for native image: " + ex.getMessage() + ">");
+                println.accept("");
                 throw new RuntimeException(ex);
             }
         }
@@ -98,23 +137,25 @@ final class Execute
 
     private static class OutputFormatAdapter extends OutputStream
     {
-        private final OutputFormat out;
+        private final Consumer<Integer> writeInt;
+        private final Consumer<byte[]> writeBytes;
 
-        public OutputFormatAdapter(OutputFormat out)
+        public OutputFormatAdapter(Consumer<Integer> writeInt, Consumer<byte[]> writeBytes)
         {
-            this.out = out;
+            this.writeInt = writeInt;
+            this.writeBytes = writeBytes;
         }
 
         @Override
         public void write(int b)
         {
-            out.write(b);
+            writeInt.accept(b);
         }
 
         @Override
-        public void write(byte[] b) throws IOException
+        public void write(byte[] b)
         {
-            out.write(b);
+            writeBytes.accept(b);
         }
     }
 }
