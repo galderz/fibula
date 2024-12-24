@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -30,15 +31,30 @@ enum ForkedVm
             return NOT_FOUND;
         }
 
+        // Benchmarks binary could be located right under the build directory,
+        // or it could be deeper, say when creating a bundle.
+        // There could also be multiple binaries,
+        // in which case return the one that was modified last.
         try (Stream<Path> walk = Files.walk(targetDir))
         {
             return walk
-                .filter(p -> !Files.isDirectory(p))
-                .map(Path::toString)
-                .filter(f -> f.endsWith("benchmarks"))
-                .findFirst()
-                .map(File::new)
+                .filter(Files::isRegularFile)
+                .filter(path -> path.getFileName().toString().equals("benchmarks"))
+                .max(Comparator.comparingLong(ForkedVm::getLastModifiedTime))
+                .map(Path::toFile)
                 .orElse(NOT_FOUND);
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static long getLastModifiedTime(Path path)
+    {
+        try
+        {
+            return Files.getLastModifiedTime(path).toMillis();
         }
         catch (IOException e)
         {
