@@ -2,11 +2,8 @@ package org.mendrugo.fibula;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public enum GraalBlackhole
 {
@@ -68,7 +65,7 @@ public enum GraalBlackhole
 
     private static int getGraalVMJavaVersion()
     {
-        final File nativeImageExecutable = NativeImage.INSTANCE.executable;
+        final File nativeImageExecutable = NativeImage.EXECUTABLE;
         if (!nativeImageExecutable.exists())
         {
             return 0;
@@ -98,64 +95,4 @@ public enum GraalBlackhole
             throw new RuntimeException("Failed to get GraalVM version", e);
         }
     }
-
-//    private static Path findNativeImageExecutable()
-//    {
-//        // todo add Windows support
-//        final String executableName = "native-image";
-//        final String graalvmHomeEnv = System.getenv("GRAALVM_HOME");
-//        if (null != graalvmHomeEnv)
-//        {
-//            File file = Paths.get(graalvmHomeEnv, "bin", executableName).toFile();
-//            if (file.exists())
-//            {
-//                return file.toPath();
-//            }
-//        }
-//
-//        Path javaHome = findJavaHome();
-//        if (javaHome != null)
-//        {
-//            final File execFile = javaHome.resolve("bin").resolve(executableName).toFile();
-//            if (execFile.exists())
-//            {
-//                return execFile.toPath();
-//            }
-//        }
-//
-//        final String systemPath = System.getenv("PATH");
-//        if (systemPath != null)
-//        {
-//            final String[] pathDirs = systemPath.split(File.pathSeparator);
-//            for (String pathDir : pathDirs)
-//            {
-//                final File dir = new File(pathDir);
-//                if (dir.isDirectory()) {
-//                    final File execFile = new File(dir, executableName);
-//                    if (execFile.exists())
-//                    {
-//                        return execFile.toPath();
-//                    }
-//                }
-//            }
-//        }
-//
-//        return null;
-//    }
-//
-//    private static Path findJavaHome()
-//    {
-//        String home = System.getProperty("java.home");
-//        if (home == null)
-//        {
-//            home = System.getenv("JAVA_HOME");
-//        }
-//
-//        if (home != null)
-//        {
-//            return Paths.get(home);
-//        }
-//
-//        return null;
-//    }
 }

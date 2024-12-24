@@ -3,14 +3,31 @@ package org.mendrugo.fibula;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-enum NativeImage
+class NativeImage
 {
-    INSTANCE;
+    // todo temporarily default access until Execute can be used for version information
+    static final File EXECUTABLE = findExecutable();
 
-    final File executable = findExecutable();
+    private final Execute execute;
 
-    private File findExecutable()
+    public NativeImage(Execute execute)
+    {
+        this.execute = execute;
+    }
+
+    void execute(String... args)
+    {
+        final List<String> commandString = new ArrayList<>();
+        commandString.add(EXECUTABLE.getAbsolutePath());
+        commandString.addAll(Arrays.asList(args));
+        execute.execute(commandString);
+    }
+
+    private static File findExecutable()
     {
         // todo add Windows support
         final String executableName = "native-image";
