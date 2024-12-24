@@ -82,6 +82,9 @@
       "name":"java.util.Collections$UnmodifiableCollection"
     },
     {
+      "name":"java.util.Collections$UnmodifiableList"
+    },
+    {
       "name":"java.util.EnumSet$SerializationProxy"
     },
     {
