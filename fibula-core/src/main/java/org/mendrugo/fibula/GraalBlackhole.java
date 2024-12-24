@@ -68,14 +68,14 @@ public enum GraalBlackhole
 
     private static int getGraalVMJavaVersion()
     {
-        final Path nativeImageExecutable = findNativeImageExecutable();
-        if (null == nativeImageExecutable)
+        final File nativeImageExecutable = NativeImage.INSTANCE.executable;
+        if (!nativeImageExecutable.exists())
         {
             return 0;
         }
 
         final String[] versionCommand = {
-            nativeImageExecutable.toAbsolutePath().toString()
+            nativeImageExecutable.getAbsolutePath()
             , "--version"
         };
 
@@ -99,63 +99,63 @@ public enum GraalBlackhole
         }
     }
 
-    private static Path findNativeImageExecutable()
-    {
-        // todo add Windows support
-        final String executableName = "native-image";
-        final String graalvmHomeEnv = System.getenv("GRAALVM_HOME");
-        if (null != graalvmHomeEnv)
-        {
-            File file = Paths.get(graalvmHomeEnv, "bin", executableName).toFile();
-            if (file.exists())
-            {
-                return file.toPath();
-            }
-        }
-
-        Path javaHome = findJavaHome();
-        if (javaHome != null)
-        {
-            final File execFile = javaHome.resolve("bin").resolve(executableName).toFile();
-            if (execFile.exists())
-            {
-                return execFile.toPath();
-            }
-        }
-
-        final String systemPath = System.getenv("PATH");
-        if (systemPath != null)
-        {
-            final String[] pathDirs = systemPath.split(File.pathSeparator);
-            for (String pathDir : pathDirs)
-            {
-                final File dir = new File(pathDir);
-                if (dir.isDirectory()) {
-                    final File execFile = new File(dir, executableName);
-                    if (execFile.exists())
-                    {
-                        return execFile.toPath();
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static Path findJavaHome()
-    {
-        String home = System.getProperty("java.home");
-        if (home == null)
-        {
-            home = System.getenv("JAVA_HOME");
-        }
-
-        if (home != null)
-        {
-            return Paths.get(home);
-        }
-
-        return null;
-    }
+//    private static Path findNativeImageExecutable()
+//    {
+//        // todo add Windows support
+//        final String executableName = "native-image";
+//        final String graalvmHomeEnv = System.getenv("GRAALVM_HOME");
+//        if (null != graalvmHomeEnv)
+//        {
+//            File file = Paths.get(graalvmHomeEnv, "bin", executableName).toFile();
+//            if (file.exists())
+//            {
+//                return file.toPath();
+//            }
+//        }
+//
+//        Path javaHome = findJavaHome();
+//        if (javaHome != null)
+//        {
+//            final File execFile = javaHome.resolve("bin").resolve(executableName).toFile();
+//            if (execFile.exists())
+//            {
+//                return execFile.toPath();
+//            }
+//        }
+//
+//        final String systemPath = System.getenv("PATH");
+//        if (systemPath != null)
+//        {
+//            final String[] pathDirs = systemPath.split(File.pathSeparator);
+//            for (String pathDir : pathDirs)
+//            {
+//                final File dir = new File(pathDir);
+//                if (dir.isDirectory()) {
+//                    final File execFile = new File(dir, executableName);
+//                    if (execFile.exists())
+//                    {
+//                        return execFile.toPath();
+//                    }
+//                }
+//            }
+//        }
+//
+//        return null;
+//    }
+//
+//    private static Path findJavaHome()
+//    {
+//        String home = System.getProperty("java.home");
+//        if (home == null)
+//        {
+//            home = System.getenv("JAVA_HOME");
+//        }
+//
+//        if (home != null)
+//        {
+//            return Paths.get(home);
+//        }
+//
+//        return null;
+//    }
 }

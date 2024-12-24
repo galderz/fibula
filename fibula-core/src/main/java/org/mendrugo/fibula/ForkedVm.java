@@ -15,13 +15,51 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
-enum ForkedVm
+record ForkedVm(
+    String jdkVersion
+    , String vmName
+    , String vmVersion
+    , File executable
+)
 {
-    HOTSPOT, SUBSTRATE;
-
     private static final File NOT_FOUND = new File("NOT_FOUND");
-    private static final File RUN_JAR = Paths.get("target/benchmarks.jar").toFile();
-    private static final File RUN_BINARY = findRunBinary();
+    private static final File RUN_JAR = Path.of("target", "benchmarks.jar").toFile();
+
+    static ForkedVm instance()
+    {
+        final File runBinary = findRunBinary();
+        if (isNativeVm(runBinary))
+        {
+            return new ForkedVm(
+                binaryReadString("com.oracle.svm.core.VM.Java.Version=", runBinary)
+                , "Substrate VM"
+                , binaryReadString("com.oracle.svm.core.VM=", runBinary)
+                , runBinary
+            );
+        }
+
+        return new ForkedVm(
+            System.getProperty("java.version")
+            , System.getProperty("java.vm.name")
+            , System.getProperty("java.vm.version")
+            , RUN_JAR
+        );
+    }
+
+    String executablePath(String jvm)
+    {
+        if (isNativeVm())
+        {
+            return executable.getPath();
+        }
+
+        return new File(jvm).getPath();
+    }
+
+    boolean isNativeVm()
+    {
+        return !executable.equals(RUN_JAR);
+    }
 
     private static File findRunBinary()
     {
@@ -62,53 +100,22 @@ enum ForkedVm
         }
     }
 
-    static ForkedVm instance()
+    private static boolean isNativeVm(File runBinary)
     {
-        if (RUN_JAR.exists() && RUN_BINARY.exists())
+        if (RUN_JAR.exists() && runBinary.exists())
         {
-            if (RUN_JAR.lastModified() > RUN_BINARY.lastModified())
-            {
-                return HOTSPOT;
-            }
-
-            return SUBSTRATE;
+            return RUN_JAR.lastModified() <= runBinary.lastModified();
         }
 
         if (RUN_JAR.exists())
         {
-            return HOTSPOT;
+            return false;
         }
 
-        if (RUN_BINARY.exists())
-        {
-            return SUBSTRATE;
-        }
-
-        return HOTSPOT;
+        return runBinary.exists();
     }
 
-    public Info info()
-    {
-        switch (this)
-        {
-            case HOTSPOT:
-                return new Info(
-                    System.getProperty("java.version")
-                    , System.getProperty("java.vm.name")
-                    , System.getProperty("java.vm.version")
-                );
-            case SUBSTRATE:
-                return new Info(
-                    binaryReadString("com.oracle.svm.core.VM.Java.Version=")
-                    , "Substrate VM"
-                    , binaryReadString("com.oracle.svm.core.VM=")
-                );
-            default:
-                throw new IllegalStateException("Unknown value " + this);
-        }
-    }
-
-    private String binaryReadString(String key)
+    private static String binaryReadString(String key, File binary)
     {
         // todo support windows
         final List<String> args = Arrays.asList(
@@ -116,7 +123,7 @@ enum ForkedVm
             , "-c"
             , String.format(
                 "strings %s| grep %s"
-                , RUN_BINARY.getPath()
+                , binary.getPath()
                 , key
             )
         );
@@ -147,38 +154,6 @@ enum ForkedVm
         catch (IOException | InterruptedException e)
         {
             throw new BenchmarkException(e);
-        }
-    }
-
-    String executablePath(String jvm)
-    {
-        switch (this)
-        {
-            case HOTSPOT:
-                return new File(jvm).getPath();
-            case SUBSTRATE:
-                return RUN_BINARY.getPath();
-            default:
-                throw new IllegalStateException("Unknown value " + this);
-        }
-    }
-
-    boolean isNativeVm()
-    {
-        return this == SUBSTRATE;
-    }
-
-    static class Info
-    {
-        final String jdkVersion;
-        final String vmName;
-        final String vmVersion;
-
-        Info(String jdkVersion, String vmName, String vmVersion)
-        {
-            this.jdkVersion = jdkVersion;
-            this.vmName = vmName;
-            this.vmVersion = vmVersion;
         }
     }
 }

@@ -17,9 +17,14 @@ public class MutiVmMain
     {
         try
         {
+            final Pgo pgo = Pgo.instance();
+            args = pgo.preProcessArgs(args);
+
             final CommandLineOptions cmdOptions = new CommandLineOptions(args);
 
-            final Runner runner = new MultiVmRunner(cmdOptions);
+            final Runner runner = pgo.isEnabled()
+                ? new MultiVmPgoRunner(cmdOptions)
+                : new MultiVmRunner(cmdOptions);
 
             if (cmdOptions.shouldHelp())
             {

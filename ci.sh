@@ -6,7 +6,7 @@ sample()
 {
     local run_target=$1
 
-    BENCHMARK=JMHSample_09 make $run_target
+    BENCHMARK=JMHSample_09 TU=ns make $run_target
     BENCHMARK=FibulaSample_01_MultiHelloWorld make $run_target
 }
 

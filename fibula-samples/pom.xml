@@ -15,6 +15,7 @@
 
     <properties>
         <uberjar.name>benchmarks</uberjar.name>
+        <nib.path>${project.build.directory}/${uberjar.name}.nib</nib.path>
     </properties>
 
     <dependencies>
@@ -69,29 +70,87 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <id>build-native</id>
-                        <goals>
-                            <goal>compile-no-fork</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <imageName>${uberjar.name}</imageName>
-                    <fallback>false</fallback>
-                    <mainClass>org.mendrugo.fibula.NativeForkedMain</mainClass>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <profile>
+            <id>native</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${uberjar.name}</imageName>
+                            <fallback>false</fallback>
+                            <mainClass>org.mendrugo.fibula.NativeForkedMain</mainClass>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>pgo</id>
+            <activation>
+                <property>
+                    <name>pgo</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${native-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-bundle</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <imageName>${uberjar.name}</imageName>
+                                    <fallback>false</fallback>
+                                    <mainClass>org.mendrugo.fibula.NativeForkedMain</mainClass>
+                                    <buildArgs>
+                                        <buildArg>--bundle-create=${nib.path},dry-run</buildArg>
+                                    </buildArgs>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>build-instrumented</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <buildArgs>
+                                        <buildArg>--bundle-apply=${nib.path}</buildArg>
+                                        <buildArg>--pgo-instrument</buildArg>
+                                    </buildArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>jvm.mode</id>
             <activation>

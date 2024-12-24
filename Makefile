@@ -12,11 +12,13 @@ endif
 
 BENCHMARK ?= JMHSample_01
 JAVA_HOME ?= $(HOME)/opt/graal-21
+GRAALVM_EE_HOME ?= $(HOME)/opt/ee-graal-21
 VERSION ?= 999-SNAPSHOT
 MAVEN_HOME ?= $(HOME)/opt/maven
 
 benchmarks_jar = target/benchmarks.jar
 final_jar = fibula-generator/target/fibula-generator-$(VERSION).jar
+java_ee = $(GRAALVM_EE_HOME)/bin/java
 java = $(JAVA_HOME)/bin/java
 jdwp = -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*
 jdwp_fork_port = 6006
@@ -25,6 +27,7 @@ maven_surefire_debug = -Dmaven.surefire.debug="$(jdwp):$(jdwp_runner_port)"
 maven_failsafe_debug = -Dmaven.failsafe.debug="$(jdwp):$(jdwp_runner_port)"
 samples_jar = fibula-samples/target/benchmarks.jar
 samples_runner = fibula-samples/target/benchmarks
+samples_pgo_runner = fibula-samples/target/benchmarks.output/default/benchmarks
 
 PROF ?=
 
@@ -56,8 +59,19 @@ benchmark_params += -w
 benchmark_params += $(WARMUP_TIME)
 benchmark_params += -foe
 benchmark_params += true
-benchmark_params += -v
-benchmark_params += EXTRA
+
+ifdef TU
+  benchmark_params += -tu
+  benchmark_params += $(TU)
+else
+  benchmark_params += -tu
+  benchmark_params += us
+endif
+
+ifdef VERBOSE
+  benchmark_params += -v
+  benchmark_params += EXTRA
+endif
 
 ifdef RESULT_FORMAT
   benchmark_params += -rf
@@ -126,7 +140,7 @@ endif
 .PHONY: test
 
 run-jvm: $(samples_jar) do-run
-.PHONY: run
+.PHONY: run-jvm
 
 test-jvm:
 > touch fibula-it/target/benchmarks.jar || true
@@ -140,6 +154,14 @@ do-run:
 > cd fibula-samples
 > $(java) -jar $(benchmarks_jar) $(benchmark_params)
 .PHONY: do-run
+
+run-pgo: $(samples_pgo_runner) do-run-pgo
+.PHONY: run-pgo
+
+do-run-pgo:
+> cd fibula-samples
+> $(java_ee) -jar $(benchmarks_jar) $(benchmark_params)
+.PHONY: do-run-pgo
 
 $(final_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
 $(final_jar): $(shell find . -type f -name "*.json" ! -path "./*/target/*")
@@ -160,6 +182,12 @@ $(samples_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "
 $(samples_runner): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
 $(samples_runner): $(final_jar)
 > $(mvnw) package -pl fibula-samples $(runner_build_args)
+
+$(samples_pgo_runner): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
+$(samples_pgo_runner): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
+$(samples_pgo_runner): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
+$(samples_pgo_runner): $(final_jar)
+> GRAALVM_HOME=$(GRAALVM_EE_HOME) $(mvnw) package -pl fibula-samples $(runner_build_args) -Dpgo
 
 clean:
 > $(mvnw) clean

@@ -15,10 +15,7 @@ import org.openjdk.jmh.util.Utils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -92,15 +89,15 @@ final class MultiVmOutputFormat implements OutputFormat
     private void amendBenchmarkParams(BenchmarkParams benchmark)
     {
         final ForkedVm forkedVm = ForkedVm.instance();
-        final ForkedVm.Info forkedVmInfo = forkedVm.info();
-        amendBenchmarkParamsField("jvm", forkedVm.executablePath(benchmark.getJvm()), benchmark);
-        amendBenchmarkParamsField("jdkVersion", forkedVmInfo.jdkVersion, benchmark);
-        amendBenchmarkParamsField("vmName", forkedVmInfo.vmName, benchmark);
-        amendBenchmarkParamsField("vmVersion", forkedVmInfo.vmVersion, benchmark);
+        final BenchmarkParamsReflect reflect = new BenchmarkParamsReflect(benchmark, out);
+        reflect.amendField("jvm", forkedVm.executablePath(benchmark.getJvm()));
+        reflect.amendField("jdkVersion", forkedVm.jdkVersion());
+        reflect.amendField("vmName", forkedVm.vmName());
+        reflect.amendField("vmVersion", forkedVm.vmVersion());
 
         // todo bring back version once this code is independent
         // amendBenchmarkParamsField("jmhVersion", "fibula:" + new Version().getVersion(), benchmark);
-        amendBenchmarkParamsField("jmhVersion", "fibula:999-SNAPSHOT", benchmark);
+        reflect.amendField("jmhVersion", "fibula:999-SNAPSHOT");
 
         final Collection<String> jvmArgs = benchmark.getJvmArgs();
         if (forkedVm.isNativeVm())
@@ -113,7 +110,7 @@ final class MultiVmOutputFormat implements OutputFormat
             final List<String> nativeValidJvmArgs = jvmArgs.stream()
                 .filter(arg -> !skip.matcher(arg).matches())
                 .collect(Collectors.toCollection(ArrayList::new));
-            amendBenchmarkParamsField("jvmArgs", nativeValidJvmArgs, benchmark);
+            reflect.amendField("jvmArgs", nativeValidJvmArgs);
         }
         else
         {
@@ -122,7 +119,7 @@ final class MultiVmOutputFormat implements OutputFormat
             {
                 hotspotJvmArgs.add("-agentlib:native-image-agent=config-output-dir=target/native-agent-config");
             }
-            amendBenchmarkParamsField("jvmArgs", hotspotJvmArgs, benchmark);
+            reflect.amendField("jvmArgs", hotspotJvmArgs);
         }
     }
 
@@ -137,24 +134,6 @@ final class MultiVmOutputFormat implements OutputFormat
         final StringJoiner joiner = new StringJoiner("|");
         skipJvmArgs.forEach(joiner::add);
         return Pattern.compile(joiner.toString());
-    }
-
-    private void amendBenchmarkParamsField(String fieldName, Object newValue, BenchmarkParams obj)
-    {
-        try
-        {
-            final Class<?> clazz = Class.forName("org.openjdk.jmh.infra.BenchmarkParamsL2");
-            final Field field = clazz.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(obj, newValue);
-        }
-        catch (Exception e)
-        {
-            out.println(String.format("Unable to amend benchmark params field %s", fieldName));
-            final StringWriter stringWriter = new StringWriter();
-            e.printStackTrace(new PrintWriter(stringWriter));
-            out.verbosePrintln(stringWriter.toString());
-        }
     }
 
     @Override
