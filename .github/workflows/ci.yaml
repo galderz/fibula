@@ -23,7 +23,6 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Show versions
         run: |
           echo "GRAALVM_HOME: $GRAALVM_HOME"
@@ -66,3 +65,40 @@ jobs:
       - name: Run a Fibula sample
         run: java -jar target/benchmarks.jar FibulaSample_06_Records -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
         working-directory: fibula-samples
+
+  test-pgo:
+    strategy:
+      matrix:
+        java-version: [21, 23]
+        distribution: [graalvm]
+    steps:
+      - name: Checkout Fibula
+        uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+      - name: Show versions
+        run: |
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
+          java --version
+          native-image --version
+      - name: Build jars
+        run: mvn install -DskipTests -e -pl !fibula-it,!fibula-samples
+      - name: Build samples with AOT
+        run: mvn package -pl fibula-samples
+      - name: Run a JMH sample with AOT
+        run: java -jar target/benchmarks.jar JMHSample_01 -foe true -tu us -rff target/aot-result.csv
+        working-directory: fibula-samples
+      - name: Build samples with PGO
+        run: mvn package -pl fibula-samples -Dpgo
+      - name: Run a JMH sample with AOT
+        run: java -jar target/benchmarks.jar JMHSample_01 -foe true -tu us -rff target/pgo-result.csv
+        working-directory: fibula-samples
+      - name: Assert AOT and PGO results
+        run: |
+          awk -F, '
+          NR==FNR && NR==2 {a=$5; print "a from aot-result.csv: " a; next}
+          FNR==2 {b=$5; print "b from pgo-result.csv: " b}
+          END {print "Final a: " a ", Final b: " b; if (b >= a * 1.1) print "Passed: Score in pgo-result.csv is at least 10% bigger"; else print "Failed: Score in pgo-result.csv is less than 10% bigger"}
+          ' aot-result.csv pgo-result.csv
+        working-directory: fibula-samples/target
