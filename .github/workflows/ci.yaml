@@ -71,6 +71,7 @@ jobs:
       matrix:
         java-version: [21, 23]
         distribution: [graalvm]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Fibula
         uses: actions/checkout@v4
