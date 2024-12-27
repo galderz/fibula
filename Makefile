@@ -152,7 +152,7 @@ endif
 
 do-run:
 > cd fibula-samples
-> $(java) -jar $(benchmarks_jar) $(benchmark_params)
+> $(java) -jar $(benchmarks_jar) $(benchmark_params) -rff target/aot-result.csv
 .PHONY: do-run
 
 run-pgo: $(samples_pgo_runner) do-run-pgo
@@ -160,7 +160,7 @@ run-pgo: $(samples_pgo_runner) do-run-pgo
 
 do-run-pgo:
 > cd fibula-samples
-> $(java_ee) -jar $(benchmarks_jar) $(benchmark_params)
+> $(java_ee) -jar $(benchmarks_jar) $(benchmark_params) -rff target/pgo-result.csv
 .PHONY: do-run-pgo
 
 $(final_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
