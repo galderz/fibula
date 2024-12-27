@@ -92,7 +92,7 @@ jobs:
         working-directory: fibula-samples
       - name: Build samples with PGO
         run: mvn package -pl fibula-samples -Dpgo
-      - name: Run a JMH sample with AOT
+      - name: Run a JMH sample with PGO
         run: java -jar target/benchmarks.jar JMHSample_01 -foe true -tu us -rff target/pgo-result.csv
         working-directory: fibula-samples
       - name: Assert AOT and PGO results
