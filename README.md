@@ -42,7 +42,7 @@ java -jar target/benchmarks.jar
 `perf` and `perfnorm` can be used just like with JMH.
 
 JMH `perfasm` profiler is not yet fully supported,
-but equivalent functionality can be obtained with the `DwarfPerfAsmProfiler`.
+but equivalent functionality can be obtained with the `DwarfPerfProfiler`.
 This custom profiler extends the `perf record` arguments to configure `dwarf` callgraph. 
 
 To use this profiler,
@@ -60,7 +60,7 @@ The downside is that the performance degrades:
 mvn package -Ddebug=true -DbuildArgs=-H:-DeleteLocalSymbols,-H:+SourceLevelDebug,-H:+TrackNodeSourcePosition,-H:+DebugCodeInfoUseSourceMappings
 ```
 
-Finally, you can run the benchmark passing in `-prof org.mendrugo.fibula.DwarfPerfAsmProfiler`
+Finally, you can run the benchmark passing in `-prof org.mendrugo.fibula.DwarfPerfProfiler`
 and when the benchmark finishes a `.perfbin` file will be generated in the working folder.
 Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
 
@@ -77,7 +77,7 @@ Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
 ```
 
 > **TIP**: Pass in `:P` event modifier to avoid performance events skid.
-> For example: `-prof org.mendrugo.fibula.DwarfPerfAsmProfiler:events=cycles:P`.
+> For example: `-prof org.mendrugo.fibula.DwarfPerfProfiler:events=cycles:P`.
 > This option is only available when Fibula is built with a JMH snapshot version from the master branch.
 
 ## Blackholes
@@ -192,5 +192,5 @@ PROF=perfnorm BENCHMARK=JMHSample_01 make run-jvm
 ```
 Running a benchmark sample in Native mode with perfasm that uses DWARF call graph and saving the perf bin data:
 ```shell script
-PROF=org.mendrugo.fibula.DwarfPerfAsmProfiler:events=cycles:P BENCHMARK=JMHSample_01 DEBUG_INFO=true MEASURE_TIME=1 WARMUP_TIME=1 make run
+PROF=org.mendrugo.fibula.DwarfPerfProfiler:events=cycles:P BENCHMARK=JMHSample_01 DEBUG_INFO=true MEASURE_TIME=1 WARMUP_TIME=1 make run
 ```
