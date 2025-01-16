@@ -171,6 +171,8 @@ $(final_jar):
 > $(mvnw) install -DskipTests -e -pl !fibula-it,!fibula-samples
 > touch $@
 
+build: $(final_jar)
+
 $(samples_jar): $(shell find fibula-samples -type f -name "*.java" ! -path "./*/target/*")
 $(samples_jar): $(shell find fibula-samples -type f -name "pom.xml" ! -path "./*/target/*")
 $(samples_jar): $(shell find fibula-samples -type f -name "application.properties" ! -path "fibula-samples/target/*")
