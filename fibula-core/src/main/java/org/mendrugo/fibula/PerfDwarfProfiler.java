@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class DwarfPerfProfiler implements ExternalProfiler
+public class PerfDwarfProfiler implements ExternalProfiler
 {
     private final TempFile perfBinData;
     private final OptionSet set;
@@ -32,7 +32,7 @@ public class DwarfPerfProfiler implements ExternalProfiler
     private final String sampleFrequency;
     private final List<String> requestedEventNames;
 
-    public DwarfPerfProfiler(String initLine) throws ProfilerException
+    public PerfDwarfProfiler(String initLine) throws ProfilerException
     {
         try
         {
@@ -99,7 +99,7 @@ public class DwarfPerfProfiler implements ExternalProfiler
     }
 
     // Empty constructor for service loader
-    public DwarfPerfProfiler() throws ProfilerException
+    public PerfDwarfProfiler() throws ProfilerException
     {
         this("");
     }
