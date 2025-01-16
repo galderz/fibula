@@ -24,9 +24,9 @@ import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-final class MultiVmOutputFormat implements OutputFormat
+class MultiVmOutputFormat implements OutputFormat
 {
-    private final OutputFormat out;
+    final OutputFormat out;
 
     MultiVmOutputFormat(Options options)
     {

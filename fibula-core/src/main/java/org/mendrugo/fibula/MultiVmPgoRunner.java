@@ -1,20 +1,28 @@
 package org.mendrugo.fibula;
 
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.runner.Defaults;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
+import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.VerboseMode;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 final class MultiVmPgoRunner extends Runner
 {
     private final NativeImage nativeImage;
 
-    boolean instrumentRunCompleted;
+    private final Set<BenchmarkParams> instrumented = new HashSet<>();
 
     public MultiVmPgoRunner(CommandLineOptions options)
     {
-        super(options, new MultiVmOutputFormat(options));
+        super(options, new MultiVmPgoOutputFormat(options));
 
         boolean forcePrint = options.verbosity()
             .orElse(Defaults.VERBOSITY)
@@ -24,28 +32,13 @@ final class MultiVmPgoRunner extends Runner
     }
 
     @Override
-    protected void etaBeforeBenchmark()
-    {
-        super.etaBeforeBenchmark();
-
-        if (!instrumentRunCompleted)
-        {
-            out.println("# PGO: Instrumented Warmup Fork");
-        }
-    }
-
-    @Override
     protected void etaAfterBenchmark(BenchmarkParams benchmarkParams)
     {
         super.etaAfterBenchmark(benchmarkParams);
 
-        // The end of the very first run is the end instrumentation run.
-        // Rebuild the native binary before executing next fork.
-        if (!instrumentRunCompleted)
+        if (instrumented.add(benchmarkParams))
         {
-            instrumentRunCompleted = true;
             addProfileInformationToBundle();
-            // todo add any debugging/profiling parameters here?
             rebuildNativeExecutable();
             updateExecutablePath(benchmarkParams);
         }
@@ -53,9 +46,21 @@ final class MultiVmPgoRunner extends Runner
 
     private void updateExecutablePath(BenchmarkParams benchmarkParams)
     {
-        final ForkedVm forkedVm = ForkedVm.instance();
         final BenchmarkParamsReflect reflect = new BenchmarkParamsReflect(benchmarkParams, out);
-        reflect.amendField("jvm", forkedVm.executablePath(benchmarkParams.getJvm()));
+        final File optimizedBinary = Path.of("target")
+            .resolve("benchmarks-optimized.output")
+            .resolve("default")
+            .resolve("benchmarks")
+            .toFile();
+
+        if (!optimizedBinary.exists())
+        {
+            throw new BenchmarkException(
+                new IOException("Optimized binary missing: " + optimizedBinary.getPath())
+            );
+        }
+
+        reflect.amendField("jvm", optimizedBinary.getPath());
     }
 
     private void rebuildNativeExecutable()
@@ -75,5 +80,23 @@ final class MultiVmPgoRunner extends Runner
             , "--bundle-create=" + Pgo.ENABLED.bundleOptimized.getAbsolutePath() + ",dry-run"
             , "--pgo"
         );
+    }
+
+    private static final class MultiVmPgoOutputFormat extends MultiVmOutputFormat
+    {
+        private MultiVmPgoOutputFormat(Options options)
+        {
+            super(options);
+        }
+
+        @Override
+        public void println(String s)
+        {
+            if (s.startsWith("# Warmup Fork"))
+            {
+                out.println("# PGO: Instrumented Warmup Fork");
+            }
+            out.println(s);
+        }
     }
 }

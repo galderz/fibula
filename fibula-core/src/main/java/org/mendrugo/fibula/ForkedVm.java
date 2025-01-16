@@ -11,9 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 
 record ForkedVm(
     String jdkVersion
@@ -69,35 +67,24 @@ record ForkedVm(
             return NOT_FOUND;
         }
 
-        // Benchmarks binary could be located right under the build directory,
-        // or it could be deeper, say when creating a bundle.
-        // There could also be multiple binaries,
-        // in which case return the one that was modified last.
-        try (Stream<Path> walk = Files.walk(targetDir))
+        final File aotBinary = targetDir.resolve("benchmarks").toFile();
+        if (aotBinary.exists())
         {
-            return walk
-                .filter(Files::isRegularFile)
-                .filter(path -> path.getFileName().toString().equals("benchmarks"))
-                .max(Comparator.comparingLong(ForkedVm::getLastModifiedTime))
-                .map(Path::toFile)
-                .orElse(NOT_FOUND);
+            return aotBinary;
         }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
-    }
 
-    private static long getLastModifiedTime(Path path)
-    {
-        try
+        final File instrumentedBinary = targetDir
+            .resolve("benchmarks.output")
+            .resolve("default")
+            .resolve("benchmarks")
+            .toFile();
+
+        if (instrumentedBinary.exists())
         {
-            return Files.getLastModifiedTime(path).toMillis();
+            return instrumentedBinary;
         }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
+
+        return NOT_FOUND;
     }
 
     private static boolean isNativeVm(File runBinary)
