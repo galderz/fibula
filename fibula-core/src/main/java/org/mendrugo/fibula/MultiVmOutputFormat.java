@@ -88,7 +88,7 @@ class MultiVmOutputFormat implements OutputFormat
 
     private void amendBenchmarkParams(BenchmarkParams benchmark)
     {
-        final ForkedVm forkedVm = ForkedVm.instance();
+        final ForkedVm forkedVm = ForkedVm.instance(out);
         final BenchmarkParamsReflect reflect = new BenchmarkParamsReflect(benchmark, out);
         reflect.amendField("jvm", forkedVm.executablePath(benchmark.getJvm()));
         reflect.amendField("jdkVersion", forkedVm.jdkVersion());

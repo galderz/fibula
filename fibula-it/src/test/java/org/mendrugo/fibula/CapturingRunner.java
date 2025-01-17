@@ -60,7 +60,7 @@ public class CapturingRunner
                     final Collection<String> lines = FileUtils.readAllLines(output);
                     lines.forEach(System.err::println);
 
-                    if (ForkedVm.instance().isNativeVm())
+                    if (TestUtils.isNativeVm())
                     {
                         assertTrue(lines.stream().anyMatch(line -> line.contains("Substrate VM")));
                     }

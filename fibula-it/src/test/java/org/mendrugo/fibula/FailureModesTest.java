@@ -142,7 +142,7 @@ public class FailureModesTest
         {
             final BenchmarkException cause = (BenchmarkException) e.getCause();
             final Throwable suppressed = cause.getSuppressed()[0];
-            if (ForkedVm.instance().isNativeVm())
+            if (TestUtils.isNativeVm())
             {
                 assertInstanceOf(IllegalStateException.class, suppressed);
             }

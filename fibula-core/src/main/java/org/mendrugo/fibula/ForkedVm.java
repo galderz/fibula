@@ -1,13 +1,12 @@
 package org.mendrugo.fibula;
 
 import org.openjdk.jmh.runner.BenchmarkException;
+import org.openjdk.jmh.runner.format.OutputFormat;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -23,10 +22,10 @@ record ForkedVm(
     private static final File NOT_FOUND = new File("NOT_FOUND");
     private static final File RUN_JAR = Path.of("target", "benchmarks.jar").toFile();
 
-    static ForkedVm instance()
+    static ForkedVm instance(OutputFormat out)
     {
-        final File runBinary = findRunBinary();
-        if (isNativeVm(runBinary))
+        final File runBinary = findRunBinary(out);
+        if (isNativeVm(runBinary, out))
         {
             return new ForkedVm(
                 binaryReadString("com.oracle.svm.core.VM.Java.Version=", runBinary)
@@ -59,46 +58,70 @@ record ForkedVm(
         return !executable.equals(RUN_JAR);
     }
 
-    private static File findRunBinary()
+    private static File findRunBinary(OutputFormat out)
     {
         final Path targetDir = Paths.get("target");
         if (!targetDir.toFile().exists())
         {
+            out.verbosePrintln("Build target dir does not exist");
             return NOT_FOUND;
         }
 
         final File aotBinary = targetDir.resolve("benchmarks").toFile();
-        if (aotBinary.exists())
-        {
-            return aotBinary;
-        }
-
         final File instrumentedBinary = targetDir
             .resolve("benchmarks.output")
             .resolve("default")
             .resolve("benchmarks")
             .toFile();
 
+        if (aotBinary.exists() && instrumentedBinary.exists())
+        {
+            out.verbosePrintln("Both " + aotBinary + " and " + instrumentedBinary + " exists");
+            if (instrumentedBinary.lastModified() >= aotBinary.lastModified())
+            {
+                out.verbosePrintln("Use " + instrumentedBinary + " because is newer");
+                return instrumentedBinary;
+            }
+            out.verbosePrintln("Use " + aotBinary + " because is newer");
+            return aotBinary;
+        }
+
+        if (aotBinary.exists())
+        {
+            out.verbosePrintln("Use " + aotBinary);
+            return aotBinary;
+        }
+
         if (instrumentedBinary.exists())
         {
+            out.verbosePrintln("Use " + instrumentedBinary);
             return instrumentedBinary;
         }
 
         return NOT_FOUND;
     }
 
-    private static boolean isNativeVm(File runBinary)
+    private static boolean isNativeVm(File runBinary, OutputFormat out)
     {
         if (RUN_JAR.exists() && runBinary.exists())
         {
-            return RUN_JAR.lastModified() <= runBinary.lastModified();
+            out.verbosePrintln("Both " + RUN_JAR + " and " + runBinary + " exists");
+            if (runBinary.lastModified() >= RUN_JAR.lastModified())
+            {
+                out.verbosePrintln("Use binary because it was created after the jar");
+                return true;
+            }
+            out.verbosePrintln("Use jar because it was created after the binary");
+            return false;
         }
 
         if (RUN_JAR.exists())
         {
+            out.verbosePrintln("Run as a HotSpot VM");
             return false;
         }
 
+        out.verbosePrintln("Run as a native VM? " + runBinary.exists());
         return runBinary.exists();
     }
 
