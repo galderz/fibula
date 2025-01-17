@@ -88,12 +88,12 @@ jobs:
       - name: Build samples with AOT
         run: mvn package -pl fibula-samples
       - name: Run a JMH sample with AOT
-        run: java -jar target/benchmarks.jar JMHSample_01 -foe true -tu us -rff target/aot-result.csv
+        run: java -jar target/benchmarks.jar JMHSample_01 -foe true -v EXTRA -tu us -rff target/aot-result.csv
         working-directory: fibula-samples
       - name: Build samples with PGO
         run: mvn package -pl fibula-samples -Dpgo
       - name: Run a JMH sample with PGO
-        run: java -jar target/benchmarks.jar JMHSample_01 -foe true -tu us -rff target/pgo-result.csv
+        run: java -jar target/benchmarks.jar JMHSample_01 -foe true -v EXTRA -tu us -rff target/pgo-result.csv
         working-directory: fibula-samples
       - name: Assert AOT and PGO results
         run: |
