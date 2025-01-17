@@ -133,9 +133,9 @@ run: $(samples_runner) do-run
 test:
 > touch fibula-it/target/benchmarks.jar || true
 ifeq ($(DEBUG),runner)
-> $(mvnw) $(maven_failsafe_debug) verify $(test_args) -pl fibula-it -am
+> $(mvnw) $(maven_failsafe_debug) install $(test_args) -pl fibula-it -am
 else
-> $(mvnw) verify $(test_args) -pl fibula-it -am
+> $(mvnw) install $(test_args) -pl fibula-it -am
 endif
 .PHONY: test
 
