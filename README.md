@@ -86,6 +86,60 @@ Both implicit and explicit blackholes are supported.
 Fibula generates bytecode to invoke one of the available `GraalDirectives.blackhole` methods,
 which works with the GraalVM compiler to make sure values sent to the blackhole are not optimized away.
 
+## Benchmarking Profile-Guided Optimizations (PGO)
+
+It is possible to benchmark native images when they are compiled with PGO.
+The integration here automates things to make it this process seamless:
+
+First it builds the benchmark with PGO instrumentation.
+At runtime,
+each benchmark runs a warmup fork with the PGO instrumented binary.
+When the warmup fork finishes,
+it rebuilds the native image iusing the profiling data obtained during the warmup fork,
+and the benchmark continues as normal.
+The final results presented are derived from the benchmark run with the optimized binary.
+
+You can see this integration in action with
+[this example](https://github.com/galderz/fibula-show/tree/main/2412-strings).
+
+To run benchmarks with PGO,
+Oracle GraalVM is a requirement.
+The example Maven project contains a `pgo` profile that you can activate so that the instrumented binary is constructed:
+
+```shell
+mvn package -Dpgo
+```
+
+Run the benchmark as usual and obtain the results:
+
+```shell
+java -jar target/benchmarks.jar
+```
+
+> **WARNING**: The results obtained with PGO on microbenchmarks need to be handled with care.
+> Although PGO can potentially present better results in a microbenchmark,
+> in real life code execution might contain more variations.
+> These variations can result in worse than expected performance,
+> because the virtual machine cannot backoff the optimizations made with the profiling data captured during instrumentation.
+
+You should profile PGO optimized binaries to understand the nature of the optimizations.
+To help with profiling,
+the example Maven project contain a dedicated `pgo.perf` profile that adds the necessary build options:
+
+```shell
+mvn package -Dpgo.perf
+```
+
+Then run the benchmark using the same profiling options shown above, e.g.
+
+```shell
+java -jar target/benchmarks.jar -prof org.mendrugo.fibula.PerfDwarfProfiler:events=cycles:P
+```
+
+When the benchmark finishes,
+you can use `perf annotate` to inspect the generated `.perfbin` files.
+Remember that these files belong to the PGO optimized benchmark runs.
+
 ## JVM Mode
 
 Benchmarks can also run in JVM mode with Fibula.
