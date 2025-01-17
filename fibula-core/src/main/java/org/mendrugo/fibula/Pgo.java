@@ -60,6 +60,16 @@ enum Pgo
     private static String[] appendInstrumentArgs(String[] args)
     {
         final List<String> instrumentArgs = new ArrayList<>(Arrays.asList(args));
+        if (instrumentArgs.contains("-wf"))
+        {
+            final int warmupForkParamIndex = instrumentArgs.indexOf("-wf");
+            if (0 == Integer.parseInt(instrumentArgs.get(warmupForkParamIndex + 1)))
+            {
+                throw new IllegalArgumentException("PGO requires warmup forks to be greater than 0");
+            }
+            return args;
+        }
+
         // Add a warmup fork artificially.
         // This fork will be used to run the benchmark and instrument it.
         // Once finished the native binary will be rebuilt with the instrumentation for subsequent forks.
