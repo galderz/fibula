@@ -156,7 +156,7 @@ public class PerfDwarfProfiler implements ExternalProfiler
 
         perfBinData.delete();
 
-        return Collections.singleton(new TextResult(outText.toString(), "asm"));
+        return Collections.singleton(new TextResult(outText.toString(), "dwarf"));
     }
 
     @Override
