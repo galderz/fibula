@@ -40,7 +40,7 @@ import java.util.StringJoiner;
  * Running both processors independently won't work because the JMH processor needs to run first
  * in order for the native configuration generator to pick up the names of the JMH generated classes.
  * Running processors independently with the JMH one running first will only work if there are unmatched annotations.
- * This is difficult to guarantee which is we use a single processor that combines functionalities from both.
+ * This is difficult to guarantee which is why we use a single processor that combines functionalities from both.
  */
 @SupportedAnnotationTypes("org.openjdk.jmh.annotations.*")
 public class NativeAssetsGenerator extends AbstractProcessor
