@@ -16,8 +16,6 @@ import java.util.List;
 
 final class BlackholeSubstitution
 {
-    private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
-
     static void generate(GraalBlackhole graalBlackhole, Path classOutputPath)
     {
         generateBlackholeSubstitution(new BlackholeClassOutput(classOutputPath), graalBlackhole);
@@ -27,7 +25,7 @@ final class BlackholeSubstitution
     {
         final String className = String.format(
             "%s.Target_org_openjdk_jmh_infra_Blackhole"
-            , PACKAGE_NAME
+            , NativeAssetsGenerator.PACKAGE_NAME
         );
 
         try (final ClassCreator blackhole = ClassCreator.builder()
@@ -35,8 +33,7 @@ final class BlackholeSubstitution
             .className(className)
             .setFinal(true)
             .build()
-        )
-        {
+        ) {
             blackhole.addAnnotation("com.oracle.svm.core.annotate.TargetClass")
                 .add("className", "org.openjdk.jmh.infra.Blackhole");
 

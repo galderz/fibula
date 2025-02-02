@@ -45,21 +45,20 @@ import java.util.StringJoiner;
 @SupportedAnnotationTypes("org.openjdk.jmh.annotations.*")
 public class NativeAssetsGenerator extends AbstractProcessor
 {
-    final BenchmarkProcessor jmhBenchmarkProcessor;
+    static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
+
+    final BenchmarkProcessor jmhBenchmarkProcessor = new BenchmarkProcessor();
+    final CompilerControlSubstitution compilerControl = new CompilerControlSubstitution();
     // Set of BenchmarkList files in dependencies
     final Set<URI> benchmarkLists = new HashSet<>();
     final List<String> benchmarkQNames = new ArrayList<>();
-
-    public NativeAssetsGenerator()
-    {
-        this.jmhBenchmarkProcessor = new BenchmarkProcessor();
-    }
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv)
     {
         super.init(processingEnv);
         jmhBenchmarkProcessor.init(processingEnv);
+        compilerControl.init(processingEnv);
     }
 
     @Override
@@ -71,6 +70,7 @@ public class NativeAssetsGenerator extends AbstractProcessor
              // The JMH processor has to run first, then the native assets generator
              // so that it picks up the JMH generated classes.
             jmhBenchmarkProcessor.process(annotations, roundEnv);
+            compilerControl.process(roundEnv);
 
             if (!roundEnv.processingOver())
             {
@@ -84,6 +84,7 @@ public class NativeAssetsGenerator extends AbstractProcessor
                 final Path classOutputPath = getClassOutputPath();
                 appendBenchmarkList(classOutputPath);
                 generateBlackholeSubstitutions(classOutputPath);
+                compilerControl.complete();
             }
         }
         catch (IOException e)
