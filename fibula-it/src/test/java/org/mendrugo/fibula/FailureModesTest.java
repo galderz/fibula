@@ -145,6 +145,7 @@ public class FailureModesTest
             if (TestUtils.isNativeVm())
             {
                 assertInstanceOf(IllegalStateException.class, suppressed);
+                assertEquals("Forked VM failed with exit code 1", suppressed.getMessage());
             }
             else
             {
