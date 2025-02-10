@@ -89,13 +89,13 @@ which works with the GraalVM compiler to make sure values sent to the blackhole 
 ## Benchmarking Profile-Guided Optimizations (PGO)
 
 It is possible to benchmark native images when they are compiled with PGO.
-The integration here automates things to make it this process seamless:
+The integration here makes it seamless:
 
 First it builds the benchmark with PGO instrumentation.
 At runtime,
 each benchmark runs a warmup fork with the PGO instrumented binary.
 When the warmup fork finishes,
-it rebuilds the native image iusing the profiling data obtained during the warmup fork,
+it rebuilds the native image using the profiling data obtained during the warmup fork,
 and the benchmark continues as normal.
 The final results presented are derived from the benchmark run with the optimized binary.
 
@@ -121,6 +121,9 @@ java -jar target/benchmarks.jar
 > in real life code execution might contain more variations.
 > These variations can result in worse than expected performance,
 > because the virtual machine cannot backoff the optimizations made with the profiling data captured during instrumentation.
+> In other words, in native mode there is no re-optimize at method at runtime.
+> If PGO aggressively optimizes a code path based on a profile, then at run-time it will only be able to fall back to a generic compilation,
+> which might be worse than HotSpot can achieve since it can recompile code at runtime when access patterns change.
 
 You should profile PGO optimized binaries to understand the nature of the optimizations.
 To help with profiling,
