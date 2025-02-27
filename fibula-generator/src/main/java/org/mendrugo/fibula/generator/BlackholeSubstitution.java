@@ -16,18 +16,16 @@ import java.util.List;
 
 final class BlackholeSubstitution
 {
-    private static final String PACKAGE_NAME = "org.mendrugo.fibula.generated";
-
-    static void generate(GraalBlackhole graalBlackhole, Path classOutputPath)
+    static void generate(GraalBlackhole graalBlackhole, ClassOutput classOutput)
     {
-        generateBlackholeSubstitution(new BlackholeClassOutput(classOutputPath), graalBlackhole);
+        generateBlackholeSubstitution(classOutput, graalBlackhole);
     }
 
     private static void generateBlackholeSubstitution(ClassOutput classOutput, GraalBlackhole graalBlackhole)
     {
         final String className = String.format(
             "%s.Target_org_openjdk_jmh_infra_Blackhole"
-            , PACKAGE_NAME
+            , NativeAssetsGenerator.PACKAGE_NAME
         );
 
         try (final ClassCreator blackhole = ClassCreator.builder()
@@ -35,8 +33,7 @@ final class BlackholeSubstitution
             .className(className)
             .setFinal(true)
             .build()
-        )
-        {
+        ) {
             blackhole.addAnnotation("com.oracle.svm.core.annotate.TargetClass")
                 .add("className", "org.openjdk.jmh.infra.Blackhole");
 
@@ -72,65 +69,6 @@ final class BlackholeSubstitution
             );
             consume.invokeStaticMethod(blackholeMethod, value);
             consume.returnVoid();
-        }
-    }
-
-    private static final class BlackholeClassOutput implements ClassOutput
-    {
-        private final Path classOutputPath;
-
-        public BlackholeClassOutput(Path classOutputPath)
-        {
-            this.classOutputPath = classOutputPath;
-        }
-
-        @Override
-        public void write(String name, byte[] data)
-        {
-            try
-            {
-                final File dir = classOutputPath
-                    .resolve(name.substring(0, name.lastIndexOf("/")))
-                    .toFile();
-                dir.mkdirs();
-
-                final File output = classOutputPath
-                    .resolve(name + ".class")
-                    .toFile();
-
-                Files.write(output.toPath(), data);
-            }
-            catch (IOException e)
-            {
-                throw new IllegalStateException("Cannot dump the class: " + name, e);
-            }
-        }
-
-        @Override
-        public Writer getSourceWriter(String className)
-        {
-            final Path outputDirectory = classOutputPath.getParent();
-            final Path gizmoSourcesPath = outputDirectory
-                .resolve("generated-sources")
-                .resolve("gizmo");
-
-            final File dir = gizmoSourcesPath
-                .resolve(className.substring(0, className.lastIndexOf('/')))
-                .toFile();
-            dir.mkdirs();
-
-            final File output = gizmoSourcesPath
-                .resolve(className + ".zig")
-                .toFile();
-
-            try
-            {
-                return Files.newBufferedWriter(output.toPath());
-            }
-            catch (IOException e)
-            {
-                throw new IllegalStateException("Cannot write .zig file for " + className, e);
-            }
         }
     }
 }
