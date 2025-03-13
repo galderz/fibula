@@ -23,7 +23,8 @@
 
         <maven.compiler.release>21</maven.compiler.release>
 
-        <jmh.version>1.37</jmh.version>
+        <jmh.version>1.38-SNAPSHOT</jmh.version>
+        <!-- jmh.version>1.37</jmh.version -->
 
         <compiler-plugin.version>3.12.1</compiler-plugin.version>
         <jar-plugin.version>3.4.2</jar-plugin.version>
