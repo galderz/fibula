@@ -11,6 +11,7 @@ endif
 .RECIPEPREFIX = >
 
 BENCHMARK ?= JMHSample_01
+IT ?= fibula
 JAVA_HOME ?= $(HOME)/opt/graal-21
 GRAALVM_EE_HOME ?= $(HOME)/opt/ee-graal-21
 VERSION ?= 999-SNAPSHOT
@@ -126,6 +127,12 @@ ifdef NATIVE_ARGS
   runner_build_args += -DbuildArgs=$(NATIVE_ARGS)
 endif
 
+ifeq ($(IT),fibula)
+  it_project = fibula-it
+else
+  it_project = fibula-jmh-it
+endif
+
 run: $(samples_runner) do-run
 .PHONY: run
 
@@ -133,9 +140,9 @@ run: $(samples_runner) do-run
 test:
 > touch fibula-it/target/benchmarks.jar || true
 ifeq ($(DEBUG),runner)
-> $(mvnw) $(maven_failsafe_debug) install $(test_args) -pl fibula-it -am
+> $(mvnw) $(maven_failsafe_debug) install $(test_args) -pl $(it_project) -am
 else
-> $(mvnw) install $(test_args) -pl fibula-it -am
+> $(mvnw) install $(test_args) -pl $(it_project) -am
 endif
 .PHONY: test
 
@@ -145,9 +152,9 @@ run-jvm: $(samples_jar) do-run
 test-jvm:
 > touch fibula-it/target/benchmarks.jar || true
 ifeq ($(DEBUG),runner)
-> $(mvnw) $(maven_surefire_debug) test $(test_args) -pl fibula-it -am -Djvm.mode
+> $(mvnw) $(maven_surefire_debug) test $(test_args) -pl $(it_project) -am -Djvm.mode
 endif
-> $(mvnw) test $(test_args) -pl fibula-it -am -Djvm.mode
+> $(mvnw) test $(test_args) -pl $(it_project) -am -Djvm.mode
 .PHONY: test-jvm
 
 do-run:

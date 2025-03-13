@@ -15,6 +15,7 @@
         <module>fibula-generator</module>
         <module>fibula-it</module>
         <module>fibula-samples</module>
+        <module>fibula-jmh-it</module>
     </modules>
 
     <properties>
