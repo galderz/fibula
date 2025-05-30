@@ -18,8 +18,8 @@ MAVEN_HOME ?= $(HOME)/opt/maven
 
 benchmarks_jar = target/benchmarks.jar
 final_jar = fibula-generator/target/fibula-generator-$(VERSION).jar
-java_ee = $(GRAALVM_EE_HOME)/bin/java
 java = $(JAVA_HOME)/bin/java
+java_ee = $(GRAALVM_EE_HOME)/bin/java
 jdwp = -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*
 jdwp_fork_port = 6006
 jdwp_runner_port = 5005
@@ -97,7 +97,7 @@ ifdef MAVEN_VERBOSE
 endif
 
 ifeq ($(DEBUG),runner)
-  java += $(jdwp):$(jdwp_runner_port)
+  jvm_args += $(jdwp):$(jdwp_runner_port)
   benchmark_params += -jvmArgs
   benchmark_params += ""
 else ifeq ($(DEBUG),fork)
@@ -112,7 +112,7 @@ ifdef TEST
 endif
 
 ifdef NATIVE_AGENT
-  java += -Dfibula.native.agent=true
+  jvm_args += -Dfibula.native.agent=true
   test_args += -Dfibula.native.agent=true
 endif
 
@@ -152,7 +152,7 @@ endif
 
 do-run:
 > cd fibula-samples
-> $(java) -jar $(benchmarks_jar) $(benchmark_params) -rff target/aot-result.csv
+> $(java) $(jvm_args) -jar $(benchmarks_jar) $(benchmark_params) -rff target/aot-result.csv
 .PHONY: do-run
 
 run-pgo: $(samples_pgo_runner) do-run-pgo
@@ -160,7 +160,7 @@ run-pgo: $(samples_pgo_runner) do-run-pgo
 
 do-run-pgo:
 > cd fibula-samples
-> $(java_ee) -jar $(benchmarks_jar) $(benchmark_params) -rff target/pgo-result.csv
+> $(java_ee) $(jvm_args) -jar $(benchmarks_jar) $(benchmark_params) -rff target/pgo-result.csv
 .PHONY: do-run-pgo
 
 $(final_jar): $(shell find . -type f -name "*.java" ! -path "./*/target/*")
