@@ -51,7 +51,7 @@ public class BlackholesTest
             final Class<?> clazz = Class.forName("org.mendrugo.fibula.generated.Target_org_openjdk_jmh_infra_Blackhole");
             final Object blackholeSubstitution = clazz
                 .getDeclaredConstructor(String.class)
-                .newInstance("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.");
+                .newInstance("Should not be calling this.");
             return clazz.getMethod("consume", double.class).invoke(blackholeSubstitution, x1);
         }
         else
