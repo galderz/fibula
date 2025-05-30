@@ -1,5 +1,10 @@
 package org.mendrugo.fibula;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +35,27 @@ final class GraalVersionParser
     private static final Pattern SECOND_PATTERN = Pattern.compile(SECOND_LINE_PATTERN);
     private static final Pattern THIRD_PATTERN = Pattern.compile(THIRD_LINE_PATTERN);
 
-    static int parse(Stream<String> output)
+    static int parse(InputStream is)
+    {
+        final BufferedReader stdInput = new BufferedReader(new InputStreamReader(is));
+        try
+        {
+            final List<String> output = new ArrayList<>();
+            String line;
+            while ((line = stdInput.readLine()) != null)
+            {
+                output.add(line);
+            }
+
+            return parse(output.stream());
+        }
+        catch (IOException e)
+        {
+            return 0;
+        }
+    }
+
+    private static int parse(Stream<String> output)
     {
         String stringOutput = output.collect(Collectors.joining("\n"));
         List<String> lines = stringOutput.lines()

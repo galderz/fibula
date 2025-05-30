@@ -1,6 +1,8 @@
 package org.mendrugo.fibula;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,7 +30,15 @@ class NativeImage
         final List<String> commandString = new ArrayList<>();
         commandString.add(EXECUTABLE.getAbsolutePath());
         commandString.add("--version");
-        return GraalVersionParser.parse(execute.execute(commandString).stream());
+        try
+        {
+            final Process process = new ProcessBuilder(commandString).start();
+            return GraalVersionParser.parse(process.getInputStream());
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
     }
 
     void execute(String... args)
