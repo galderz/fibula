@@ -1,5 +1,6 @@
 package org.mendrugo.fibula;
 
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.BenchmarkException;
 import org.openjdk.jmh.runner.format.OutputFormat;
 
@@ -9,8 +10,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 record ForkedVm(
     String jdkVersion
@@ -56,6 +62,43 @@ record ForkedVm(
     boolean isNativeVm()
     {
         return !executable.equals(RUN_JAR);
+    }
+
+    Collection<String> jvmArgs(BenchmarkParams bp)
+    {
+        final Collection<String> jvmArgs = bp.getJvmArgs();
+        if (isNativeVm())
+        {
+            // Avoid -XX: arguments being passed in to native, because they're not understood in that environment
+            System.setProperty("jmh.compilerhints.mode", "FORCE_OFF");
+
+            // Skip jvm arguments that are invalid in native
+            final Pattern skip = skipNativeInvalidJvmArgs();
+            final List<String> nativeValidJvmArgs = jvmArgs.stream()
+                .filter(arg -> !skip.matcher(arg).matches())
+                .collect(Collectors.toCollection(ArrayList::new));
+            return nativeValidJvmArgs;
+        }
+
+        final List<String> hotspotJvmArgs = new ArrayList<>(jvmArgs);
+        if (Boolean.getBoolean("fibula.native.agent"))
+        {
+            hotspotJvmArgs.add("-agentlib:native-image-agent=config-output-dir=target/native-agent-config");
+        }
+        return hotspotJvmArgs;
+    }
+
+    private static Pattern skipNativeInvalidJvmArgs()
+    {
+        final List<String> skipJvmArgs = Arrays.asList(
+            "-XX:(\\+|-)UnlockExperimentalVMOptions"
+            , "-XX:(\\+|-)EnableJVMCIProduct"
+            , "-XX:ThreadPriorityPolicy=\\d+"
+        );
+
+        final StringJoiner joiner = new StringJoiner("|");
+        skipJvmArgs.forEach(joiner::add);
+        return Pattern.compile(joiner.toString());
     }
 
     private static File findRunBinary(OutputFormat out)

@@ -142,7 +142,7 @@ public class FailureModesTest
         {
             final BenchmarkException cause = (BenchmarkException) e.getCause();
             final Throwable suppressed = cause.getSuppressed()[0];
-            if (TestUtils.isNativeVm())
+            if (MultiVmRunner.isNativeVm())
             {
                 assertInstanceOf(IllegalStateException.class, suppressed);
                 assertEquals("Forked VM failed with exit code 1", suppressed.getMessage());
