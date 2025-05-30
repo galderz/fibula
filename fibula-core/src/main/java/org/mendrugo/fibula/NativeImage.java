@@ -1,6 +1,13 @@
 package org.mendrugo.fibula;
 
+import org.openjdk.jmh.runner.OutputFormatAdapter;
+import org.openjdk.jmh.runner.format.OutputFormat;
+import org.openjdk.jmh.util.FileUtils;
+import org.openjdk.jmh.util.InputStreamDrainer;
+import org.openjdk.jmh.util.TempFile;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -9,18 +16,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class NativeImage
+final class NativeImage
 {
     private static final File EXECUTABLE = findExecutable();
 
-    private final Execute execute;
+    private final boolean verbosePrint;
+    private final OutputFormat out;
 
-    public NativeImage(Execute execute)
+    public NativeImage(boolean verbosePrint, OutputFormat out)
     {
-        this.execute = execute;
+        this.verbosePrint = verbosePrint;
+        this.out = out;
     }
 
-    int getJavaVersion()
+    static int getJavaVersion()
     {
         if (!EXECUTABLE.exists())
         {
@@ -46,7 +55,46 @@ class NativeImage
         final List<String> commandString = new ArrayList<>();
         commandString.add(EXECUTABLE.getAbsolutePath());
         commandString.addAll(Arrays.asList(args));
-        execute.execute(commandString);
+
+        try
+        {
+            final TempFile tmpFile = FileUtils.weakTempFile("nativeimage");
+
+            try (FileOutputStream fos = new FileOutputStream(tmpFile.file()))
+            {
+                final ProcessBuilder processBuilder = new ProcessBuilder(commandString);
+                final Process process = processBuilder.start();
+
+                final InputStreamDrainer errDrainer = new InputStreamDrainer(process.getErrorStream(), fos);
+                final InputStreamDrainer outDrainer = new InputStreamDrainer(process.getInputStream(), fos);
+
+                if (verbosePrint)
+                {
+                    errDrainer.addOutputStream(new OutputFormatAdapter(out));
+                    outDrainer.addOutputStream(new OutputFormatAdapter(out));
+                }
+
+                errDrainer.start();
+                outDrainer.start();
+
+                process.waitFor();
+
+                errDrainer.join();
+                outDrainer.join();
+            }
+            catch (InterruptedException e)
+            {
+                out.println("<interrupted waiting for native image: " + e.getMessage() + ">");
+                out.println("");
+                throw new RuntimeException(e);
+            }
+
+            tmpFile.delete();
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static File findExecutable()

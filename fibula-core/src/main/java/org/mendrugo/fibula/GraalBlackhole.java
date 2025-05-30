@@ -44,8 +44,7 @@ public enum GraalBlackhole
 
     public static GraalBlackhole instance()
     {
-        final NativeImage nativeImage = new NativeImage(Execute.from(false, System.out));
-        final int graalVMJavaVersion = nativeImage.getJavaVersion();
+        final int graalVMJavaVersion = NativeImage.getJavaVersion();
         if (0 == graalVMJavaVersion)
         {
             return DISABLED;

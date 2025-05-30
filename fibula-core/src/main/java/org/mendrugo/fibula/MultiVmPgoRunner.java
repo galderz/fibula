@@ -24,11 +24,11 @@ final class MultiVmPgoRunner extends Runner
     {
         super(options, new MultiVmPgoOutputFormat(options));
 
-        boolean forcePrint = options.verbosity()
+        boolean verbosePrint = options.verbosity()
             .orElse(Defaults.VERBOSITY)
             .equalsOrHigherThan(VerboseMode.EXTRA);
 
-        this.nativeImage = new NativeImage(Execute.from(forcePrint, this.out));
+        this.nativeImage = new NativeImage(verbosePrint, this.out);
     }
 
     @Override
