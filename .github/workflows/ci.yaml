@@ -8,6 +8,7 @@ on:
 
 env:
   ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+  JMH_BRANCH: topic.fibula-refactors
 
 jobs:
   test-native:
@@ -17,8 +18,27 @@ jobs:
         distribution: [graalvm-community, mandrel]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Fibula
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Checkout JMH
         uses: actions/checkout@v4
+        with:
+          repository: galderz/jmh
+          ref: ${{ env.JMH_BRANCH }}
+          path: jmh
+      - name: Build JMH
+        # Needs to be built with HotSpot,
+        # otherwise benchmarks not generated.
+        # Examples relying on JMH samples,
+        # or test relying on core-it tests,
+        # would fail otherwise.
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
+        run: mvn install -DskipTests
+        working-directory: jmh
+
       - uses: graalvm/setup-graalvm@v1
         with:
           distribution: ${{ matrix.distribution }}
@@ -28,16 +48,23 @@ jobs:
           echo "GRAALVM_HOME: $GRAALVM_HOME"
           java --version
           native-image --version
+
+      - name: Checkout Fibula
+        uses: actions/checkout@v4
+        with:
+          path: fibula
       - name: Run integration tests
         run: mvn install -pl fibula-it -am
+        working-directory: fibula
       - name: Build samples
         run: mvn package -pl fibula-samples
+        working-directory: fibula
       - name: Run a JMH sample
         run: java -jar target/benchmarks.jar JMHSample_09_Blackholes -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
-        working-directory: fibula-samples
+        working-directory: fibula/fibula-samples
       - name: Run a Fibula sample
         run: java -jar target/benchmarks.jar FibulaSample_06_Records -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
-        working-directory: fibula-samples
+        working-directory: fibula/fibula-samples
 
   test-jvm:
     strategy:
@@ -45,8 +72,6 @@ jobs:
         java-version: [21, 23]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Fibula
-        uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -55,16 +80,33 @@ jobs:
         run: |
           echo "JAVA_HOME: $JAVA_HOME"
           java --version
+
+      - name: Checkout JMH
+        uses: actions/checkout@v4
+        with:
+          repository: galderz/jmh
+          ref: ${{ env.JMH_BRANCH }}
+          path: jmh
+      - name: Build JMH
+        run: mvn install -DskipTests
+        working-directory: jmh
+
+      - name: Checkout Fibula
+        uses: actions/checkout@v4
+        with:
+          path: fibula
       - name: Run tests
         run: mvn install -pl fibula-it -am -Djvm.mode
+        working-directory: fibula
       - name: Build samples
         run: mvn package -pl fibula-samples -Djvm.mode
+        working-directory: fibula
       - name: Run a JMH sample
         run: java -jar target/benchmarks.jar JMHSample_09_Blackholes -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
-        working-directory: fibula-samples
+        working-directory: fibula/fibula-samples
       - name: Run a Fibula sample
         run: java -jar target/benchmarks.jar FibulaSample_06_Records -f 1 -i 1 -r 1 -wi 1 -w 1 -foe true -v EXTRA
-        working-directory: fibula-samples
+        working-directory: fibula/fibula-samples
 
   test-pgo:
     strategy:
@@ -73,8 +115,27 @@ jobs:
         distribution: [graalvm]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Fibula
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Checkout JMH
         uses: actions/checkout@v4
+        with:
+          repository: galderz/jmh
+          ref: ${{ env.JMH_BRANCH }}
+          path: jmh
+      - name: Build JMH
+        # Needs to be built with HotSpot,
+        # otherwise benchmarks not generated.
+        # Examples relying on JMH samples,
+        # or test relying on core-it tests,
+        # would fail otherwise.
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
+        run: mvn install -DskipTests
+        working-directory: jmh
+
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: ${{ matrix.java-version }}
@@ -83,18 +144,26 @@ jobs:
           echo "GRAALVM_HOME: $GRAALVM_HOME"
           java --version
           native-image --version
+
+      - name: Checkout Fibula
+        uses: actions/checkout@v4
+        with:
+          path: fibula
       - name: Build jars
         run: mvn install -DskipTests -e -pl !fibula-it,!fibula-samples
+        working-directory: fibula
       - name: Build samples with AOT
         run: mvn package -pl fibula-samples
+        working-directory: fibula
       - name: Run a JMH sample with AOT
         run: java -jar target/benchmarks.jar JMHSample_01 -foe true -v EXTRA -tu us -rff target/aot-result.csv
-        working-directory: fibula-samples
+        working-directory: fibula/fibula-samples
       - name: Build samples with PGO
         run: mvn package -pl fibula-samples -Dpgo
+        working-directory: fibula
       - name: Run a JMH sample with PGO
         run: java -jar target/benchmarks.jar JMHSample_01 -foe true -v EXTRA -tu us -rff target/pgo-result.csv
-        working-directory: fibula-samples
+        working-directory: fibula/fibula-samples
       - name: Assert AOT and PGO results
         run: |
           awk -F, '
@@ -102,4 +171,4 @@ jobs:
           FNR==2 {b=$5; print "b from pgo-result.csv: " b}
           END {print "Final a: " a ", Final b: " b; if (b >= a * 1.1) print "Passed: Score in pgo-result.csv is at least 10% bigger"; else print "Failed: Score in pgo-result.csv is less than 10% bigger"}
           ' aot-result.csv pgo-result.csv
-        working-directory: fibula-samples/target
+        working-directory: fibula/fibula-samples/target
