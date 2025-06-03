@@ -96,6 +96,7 @@ ifdef MAVEN_VERBOSE
   mvnw += -X
 endif
 
+jvm_args =
 ifeq ($(DEBUG),runner)
   jvm_args += $(jdwp):$(jdwp_runner_port)
   benchmark_params += -jvmArgs
