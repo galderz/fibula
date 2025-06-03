@@ -1,7 +1,5 @@
 package org.mendrugo.fibula;
 
-import joptsimple.HelpFormatter;
-import joptsimple.OptionDescriptor;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -9,6 +7,8 @@ import joptsimple.OptionSpec;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.profile.ProfilerException;
+import org.openjdk.jmh.profile.ProfilerOptionFormatter;
+import org.openjdk.jmh.profile.ProfilerUtils;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.TextResult;
@@ -20,11 +20,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings("unused")
 public class PerfDwarfProfiler implements ExternalProfiler
@@ -49,7 +47,7 @@ public class PerfDwarfProfiler implements ExternalProfiler
 
 
         final OptionParser parser = new OptionParser();
-        parser.formatHelpWith(new ProfilerHelpFormatter());
+        parser.formatHelpWith(new ProfilerOptionFormatter("org.mendrugo.fibula.PerfDwarfProfiler"));
 
         final OptionSpec<String> optPerfBinTo = parser.accepts(
             "savePerfBinTo"
@@ -87,7 +85,7 @@ public class PerfDwarfProfiler implements ExternalProfiler
             .describedAs("event")
             .defaultsTo("cycles");
 
-        set = parseInitLine(initLine, parser);
+        set = ProfilerUtils.parseInitLine(initLine, parser);
 
         try
         {
@@ -177,146 +175,4 @@ public class PerfDwarfProfiler implements ExternalProfiler
         return "DWARF perf Profiler";
     }
 
-    public static OptionSet parseInitLine(String initLine, OptionParser parser) throws ProfilerException
-    {
-        parser.accepts("help", "Display help.");
-
-        final OptionSpec<String> nonOptions = parser.nonOptions();
-
-        String[] split = initLine.split(";");
-        for (int c = 0; c < split.length; c++)
-        {
-            if (!split[c].isEmpty())
-            {
-                split[c] = "-" + split[c];
-            }
-        }
-
-        OptionSet optionSet;
-        try
-        {
-            optionSet = parser.parse(split);
-        }
-        catch (OptionException e)
-        {
-            try
-            {
-                final StringWriter sw = new StringWriter();
-                sw.append(e.getMessage());
-                sw.append("\n");
-                parser.printHelpOn(sw);
-                throw new ProfilerException(sw.toString());
-            }
-            catch (IOException ioException)
-            {
-                throw new ProfilerException(ioException);
-            }
-        }
-
-        if (optionSet.has("help"))
-        {
-            try
-            {
-                StringWriter sw = new StringWriter();
-                parser.printHelpOn(sw);
-                throw new ProfilerException(sw.toString());
-            }
-            catch (IOException e)
-            {
-                throw new UncheckedIOException(e);
-            }
-        }
-
-        final String optionArgument = optionSet.valueOf(nonOptions);
-        if (optionArgument != null && !optionArgument.isEmpty())
-        {
-            throw new ProfilerException("Unhandled options: " + optionArgument + " in " + initLine);
-        }
-        return optionSet;
-    }
-
-    private static final class ProfilerHelpFormatter implements HelpFormatter
-    {
-        @Override
-        public String format(Map<String, ? extends OptionDescriptor> options)
-        {
-            final String header = """
-                Usage: -prof org.mendrugo.fibula.PerfDwarfProfiler:opt1=value1,value2;opt2=value3
-                
-                Options accepted by profiler:
-                """;
-
-            final StringBuilder help = new StringBuilder(header);
-            for (OptionDescriptor option : options.values())
-            {
-                help.append(optionHelp(option));
-            }
-
-            return help.toString();
-        }
-
-        private static String optionHelp(OptionDescriptor descriptor)
-        {
-            final StringBuilder line = new StringBuilder();
-
-            final StringBuilder output = new StringBuilder();
-            output.append("  ");
-            for (String str : descriptor.options())
-            {
-                if (descriptor.representsNonOptions())
-                {
-                    continue;
-                }
-                output.append(str);
-                if (descriptor.acceptsArguments())
-                {
-                    output.append("=");
-                    if (descriptor.requiresArgument())
-                    {
-                        output.append("<");
-                    }
-                    else
-                    {
-                        output.append("[");
-                    }
-                    output.append(descriptor.argumentDescription());
-                    if (descriptor.requiresArgument())
-                    {
-                        output.append(">");
-                    }
-                    else
-                    {
-                        output.append("]");
-                    }
-                }
-            }
-
-            final int optWidth = 35;
-            line.append(String.format("%-" + optWidth + "s", output));
-            boolean first = true;
-            String desc = descriptor.description();
-            final List<?> defaults = descriptor.defaultValues();
-            if (defaults != null && !defaults.isEmpty())
-            {
-                desc += " (default: " + defaults + ")";
-            }
-            for (String l : Utils.rewrap(desc))
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    line.append(System.lineSeparator());
-                    line.append(String.format("%-" + optWidth + "s", ""));
-                }
-                line.append(l);
-            }
-
-            line.append(System.lineSeparator());
-            line.append(System.lineSeparator());
-            return line.toString();
-        }
-    }
 }
