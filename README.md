@@ -5,11 +5,19 @@ Fibula allows you to run JMH benchmarks as GraalVM native executables.
 # Pre-requisites
 
 There are no Fibula releases yet so you need to build Fibula first.
+But before building Fibula, JMH itself needs to built since Fibula requires small modifications to avoid code duplication.
+JMH can be built with any recent JDK LTS versions, e.g. JDK 21:
+
+```shell
+git clone https://github.com/galderz/jmh
+cd jmh && git checkout topic.fibula-refactors
+mvn install -DskipTests
+```
 
 Building Fibula requires JDK 21.
 Set `JAVA_HOME` to GraalVM for JDK 21 and execute:
 
-```
+```shell
 ./mvnw install
 ```
 
