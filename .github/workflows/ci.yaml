@@ -56,6 +56,9 @@ jobs:
       - name: Run integration tests
         run: mvn install -pl fibula-it -am
         working-directory: fibula
+      - name: Run JMH integration tests
+        run: mvn install -pl fibula-jmh-it -am
+        working-directory: fibula
       - name: Build samples
         run: mvn package -pl fibula-samples
         working-directory: fibula
@@ -95,8 +98,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: fibula
-      - name: Run tests
+      - name: Run integration tests
         run: mvn install -pl fibula-it -am -Djvm.mode
+        working-directory: fibula
+      - name: Run JMH integration tests
+        run: mvn install -pl fibula-jmh-it -am -Djvm.mode
         working-directory: fibula
       - name: Build samples
         run: mvn package -pl fibula-samples -Djvm.mode

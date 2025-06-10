@@ -131,13 +131,26 @@ run: $(samples_runner) do-run
 .PHONY: run
 
 # Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
-test:
+it:
 > touch fibula-it/target/benchmarks.jar || true
 ifeq ($(DEBUG),runner)
 > $(mvnw) $(maven_failsafe_debug) install $(test_args) -pl fibula-it -am
 else
 > $(mvnw) install $(test_args) -pl fibula-it -am
 endif
+.PHONY: it
+
+# Touch jar file in case there's no rebuild and surefire wrongly tries to execute native tests
+it-jmh:
+> touch fibula-jmh-it/target/benchmarks.jar || true
+ifeq ($(DEBUG),runner)
+> $(mvnw) $(maven_failsafe_debug) install $(test_args) -pl fibula-jmh-it -am
+else
+> $(mvnw) install $(test_args) -pl fibula-jmh-it -am
+endif
+.PHONY: it-jmh
+
+test: it it-jmh
 .PHONY: test
 
 run-jvm: $(samples_jar) do-run
