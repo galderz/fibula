@@ -14,6 +14,7 @@
         <module>fibula-core</module>
         <module>fibula-generator</module>
         <module>fibula-it</module>
+        <module>fibula-jmh-it</module>
         <module>fibula-samples</module>
     </modules>
 
@@ -49,6 +50,12 @@
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-generator-annprocess</artifactId>
                 <version>${jmh.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-core-it</artifactId>
+                <version>${jmh.version}</version>
+                <type>test-jar</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
