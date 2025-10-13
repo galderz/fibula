@@ -6,14 +6,14 @@ sample()
 {
     local run_target=$1
 
-    BENCHMARK=JMHSample_09 TU=ns make $run_target
-    BENCHMARK=FibulaSample_01_MultiHelloWorld make $run_target
+    BENCHMARK=JMHSample_09 TU=ns gmake $run_target
+    BENCHMARK=FibulaSample_01_MultiHelloWorld gmake $run_target
 }
 
 pgo()
 {
-    make run
-    make run-pgo
+    gmake run
+    gmake run-pgo
     awk -F, '
     NR==FNR && NR==2 {a=$5; print "a from aot-result.csv: " a; next}
     FNR==2 {b=$5; print "b from pgo-result.csv: " b}
@@ -21,9 +21,9 @@ pgo()
     ' fibula-samples/target/aot-result.csv fibula-samples/target/pgo-result.csv
 }
 
-make clean
+gmake clean
 # native tests already run jvm mode tests before
-make test
+gmake test
 sample "run-jvm"
 sample "run"
 pgo
