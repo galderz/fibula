@@ -92,6 +92,7 @@ record ForkedVm(
     {
         final List<String> skipJvmArgs = Arrays.asList(
             "-XX:(\\+|-)UnlockExperimentalVMOptions"
+            , "-XX:(\\+|-)EnableJVMCI"
             , "-XX:(\\+|-)EnableJVMCIProduct"
             , "-XX:ThreadPriorityPolicy=\\d+"
         );
