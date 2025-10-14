@@ -11,8 +11,8 @@ endif
 .RECIPEPREFIX = >
 
 BENCHMARK ?= JMHSample_01
-JAVA_HOME ?= $(HOME)/opt/graal-21
-GRAALVM_EE_HOME ?= $(HOME)/opt/ee-graal-21
+JAVA_HOME ?= $(HOME)/opt/graalvm-25
+GRAALVM_EE_HOME ?= $(HOME)/opt/ee-graalvm-25
 VERSION ?= 999-SNAPSHOT
 MAVEN_HOME ?= $(HOME)/opt/maven
 
