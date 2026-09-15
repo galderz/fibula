@@ -34,7 +34,9 @@ public class NativeAsyncProfiler implements ExternalProfiler, InternalProfiler
     public Collection<String> addJVMInvokeOptions(BenchmarkParams params)
     {
         return List.of(
-            "LD_PRELOAD=/home/agentuser/opt/async-profiler/lib/libasyncProfiler.so ASPROF_COMMAND=start,event=cpu,file=profile.jfr"
+	    "env"
+            , "LD_PRELOAD=/home/agentuser/opt/async-profiler/lib/libasyncProfiler.so"
+	    , "ASPROF_COMMAND=start,cstack=dwarf,event=cpu,file=profile.html"
         );
     }
 
