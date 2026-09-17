@@ -191,5 +191,29 @@
 {
   "name":"sun.security.provider.SHA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name": "org.mendrugo.fibula.NativeAsyncProfiler",
+  "methods": [
+    {"name": "<init>", "parameterTypes": ["java.lang.String"]}
+  ]
+},
+{
+  "name": "org.openjdk.jmh.profile.AsyncProfiler$OutputType",
+  "methods": [
+    { "name": "valueOf", "parameterTypes": ["java.lang.String"]}
+  ]
+},
+{
+  "name": "org.openjdk.jmh.profile.AsyncProfiler$Direction",
+  "methods": [
+    { "name": "valueOf", "parameterTypes": ["java.lang.String"]}
+  ]
+},
+{
+  "name": "org.openjdk.jmh.profile.AsyncProfiler$CStackMode",
+  "methods": [
+    { "name": "valueOf", "parameterTypes": ["java.lang.String"]}
+  ]
 }
 ]
