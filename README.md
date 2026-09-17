@@ -47,6 +47,8 @@ java -jar target/benchmarks.jar
 
 ## Profiling
 
+### Perf
+
 `perf` and `perfnorm` can be used just like with JMH.
 
 JMH `perfasm` profiler is not yet fully supported,
@@ -87,6 +89,38 @@ Use `perf annotate -i < <file>.perfbin` to analyse hot assembly parts, e.g.
 > **TIP**: Pass in `:P` event modifier to avoid performance events skid.
 > For example: `-prof org.mendrugo.fibula.PerfDwarfProfiler:events=cycles:P`.
 > This option is only available when Fibula is built with a JMH snapshot version from the master branch.
+
+### Async Profiler
+
+Fibula comes with a profiler provider to integrate with
+[Async Profiler](https://github.com/async-profiler/async-profiler).
+It is configurable with most of the options available in
+[JMH's AsyncProfiler](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/profile/AsyncProfiler.java)
+with some small variations:
+
+* There are only two available output types: `flamegraph` and `jfr`.
+* The default output type is [Flame Graph](https://github.com/brendangregg/flamegraph) as HTML instead of text.
+* The C stack mode is hardcoded to `dwarf` to integrate with DWARF debug symbols available in GraalVM native images.
+
+To use this profiler build the benchmark with debug symbols:
+
+```shell
+mvn package -Ddebug=true
+```
+
+Then run the benchmark passing in the Async Profiler patch either via the `LD_PRELOAD` environment variable,
+or the `libPath` configuration option:
+
+```shell
+LD_PRELOAD=/opt/async-profiler/lib/libasyncProfiler.so java -jar target/benchmarks.jar -prof org.mendrugo.fibula.NativeAsyncProfiler
+# or
+java -jar target/benchmarks.jar -prof org.mendrugo.fibula.NativeAsyncProfiler:libPath=/opt/async-profiler/lib/libasyncProfiler.so
+```
+
+> **IMPORTANT**:
+> Make sure not to pass in `-H:-DeleteLocalSymbols` when using the Async Profiler provider.
+> When local symbols are available, Async PRofiler will use those to parse the stacks instead of the DWAF info,
+> and these symbols are incomplete for this use case.
 
 ## Blackholes
 
