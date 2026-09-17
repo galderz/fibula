@@ -138,10 +138,6 @@ public class NativeAsyncProfiler implements ExternalProfiler
                 "Only include user-mode events.")
             .withRequiredArg().ofType(Boolean.class).describedAs("bool");
 
-        OptionSpec<CStackMode> optCStack = parser.accepts("cstack",
-                "How to traverse C stack: Supported: " + EnumSet.allOf(AsyncProfiler.CStackMode.class) + ".")
-            .withRequiredArg().ofType(CStackMode.class).describedAs("mode").defaultsTo(CStackMode.dwarf);
-
         OptionSpec<Boolean> optVerbose = parser.accepts("verbose",
                 "Output the sequence of commands.")
             .withRequiredArg().ofType(Boolean.class).defaultsTo(false).describedAs("bool");
@@ -189,7 +185,9 @@ public class NativeAsyncProfiler implements ExternalProfiler
 
             builder.appendIfTrue(optAllKernel);
             builder.appendIfTrue(optAllUser);
-            builder.appendIfExists(optCStack);
+
+	    // The only supported C stack is DWARF
+            builder.appendRaw("cstack=dwarf");
 
             if (set.has(optRawCommand))
             {
