@@ -15,8 +15,11 @@ import org.openjdk.jmh.results.Aggregator;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ResultRole;
+import org.openjdk.jmh.util.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -323,16 +326,31 @@ public class NativeAsyncProfiler implements ExternalProfiler
             {
                 case flamegraph:
                     // Flame graph is already dumped into file by async-profiler.
-                    results.add(new FileResult("async-flamegraph", Collections.singletonList(flameOutputFile())));
+                    results.add(new FileResult("async-flamegraph", Collections.singletonList(saveFile(flameOutputFile(), br))));
                     break;
                 case jfr:
                     // JFR is already dumped into file by async-profiler.
-                    results.add(new FileResult("async-jfr", Collections.singletonList(jfrOutputFile())));
+                    results.add(new FileResult("async-jfr", Collections.singletonList(saveFile(jfrOutputFile(), br))));
                     break;
             }
         }
 
         return results;
+    }
+
+    private File saveFile(File f, BenchmarkResult br)
+    {
+	String target = br.getParams().id() + "-" + f.getName();
+	try
+        {
+            FileUtils.copy(f.getAbsolutePath(), target);
+            System.out.println("[native-async-profiler] Output saved to " + target);
+	    return new File(target);
+        }
+        catch (IOException e)
+        {
+            throw new UncheckedIOException("Unable to save Async Profiler output to " + target, e);
+        }
     }
 
     @Override
